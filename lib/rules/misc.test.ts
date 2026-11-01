@@ -156,3 +156,47 @@ describe("consultation notes", () => {
     expect(editableFields(false)).toContain("plan");
   });
 });
+
+import { applyConsentChange } from "./patient";
+
+describe("applyConsentChange", () => {
+  const none = { consentTreatmentAt: null, consentDataProcessingAt: null, consentCommunication: false, consentVersion: null };
+  const now = "2026-11-01T10:00:00.000Z";
+  it("stamps newly given consent with time and current version", () => {
+    expect(applyConsentChange(none, { treatment: true, dataProcessing: true, communication: true }, now, "v2")).toEqual({
+      consentTreatmentAt: now, consentDataProcessingAt: now, consentCommunication: true, consentVersion: "v2", changed: true,
+    });
+  });
+  it("keeps the original timestamp and version when nothing changes", () => {
+    const onFile = { consentTreatmentAt: "2025-01-01", consentDataProcessingAt: "2025-01-01", consentCommunication: false, consentVersion: "v1" };
+    expect(applyConsentChange(onFile, { treatment: true, dataProcessing: true, communication: false }, now, "v2")).toEqual({ ...onFile, changed: false });
+  });
+  it("reconfirming brings outdated consent up to the current version", () => {
+    const onFile = { consentTreatmentAt: "2025-01-01", consentDataProcessingAt: "2025-01-01", consentCommunication: false, consentVersion: "v1" };
+    const r = applyConsentChange(onFile, { treatment: true, dataProcessing: true, communication: false, reconfirm: true }, now, "v2");
+    expect(r).toMatchObject({ consentTreatmentAt: now, consentVersion: "v2", changed: true });
+    expect(consentState(r, "v2")).toBe("complete");
+  });
+  it("unticking withdraws consent", () => {
+    const onFile = { consentTreatmentAt: "2025-01-01", consentDataProcessingAt: "2025-01-01", consentCommunication: true, consentVersion: "v2" };
+    const r = applyConsentChange(onFile, { treatment: false, dataProcessing: false, communication: false }, now, "v2");
+    expect(r).toMatchObject({ consentTreatmentAt: null, consentDataProcessingAt: null, consentVersion: null, changed: true });
+    expect(consentState(r, "v2")).toBe("missing");
+  });
+});
+
+import { searchTerm } from "./search";
+
+describe("searchTerm", () => {
+  it("keeps names, MRNs and accents", () => {
+    expect(searchTerm("  Tomás  O'Neil-Smith ")).toBe("Tomás O'Neil-Smith");
+    expect(searchTerm("P000123")).toBe("P000123");
+  });
+  it("strips filter syntax so it cannot alter the query", () => {
+    expect(searchTerm("a,clinic_id.neq.x")).toBe("a clinic id neq x");
+    expect(searchTerm("%)(*")).toBeNull();
+  });
+  it("caps length", () => {
+    expect(searchTerm("x".repeat(100))?.length).toBe(60);
+  });
+});

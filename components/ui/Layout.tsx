@@ -70,11 +70,11 @@ export function Placeholder({ phase, children }: { phase: string; children: Reac
 
 export function DefinitionList({ items }: { items: Array<[string, ReactNode]> }) {
   return (
-    <dl className="grid grid-cols-[minmax(8rem,auto)_1fr] gap-x-6 gap-y-3">
+    <dl className="grid grid-cols-[minmax(6rem,auto)_minmax(0,1fr)] gap-x-6 gap-y-3">
       {items.map(([k, v]) => (
         <div key={k} className="contents">
           <dt className="text-sm font-bold text-ink-500">{k}</dt>
-          <dd className="text-base text-ink-900">{v}</dd>
+          <dd className="min-w-0 break-words text-base text-ink-900">{v}</dd>
         </div>
       ))}
     </dl>

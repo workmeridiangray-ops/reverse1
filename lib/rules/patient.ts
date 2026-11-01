@@ -69,3 +69,39 @@ export function consentLabel(state: ConsentState): string {
 export function fullName(p: { givenName: string; familyName: string }): string {
   return `${p.givenName.trim()} ${p.familyName.trim()}`.trim();
 }
+
+/**
+ * Apply consent checkboxes from a form to the stored consent record.
+ * - Newly given consent is stamped with `nowIso` and the clinic's current form version.
+ * - Consent that was already on file keeps its original timestamp.
+ * - Unticking withdraws it (timestamp cleared).
+ * - `reconfirm` re-stamps everything with the current version (outdated -> complete).
+ */
+export function applyConsentChange(
+  current: ConsentRecord,
+  form: { treatment: boolean; dataProcessing: boolean; communication: boolean; reconfirm?: boolean },
+  nowIso: string,
+  version: string,
+): ConsentRecord & { changed: boolean } {
+  const stamp = (given: boolean, existing: string | null) =>
+    given ? (existing && !form.reconfirm ? existing : nowIso) : null;
+  const next: ConsentRecord = {
+    consentTreatmentAt: stamp(form.treatment, current.consentTreatmentAt),
+    consentDataProcessingAt: stamp(form.dataProcessing, current.consentDataProcessingAt),
+    consentCommunication: form.communication,
+    consentVersion:
+      form.treatment || form.dataProcessing
+        ? form.reconfirm ||
+          (!current.consentTreatmentAt && form.treatment) ||
+          (!current.consentDataProcessingAt && form.dataProcessing)
+          ? version
+          : current.consentVersion
+        : null,
+  };
+  const changed =
+    next.consentTreatmentAt !== current.consentTreatmentAt ||
+    next.consentDataProcessingAt !== current.consentDataProcessingAt ||
+    next.consentCommunication !== current.consentCommunication ||
+    next.consentVersion !== current.consentVersion;
+  return { ...next, changed };
+}
