@@ -3,6 +3,8 @@ import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTML
 interface Common {
   label: string;
   name: string;
+  /** defaults to `name`; set when the same field name repeats on a page */
+  id?: string;
   error?: string;
   hint?: string;
   optional?: boolean;
@@ -12,7 +14,7 @@ function describedBy(name: string, error?: string, hint?: string) {
   return [hint ? `${name}-hint` : null, error ? `${name}-error` : null].filter(Boolean).join(" ") || undefined;
 }
 
-function Shell({ label, name, error, hint, optional, children }: Common & { children: ReactNode }) {
+function Shell({ label, id: name, error, hint, optional, children }: Omit<Common, "name"> & { id: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={name} className="text-sm font-bold text-ink-900">
@@ -37,33 +39,33 @@ function Shell({ label, name, error, hint, optional, children }: Common & { chil
 const INPUT =
   "min-h-touch w-full rounded border border-ink-500 bg-surface px-3 text-base text-ink-900 placeholder:text-ink-500 aria-[invalid=true]:border-danger-fg aria-[invalid=true]:border-2";
 
-export function TextField({ label, name, error, hint, optional, ...rest }: Common & InputHTMLAttributes<HTMLInputElement>) {
+export function TextField({ label, name, id = name, error, hint, optional, ...rest }: Common & InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <Shell {...{ label, name, error, hint, optional }}>
-      <input id={name} name={name} aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy(name, error, hint)} required={!optional} className={INPUT} {...rest} />
+    <Shell {...{ label, id, error, hint, optional }}>
+      <input id={id} name={name} aria-invalid={error ? true : undefined}
+        aria-describedby={describedBy(id, error, hint)} required={!optional} className={INPUT} {...rest} />
     </Shell>
   );
 }
 
 export function SelectField({
-  label, name, error, hint, optional, children, ...rest
+  label, name, id = name, error, hint, optional, children, ...rest
 }: Common & SelectHTMLAttributes<HTMLSelectElement> & { children: ReactNode }) {
   return (
-    <Shell {...{ label, name, error, hint, optional }}>
-      <select id={name} name={name} aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy(name, error, hint)} required={!optional} className={INPUT} {...rest}>
+    <Shell {...{ label, id, error, hint, optional }}>
+      <select id={id} name={name} aria-invalid={error ? true : undefined}
+        aria-describedby={describedBy(id, error, hint)} required={!optional} className={INPUT} {...rest}>
         {children}
       </select>
     </Shell>
   );
 }
 
-export function TextAreaField({ label, name, error, hint, optional, ...rest }: Common & TextareaHTMLAttributes<HTMLTextAreaElement>) {
+export function TextAreaField({ label, name, id = name, error, hint, optional, ...rest }: Common & TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return (
-    <Shell {...{ label, name, error, hint, optional }}>
-      <textarea id={name} name={name} aria-invalid={error ? true : undefined}
-        aria-describedby={describedBy(name, error, hint)} required={!optional}
+    <Shell {...{ label, id, error, hint, optional }}>
+      <textarea id={id} name={name} aria-invalid={error ? true : undefined}
+        aria-describedby={describedBy(id, error, hint)} required={!optional}
         className={`${INPUT} min-h-[6rem] py-2 leading-relaxed`} {...rest} />
     </Shell>
   );

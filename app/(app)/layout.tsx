@@ -15,7 +15,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
       </a>
       <header className="border-b border-line bg-surface">
         <div className="mx-auto flex max-w-page flex-wrap items-center gap-x-8 gap-y-3 px-6 py-3">
-          <a href="/" className="no-underline" aria-label={`${session.clinic.name} home`}><Logo /></a>
+          <a href="/" className="no-underline"><Logo /><span className="sr-only"> home</span></a>
           <NavLinks items={navFor(session.role)} />
           <div className="ml-auto flex items-center gap-4">
             <div className="text-right leading-tight">

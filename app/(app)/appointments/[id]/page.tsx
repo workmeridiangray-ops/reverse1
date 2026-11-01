@@ -109,7 +109,7 @@ export default async function AppointmentPage({ params, searchParams }: { params
                 <input type="hidden" name="id" value={id} />
                 <input type="hidden" name="to" value="cancelled" />
                 <input type="hidden" name="back" value={back} />
-                <TextField label="Reason" name="reason" maxLength={200} />
+                <TextField label="Reason" name="reason" id="cancel_reason" maxLength={200} />
                 <Button type="submit" variant="danger" size="sm">Cancel appointment</Button>
               </form>
             </Card>
