@@ -135,3 +135,24 @@ describe("patient validation and consent", () => {
     expect(consentState({ ...full, consentDataProcessingAt: null }, "v2")).toBe("missing");
   });
 });
+
+import { editableFields, validateNote } from "./notes";
+
+describe("consultation notes", () => {
+  const blank = { subjective: "", objective: "", assessment: "", plan: "", isCritical: false, criticalReason: null };
+  it("allows saving an empty draft but not signing it", () => {
+    expect(validateNote(blank, "save")).toEqual([]);
+    expect(validateNote(blank, "sign")).toEqual(["Add an assessment or plan before signing."]);
+    expect(validateNote({ ...blank, plan: "Review 1 week" }, "sign")).toEqual([]);
+  });
+  it("requires a reason for critical", () => {
+    expect(validateNote({ ...blank, isCritical: true }, "save")).toHaveLength(1);
+  });
+  it("rejects runaway text", () => {
+    expect(validateNote({ ...blank, subjective: "x".repeat(20_001) }, "save")).toEqual(["Subjective is too long."]);
+  });
+  it("locks clinical text after signing", () => {
+    expect(editableFields(true)).toEqual(["isCritical", "criticalReason"]);
+    expect(editableFields(false)).toContain("plan");
+  });
+});
