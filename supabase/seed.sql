@@ -112,7 +112,7 @@ select pg_temp.mk_appt('a3000000-0000-4000-8000-000000000001', 'aaaaaaaa-0000-40
   -1440, 20, 'Blood pressure review');                                        -- yesterday, completed, note unsigned
 select pg_temp.mk_appt('a3000000-0000-4000-8000-000000000002', 'aaaaaaaa-0000-4000-8000-000000000000',
   'a2000000-0000-4000-8000-000000000001', 'a0000000-0000-4000-8000-000000000002', 'a1000000-0000-4000-8000-000000000001',
-  -90, 20, 'Follow-up: fatigue');                                              -- completed, still owes
+  -40, 20, 'Follow-up: fatigue');                                              -- completed, still owes
 select pg_temp.mk_appt('a3000000-0000-4000-8000-000000000003', 'aaaaaaaa-0000-4000-8000-000000000000',
   'a2000000-0000-4000-8000-000000000004', 'a0000000-0000-4000-8000-000000000002', 'a1000000-0000-4000-8000-000000000001',
   -15, 20, 'Palpitations');                                                    -- with doctor, critical

@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply bg-canvas font-sans text-base text-ink-900 antialiased;
+    font-variant-numeric: tabular-nums;
+  }
+  /* Large, offset focus ring: always drawn on the page background (see tokens.test.ts). */
+  :focus-visible {
+    outline: 3px solid theme("colors.focus");
+    outline-offset: 2px;
+  }
+  a {
+    @apply text-brand-700 underline decoration-1 underline-offset-2 hover:text-clay-600;
+  }
+  h1, h2, h3 {
+    text-wrap: balance;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

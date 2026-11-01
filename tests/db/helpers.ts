@@ -61,14 +61,14 @@ export const ID = {
   invJon: "b6000000-0000-4000-8000-000000000001",
 } as const;
 
-export type Q = <T = Record<string, unknown>>(sql: string, params?: unknown[]) => Promise<T[]>;
+export type Q = <T = Record<string, unknown>>(sql: string, params?: readonly unknown[]) => Promise<T[]>;
 
 async function inTx<T>(setup: string[], fn: (q: Q) => Promise<T>): Promise<T> {
   const client = await pool.connect();
   try {
     await client.query("begin");
     for (const s of setup) await client.query(s);
-    const q: Q = async <R>(sql: string, params?: unknown[]) => (await client.query(sql, params)).rows as R[];
+    const q: Q = async <R>(sql: string, params?: readonly unknown[]) => (await client.query(sql, params as unknown[])).rows as R[];
     return await fn(q);
   } finally {
     await client.query("rollback").catch(() => undefined);
@@ -104,7 +104,7 @@ export async function failure(p: Promise<unknown>): Promise<string> {
 }
 
 /** Run a write inside a savepoint so a failure does not abort the test transaction. */
-export async function attempt(q: Q, sql: string, params?: unknown[]): Promise<{ ok: boolean; rows: number; error?: string }> {
+export async function attempt(q: Q, sql: string, params?: readonly unknown[]): Promise<{ ok: boolean; rows: number; error?: string }> {
   await q("savepoint t");
   try {
     const rows = await q(sql, params);
