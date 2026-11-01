@@ -27,7 +27,12 @@ alter table public.audit_log enable row level security;
 create policy audit_log_select on public.audit_log for select to authenticated
   using (clinic_id = (select app.clinic_id()) and (select app.has_role('admin')));
 -- No insert/update/delete policies; writes come only from definer functions.
-revoke insert, update, delete, truncate on public.audit_log from anon, authenticated, service_role;
+revoke all on public.audit_log from anon;
+revoke insert, update, delete, truncate on public.audit_log from authenticated, service_role;
+
+-- Future tables must not inherit Supabase's default anon grants either.
+alter default privileges in schema public revoke all on tables from anon;
+alter default privileges in schema public revoke all on functions from anon;
 
 create or replace function app.audit_log_immutable()
 returns trigger language plpgsql set search_path = '' as $$
