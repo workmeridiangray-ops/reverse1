@@ -41,7 +41,7 @@ export function LinesEditor({ lines, onChange, items, readOnly }: { lines: Line[
 
 export function DocView({ kind, doc, seller, customer, contact }: { kind: 'Tax invoice' | 'Quotation'; doc: Row; seller: any; customer: Row | undefined; contact?: Row }) {
   const t = doc.totals as DocTotals;
-  return <article className="doc" aria-label={kind}>
+  return <article className="doc" aria-label={kind} tabIndex={0}>
     <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
       <div><h2 style={{ fontSize: 20 }}>{seller.business.legalName}</h2><div style={{ color: 'var(--muted)', fontSize: 13 }}>{seller.billing.address}<br />GSTIN {seller.billing.gstin}</div></div>
       <div style={{ textAlign: 'right' }}><h2 style={{ fontSize: 20, textTransform: 'uppercase', letterSpacing: '.04em' }}>{kind}</h2><div className="num" style={{ fontWeight: 600 }}>{doc.number || 'DRAFT – not numbered'}</div>{doc.revision ? <div style={{ fontSize: 13, color: 'var(--muted)' }}>Revision {doc.revision}</div> : null}</div>
