@@ -5,7 +5,7 @@ export function PageHeader({ title, description, actions, eyebrow }: { title: st
   return (
     <header className="mb-section flex flex-wrap items-end justify-between gap-4">
       <div>
-        {eyebrow ? <p className="text-sm font-bold uppercase tracking-wide text-clay-600">{eyebrow}</p> : null}
+        {eyebrow ? <p className="text-sm font-bold uppercase tracking-wide text-brand-700">{eyebrow}</p> : null}
         <h1 className="text-display font-bold text-ink-900">{title}</h1>
         {description ? <div className="mt-1 max-w-prose text-lg text-ink-700">{description}</div> : null}
       </div>
@@ -59,7 +59,7 @@ export function EmptyState({ title, children }: { title: string; children?: Reac
   );
 }
 
-export function Placeholder({ phase, children }: { phase: string; children: ReactNode }) {
+export function Notice({ phase, children }: { phase: string; children: ReactNode }) {
   return (
     <div className="rounded-lg border border-clay-100 bg-clay-50 px-6 py-5">
       <p className="text-sm font-bold uppercase tracking-wide text-clay-700">{phase}</p>

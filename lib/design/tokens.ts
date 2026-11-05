@@ -1,5 +1,5 @@
 /**
- * Tendwell design tokens. Single source of truth for colour, type, spacing,
+ * Design tokens. Single source of truth for colour, type, spacing,
  * radius and elevation; tailwind.config.ts reads from here.
  *
  * Identity: calm, warm and clinical. Deep teal ink on warm paper, with one
@@ -8,43 +8,43 @@
  * conveyed by colour alone: badges always pair colour with an icon and a word.
  */
 export const color = {
-  canvas: "#F7F5F0", // warm paper page background
+  canvas: "#F7F8FA", // page background (scope: #F7F8FA)
   surface: "#FFFFFF",
-  sunken: "#EFEBE3",
-  line: { DEFAULT: "#DCD5C9", strong: "#B3AA9B" },
+  sunken: "#EEF1F5",
+  line: { DEFAULT: "#D9DFE7", strong: "#9AA6B5" },
   ink: {
-    900: "#10272A", // primary text 15.6:1 on canvas
-    700: "#34484B", // secondary text 9.5:1
-    500: "#56686A", // muted text 5.6:1 on canvas, 6.0:1 on white
-    300: "#9AA6A7", // disabled/decoration only, never text
+    900: "#17212F", // primary text
+    700: "#3A485A", // secondary text
+    500: "#526174", // muted text (scope: #526174)
+    300: "#9AA6B5", // decoration only, never text
   },
   brand: {
-    50: "#EEF6F4",
-    100: "#D8ECE8",
-    200: "#B2D8D1",
-    600: "#127069", // 5.9:1 on white
-    700: "#0E5B57", // 7.6:1 on white - primary buttons
-    800: "#0A4643",
+    50: "#EDF2F8",
+    100: "#D9E4F1",
+    200: "#B3C8E0",
+    600: "#2F5E94",
+    700: "#244B78", // scope accent
+    800: "#1A3859",
   },
   clay: {
-    50: "#FBF1EC",
-    100: "#F5DFD4",
-    600: "#A4492A", // 5.6:1 on white - accent, links on hover
-    700: "#863A21",
+    50: "#F3F5F8",
+    100: "#E3E8EF",
+    600: "#2F5E94",
+    700: "#244B78",
   },
-  focus: "#C2410C", // 3px outline, >= 3:1 against canvas, surface and brand
+  focus: "#C2410C",
   status: {
-    ok: { fg: "#1B5E36", bg: "#E3F1E7", line: "#A6CFB2" }, // 7.0:1
-    warn: { fg: "#734600", bg: "#FCF0D6", line: "#E3C27C" }, // 7.1:1
-    danger: { fg: "#9B2318", bg: "#FBE6E3", line: "#E6AAA2" }, // 6.4:1
-    info: { fg: "#1D4A85", bg: "#E4EDF9", line: "#A7C0E4" }, // 7.4:1
-    neutral: { fg: "#45505A", bg: "#ECEEF0", line: "#C6CCD1" }, // 7.3:1
-    critical: { fg: "#FFFFFF", bg: "#9B2318", line: "#7A1B12" }, // 7.9:1
+    ok: { fg: "#1B5E36", bg: "#E3F1E7", line: "#A6CFB2" },
+    warn: { fg: "#734600", bg: "#FCF0D6", line: "#E3C27C" },
+    danger: { fg: "#9B2318", bg: "#FBE6E3", line: "#E6AAA2" },
+    info: { fg: "#1D4A85", bg: "#E4EDF9", line: "#A7C0E4" },
+    neutral: { fg: "#45505A", bg: "#ECEEF0", line: "#C6CCD1" },
+    critical: { fg: "#FFFFFF", bg: "#9B2318", line: "#7A1B12" },
   },
 } as const;
 
 export const font = {
-  sans: ["Atkinson Hyperlegible", "system-ui", "Segoe UI", "Roboto", "sans-serif"],
+  sans: ["Inter", "system-ui", "Segoe UI", "Roboto", "sans-serif"],
   mono: ["IBM Plex Mono", "ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
 } as const;
 

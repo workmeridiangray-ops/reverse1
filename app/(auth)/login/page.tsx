@@ -1,34 +1,33 @@
-import type { Metadata } from "next";
-import { Logo } from "@/components/shell/Logo";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Alert } from "@/components/ui/Layout";
-import { safeNextPath } from "@/lib/rules/routing";
-import { LoginForm } from "./LoginForm";
+import { ActionForm } from "@/components/ui/ActionForm";
+import { TextField } from "@/components/ui/Field";
+import { getAuth } from "@/lib/server/auth";
+import { signIn } from "../actions";
 
-export const metadata: Metadata = { title: "Sign in" };
-
-export default async function LoginPage({ searchParams }: { searchParams: Promise<{ next?: string; error?: string }> }) {
-  const { next, error } = await searchParams;
+export const metadata = { title: "Sign in" };
+const REASONS: Record<string, [("info" | "warn" | "ok"), string]> = {
+  expired: ["warn", "Your session expired or was signed out elsewhere. Sign in again — your saved records are safe."],
+  "signed-out": ["ok", "You have been signed out."],
+  "password-reset": ["ok", "Password updated. Sign in with your new password; other devices were signed out."],
+  revoked: ["warn", "Your access was removed. Contact your administrator."],
+};
+export default async function Login({ searchParams }: { searchParams: Promise<{ reason?: string; next?: string }> }) {
+  const { reason, next } = await searchParams;
+  const { auth } = await getAuth();
+  if (auth) redirect("/app");
+  const r = reason ? REASONS[reason] : undefined;
   return (
-    <main className="grid min-h-screen place-items-center px-4 py-12">
-      <div className="w-full max-w-md">
-        <div className="mb-8 flex justify-center"><Logo size="lg" /></div>
-        <div className="rounded-lg border border-line bg-surface p-8 shadow-raised">
-          <h1 className="mb-1 text-heading font-bold">Sign in</h1>
-          <p className="mb-6 text-ink-700">Use the account your clinic gave you.</p>
-          {error === "no-access" ? (
-            <div className="mb-5">
-              <Alert tone="warn" title="Your account isn't active">Ask your clinic administrator to restore access.</Alert>
-            </div>
-          ) : null}
-          <LoginForm next={safeNextPath(next)} />
-        </div>
-        {process.env.NODE_ENV !== "production" ? (
-          <p className="mt-6 text-center text-sm text-ink-500">
-            Local demo: <span className="font-mono">desk@cedarlane.test</span>, <span className="font-mono">dr.okafor@cedarlane.test</span>,{" "}
-            <span className="font-mono">admin@cedarlane.test</span> · password <span className="font-mono">tendwell-demo-pass</span>
-          </p>
-        ) : null}
-      </div>
-    </main>
+    <>
+      <h1 className="mb-4 text-heading font-bold">Sign in</h1>
+      {r ? <div className="mb-4"><Alert tone={r[0]}>{r[1]}</Alert></div> : null}
+      <ActionForm action={signIn} submitLabel="Sign in" pendingLabel="Signing in…">
+        <input type="hidden" name="next" value={next ?? ""} />
+        <TextField label="Email" name="email" type="email" autoComplete="username" />
+        <TextField label="Password" name="password" type="password" autoComplete="current-password" />
+      </ActionForm>
+      <p className="mt-4 text-sm"><Link href="/forgot">Forgot password?</Link> · <Link href="/signup">Create an account</Link></p>
+    </>
   );
 }

@@ -9,3 +9,5 @@ next-env.d.ts
 supabase/.temp/
 supabase/.branches/
 .DS_Store
+storage-data/
+.env.local
