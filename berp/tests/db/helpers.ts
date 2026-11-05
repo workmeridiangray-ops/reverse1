@@ -60,9 +60,9 @@ export async function admin<T = Record<string, unknown>>(sql: string, params: un
 
 export const TENANT = { A: "", B: "" };
 export const WH = { A: "", A2: "" };
-export const ITEM: Record<string, string> = {};
-export const CUST: Record<string, string> = {};
-export const SUP: Record<string, string> = {};
+export const ITEM = {} as Record<"WID-1" | "GAD-1" | "SVC-1", string>;
+export const CUST = {} as Record<"Kiran Stores" | "Tiny Shop", string>;
+export const SUP = {} as Record<"Prime Components", string>;
 
 /** Seeds two tenants (A has the full role set) once per test file; committed, idempotent. */
 export async function seed() {
@@ -88,7 +88,7 @@ export async function seed() {
   TENANT.A = (await admin<{ id: string }>("select id from public.tenants where name='Acme Traders'"))[0]!.id;
   TENANT.B = (await admin<{ id: string }>("select id from public.tenants where name='Bharat Supplies'"))[0]!.id;
   WH.A = (await admin<{ id: string }>("select id from public.warehouses where tenant_id=$1", [TENANT.A]))[0]!.id;
-  for (const r of await admin<{ id: string; sku: string }>("select id, sku from public.items where tenant_id=$1", [TENANT.A])) ITEM[r.sku] = r.id;
-  for (const r of await admin<{ id: string; name: string }>("select id, name from public.customers where tenant_id=$1", [TENANT.A])) CUST[r.name] = r.id;
-  for (const r of await admin<{ id: string; name: string }>("select id, name from public.suppliers where tenant_id=$1", [TENANT.A])) SUP[r.name] = r.id;
+  for (const r of await admin<{ id: string; sku: string }>("select id, sku from public.items where tenant_id=$1", [TENANT.A])) (ITEM as Record<string, string>)[r.sku] = r.id;
+  for (const r of await admin<{ id: string; name: string }>("select id, name from public.customers where tenant_id=$1", [TENANT.A])) (CUST as Record<string, string>)[r.name] = r.id;
+  for (const r of await admin<{ id: string; name: string }>("select id, name from public.suppliers where tenant_id=$1", [TENANT.A])) (SUP as Record<string, string>)[r.name] = r.id;
 }

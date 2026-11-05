@@ -145,3 +145,9 @@ language sql stable security definer set search_path = '' as $$
   from public.memberships m join auth.users u on u.id = m.user_id left join public.profiles p on p.user_id = m.user_id
   where m.tenant_id = app.tenant_id() and app.role() is not null order by m.created_at
 $$;
+
+create or replace function public.am_platform_admin() returns boolean
+language sql stable security definer set search_path = '' as $$ select app.is_platform_admin() $$;
+
+create or replace function public.current_tenant() returns uuid
+language sql stable security definer set search_path = '' as $$ select app.tenant_id() $$;

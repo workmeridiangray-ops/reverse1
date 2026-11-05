@@ -1,0 +1,23 @@
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { color-scheme: light; }
+  body { @apply bg-canvas font-sans text-[15px] leading-6 text-ink antialiased; }
+  :focus-visible { outline: 3px solid #244B78; outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+}
+@layer components {
+  .card { @apply rounded-lg border border-line bg-surface; }
+  .input { @apply min-h-touch w-full rounded-md border border-line bg-white px-3 text-ink; }
+  .btn { @apply inline-flex min-h-touch items-center justify-center gap-2 rounded-md border border-line bg-white px-4 font-medium text-ink hover:bg-canvas; }
+  .btn-primary { @apply border-brand bg-brand text-white hover:bg-[#1b3a5e]; }
+  .btn-danger { @apply border-danger bg-white text-danger hover:bg-danger-bg; }
+  .th { @apply whitespace-nowrap border-b border-line bg-canvas px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-muted; }
+  .td { @apply border-b border-line px-3 py-2 align-top; }
+  .num { @apply text-right tabular-nums; }
+}

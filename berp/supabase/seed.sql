@@ -1,0 +1,5 @@
+-- Local development seed. Create users first via the Auth API / sign-up form, then
+-- promote yourself to platform admin (this table is not writable by clients):
+--   insert into public.platform_admins (user_id) select id from auth.users where email = 'you@example.com';
+-- Nothing else is seeded: each workspace gets its chart of accounts, tax codes, branch and warehouse
+-- from public.create_workspace() at sign-up.

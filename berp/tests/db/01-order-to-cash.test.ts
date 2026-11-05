@@ -1,15 +1,15 @@
 import { beforeAll, describe, expect, test } from "vitest";
 import { as, fails, ITEM, CUST, SUP, seed, WH, TENANT, admin } from "./helpers";
 
-const base: Record<string, number> = {};
+const base = { ar: 0, bank: 0, inventory: 0, cogs: 0, grni: 0 };
 beforeAll(async () => {
   await seed();
-  for (const k of ["ar", "bank", "inventory", "cogs", "grni"]) base[k] = await bal(k);
+  for (const k of ["ar", "bank", "inventory", "cogs", "grni"] as const) base[k] = await bal(k);
 });
 
 type Row = Record<string, any>;
 async function bal(key: string) { return (await as("acctA", (c) => c.q<Row>("select balance_paise b from public.trial_balance tb join public.accounts a on a.id=tb.account_id where a.system_key=$1", [key])))[0]!.b as number; }
-const stock = async (sku: string) =>
+const stock = async (sku: keyof typeof ITEM) =>
   (await as("whA", (c) => c.q<Row>("select on_hand, reserved from public.stock_levels where item_id=$1 and warehouse_id=$2", [ITEM[sku], WH.A])))[0]!;
 
 describe("approved sale → reservation → shortage → purchase → partial receipt → dispatch → invoice → partial collection", () => {
