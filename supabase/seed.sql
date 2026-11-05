@@ -35,6 +35,8 @@ select pg_temp.mk_user('a0000000-0000-4000-8000-000000000005', 'lab@cedarlane.te
 select pg_temp.mk_user('a0000000-0000-4000-8000-000000000006', 'pharmacy@cedarlane.test');
 select pg_temp.mk_user('a0000000-0000-4000-8000-000000000007', 'amal.haddad@patient.test');
 select pg_temp.mk_user('a0000000-0000-4000-8000-000000000008', 'former.desk@cedarlane.test');
+select pg_temp.mk_user('a0000000-0000-4000-8000-000000000009', 'nurse@cedarlane.test');
+select pg_temp.mk_user('b0000000-0000-4000-8000-000000000009', 'nurse@northgate.test');
 select pg_temp.mk_user('b0000000-0000-4000-8000-000000000001', 'admin@northgate.test');
 select pg_temp.mk_user('b0000000-0000-4000-8000-000000000002', 'dr.reyes@northgate.test');
 select pg_temp.mk_user('b0000000-0000-4000-8000-000000000004', 'desk@northgate.test');
@@ -56,6 +58,8 @@ insert into public.profiles (id, clinic_id, role, full_name, active) values
   ('a0000000-0000-4000-8000-000000000006', 'aaaaaaaa-0000-4000-8000-000000000000', 'pharmacist', 'Yusuf Demir', true),
   ('a0000000-0000-4000-8000-000000000007', 'aaaaaaaa-0000-4000-8000-000000000000', 'patient', 'Amal Haddad', true),
   ('a0000000-0000-4000-8000-000000000008', 'aaaaaaaa-0000-4000-8000-000000000000', 'receptionist', 'Former Desk', false),
+  ('a0000000-0000-4000-8000-000000000009', 'aaaaaaaa-0000-4000-8000-000000000000', 'nurse', 'Mei Tanaka', true),
+  ('b0000000-0000-4000-8000-000000000009', 'bbbbbbbb-0000-4000-8000-000000000000', 'nurse', 'Omar Ali', true),
   ('b0000000-0000-4000-8000-000000000001', 'bbbbbbbb-0000-4000-8000-000000000000', 'admin', 'Grace Whitfield', true),
   ('b0000000-0000-4000-8000-000000000002', 'bbbbbbbb-0000-4000-8000-000000000000', 'doctor', 'Dr. Luis Reyes', true),
   ('b0000000-0000-4000-8000-000000000004', 'bbbbbbbb-0000-4000-8000-000000000000', 'receptionist', 'Dana Kim', true),
@@ -240,3 +244,46 @@ values ('b6000000-0000-4000-8000-000000000001', 'bbbbbbbb-0000-4000-8000-0000000
 insert into public.invoice_lines (clinic_id, invoice_id, description, quantity, unit_price_minor) values
   ('bbbbbbbb-0000-4000-8000-000000000000', 'b6000000-0000-4000-8000-000000000001', 'Annual physical', 1, 15000);
 update public.invoices set state = 'issued' where id = 'b6000000-0000-4000-8000-000000000001';
+
+
+-- ---------------------------------------------------------------------------
+-- Phase 2: inpatient demo data (synthetic)
+-- ---------------------------------------------------------------------------
+insert into public.wards (id, clinic_id, name, kind) values
+  ('a7000000-0000-4000-8000-000000000001', 'aaaaaaaa-0000-4000-8000-000000000000', 'Ward 1 General', 'general'),
+  ('a7000000-0000-4000-8000-000000000002', 'aaaaaaaa-0000-4000-8000-000000000000', 'High dependency', 'icu'),
+  ('b7000000-0000-4000-8000-000000000001', 'bbbbbbbb-0000-4000-8000-000000000000', 'North Ward', 'general');
+
+insert into public.beds (id, clinic_id, ward_id, label, out_of_service, housekeeping) values
+  ('a8000000-0000-4000-8000-000000000001', 'aaaaaaaa-0000-4000-8000-000000000000', 'a7000000-0000-4000-8000-000000000001', 'W1-01', false, 'clean'),
+  ('a8000000-0000-4000-8000-000000000002', 'aaaaaaaa-0000-4000-8000-000000000000', 'a7000000-0000-4000-8000-000000000001', 'W1-02', false, 'clean'),
+  ('a8000000-0000-4000-8000-000000000003', 'aaaaaaaa-0000-4000-8000-000000000000', 'a7000000-0000-4000-8000-000000000001', 'W1-03', false, 'dirty'),
+  ('a8000000-0000-4000-8000-000000000004', 'aaaaaaaa-0000-4000-8000-000000000000', 'a7000000-0000-4000-8000-000000000001', 'W1-04', true, 'clean'),
+  ('a8000000-0000-4000-8000-000000000005', 'aaaaaaaa-0000-4000-8000-000000000000', 'a7000000-0000-4000-8000-000000000002', 'HDU-01', false, 'clean'),
+  ('b8000000-0000-4000-8000-000000000001', 'bbbbbbbb-0000-4000-8000-000000000000', 'b7000000-0000-4000-8000-000000000001', 'N-01', false, 'clean');
+
+-- A: George is in W1-01 (elective, deposit referenced). Owen is waiting for a bed. Ines is an emergency request.
+insert into public.admissions (id, clinic_id, patient_id, attending_id, admission_type, reason, deposit_reference, expected_discharge_on) values
+  ('a9000000-0000-4000-8000-000000000001', 'aaaaaaaa-0000-4000-8000-000000000000', 'a2000000-0000-4000-8000-000000000002',
+   'a0000000-0000-4000-8000-000000000002', 'elective', 'Planned hip replacement recovery', 'DEP-1001', current_date + 3),
+  ('a9000000-0000-4000-8000-000000000002', 'aaaaaaaa-0000-4000-8000-000000000000', 'a2000000-0000-4000-8000-000000000006',
+   'a0000000-0000-4000-8000-000000000003', 'elective', 'Observation after cardiac procedure', 'DEP-1042', null),
+  ('a9000000-0000-4000-8000-000000000003', 'aaaaaaaa-0000-4000-8000-000000000000', 'a2000000-0000-4000-8000-000000000007',
+   'a0000000-0000-4000-8000-000000000002', 'emergency', 'Acute abdominal pain', null, null),
+  ('b9000000-0000-4000-8000-000000000001', 'bbbbbbbb-0000-4000-8000-000000000000', 'b2000000-0000-4000-8000-000000000002',
+   'b0000000-0000-4000-8000-000000000002', 'emergency', 'Chest pain, rule out cardiac cause', null, null);
+
+insert into public.bed_stays (clinic_id, admission_id, patient_id, bed_id, starts_at, reason) values
+  ('aaaaaaaa-0000-4000-8000-000000000000', 'a9000000-0000-4000-8000-000000000001', 'a2000000-0000-4000-8000-000000000002',
+   'a8000000-0000-4000-8000-000000000001', now() - interval '2 days', 'admission'),
+  ('bbbbbbbb-0000-4000-8000-000000000000', 'b9000000-0000-4000-8000-000000000001', 'b2000000-0000-4000-8000-000000000002',
+   'b8000000-0000-4000-8000-000000000001', now() - interval '3 hours', 'admission');
+update public.admissions set status = 'admitted', admitted_at = now() - interval '2 days' where id = 'a9000000-0000-4000-8000-000000000001';
+update public.admissions set status = 'admitted', admitted_at = now() - interval '3 hours' where id = 'b9000000-0000-4000-8000-000000000001';
+
+insert into public.care_tasks (clinic_id, admission_id, patient_id, title, due_at) values
+  ('aaaaaaaa-0000-4000-8000-000000000000', 'a9000000-0000-4000-8000-000000000001', 'a2000000-0000-4000-8000-000000000002', 'Mobilise with physiotherapist', now() + interval '1 hour'),
+  ('aaaaaaaa-0000-4000-8000-000000000000', 'a9000000-0000-4000-8000-000000000001', 'a2000000-0000-4000-8000-000000000002', 'Wound dressing check', now() - interval '30 minutes');
+insert into public.observations (clinic_id, admission_id, patient_id, recorded_by, systolic, diastolic, pulse, resp_rate, temp_c, spo2) values
+  ('aaaaaaaa-0000-4000-8000-000000000000', 'a9000000-0000-4000-8000-000000000001', 'a2000000-0000-4000-8000-000000000002',
+   'a0000000-0000-4000-8000-000000000009', 128, 76, 72, 16, 36.8, 97);

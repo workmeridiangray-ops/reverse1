@@ -20,7 +20,16 @@ type Table =
   | "invoice_lines"
   | "payments"
   | "invoice_balances"
-  | "audit_log";
+  | "audit_log"
+  | "wards"
+  | "beds"
+  | "admissions"
+  | "admission_summaries"
+  | "bed_stays"
+  | "bed_reservations"
+  | "discharge_clearances"
+  | "care_tasks"
+  | "observations";
 
 const TABLES: Table[] = [
   "clinics",
@@ -35,29 +44,40 @@ const TABLES: Table[] = [
   "payments",
   "invoice_balances",
   "audit_log",
+  "wards",
+  "beds",
+  "admissions",
+  "admission_summaries",
+  "bed_stays",
+  "bed_reservations",
+  "discharge_clearances",
+  "care_tasks",
+  "observations",
 ];
 
 // Expected visible row counts from supabase/seed.sql. "audit" = any (>0).
 const EXPECTED: Record<UserKey, Partial<Record<Table, number | "some">>> = {
-  adminA: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 10, consultations: 0, prescriptions: 0, invoices: 3, invoice_lines: 4, payments: 2, invoice_balances: 3, audit_log: "some" },
-  doctorA: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 10, consultations: 3, prescriptions: 2, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0 },
-  doctorA2: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 10, consultations: 3, prescriptions: 2, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0 },
-  deskA: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 10, consultations: 0, prescriptions: 0, invoices: 3, invoice_lines: 4, payments: 2, invoice_balances: 3, audit_log: 0 },
-  labA: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 0, consultations: 0, prescriptions: 0, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0 },
-  pharmA: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 0, consultations: 0, prescriptions: 2, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0 },
+  adminA: { clinics: 1, profiles: 9, patients: 7, rooms: 4, appointments: 10, consultations: 0, prescriptions: 0, invoices: 3, invoice_lines: 4, payments: 2, invoice_balances: 3, audit_log: "some", wards: 2, beds: 5, admissions: 3, admission_summaries: 0, bed_stays: 1, bed_reservations: 0, discharge_clearances: 0, care_tasks: 0, observations: 0 },
+  doctorA: { clinics: 1, profiles: 9, patients: 7, rooms: 4, appointments: 10, consultations: 3, prescriptions: 2, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0, wards: 2, beds: 5, admissions: 3, admission_summaries: 0, bed_stays: 1, bed_reservations: 0, discharge_clearances: 0, care_tasks: 2, observations: 1 },
+  doctorA2: { clinics: 1, profiles: 9, patients: 7, rooms: 4, appointments: 10, consultations: 3, prescriptions: 2, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0, wards: 2, beds: 5, admissions: 3, admission_summaries: 0, bed_stays: 1, bed_reservations: 0, discharge_clearances: 0, care_tasks: 2, observations: 1 },
+  deskA: { clinics: 1, profiles: 9, patients: 7, rooms: 4, appointments: 10, consultations: 0, prescriptions: 0, invoices: 3, invoice_lines: 4, payments: 2, invoice_balances: 3, audit_log: 0, wards: 2, beds: 5, admissions: 3, admission_summaries: 0, bed_stays: 1, bed_reservations: 0, discharge_clearances: 0, care_tasks: 0, observations: 0 },
+  labA: { clinics: 1, profiles: 9, patients: 7, rooms: 4, appointments: 0, consultations: 0, prescriptions: 0, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0, wards: 0, beds: 0, admissions: 0, admission_summaries: 0, bed_stays: 0, bed_reservations: 0, discharge_clearances: 0, care_tasks: 0, observations: 0 },
+  pharmA: { clinics: 1, profiles: 9, patients: 7, rooms: 4, appointments: 0, consultations: 0, prescriptions: 2, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0, wards: 0, beds: 0, admissions: 3, admission_summaries: 0, bed_stays: 0, bed_reservations: 0, discharge_clearances: 0, care_tasks: 0, observations: 0 },
   // Amal: own record, own 2 appointments, only the ACTIVE prescription, own ISSUED invoice and its lines/payments.
-  patientA: { clinics: 1, profiles: 1, patients: 1, rooms: 0, appointments: 2, consultations: 0, prescriptions: 1, invoices: 1, invoice_lines: 2, payments: 1, invoice_balances: 1, audit_log: 0 },
+  patientA: { clinics: 1, profiles: 1, patients: 1, rooms: 0, appointments: 2, consultations: 0, prescriptions: 1, invoices: 1, invoice_lines: 2, payments: 1, invoice_balances: 1, audit_log: 0, wards: 0, beds: 0, admissions: 0, admission_summaries: 0, bed_stays: 0, bed_reservations: 0, discharge_clearances: 0, care_tasks: 0, observations: 0 },
   // Deactivated staff: everything resolves to nothing.
-  inactiveDeskA: { clinics: 0, profiles: 1, patients: 0, rooms: 0, appointments: 0, consultations: 0, prescriptions: 0, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0 },
-  adminB: { clinics: 1, profiles: 4, patients: 2, rooms: 1, appointments: 2, consultations: 0, prescriptions: 0, invoices: 1, invoice_lines: 1, payments: 0, invoice_balances: 1, audit_log: "some" },
-  doctorB: { clinics: 1, profiles: 4, patients: 2, rooms: 1, appointments: 2, consultations: 1, prescriptions: 0, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0 },
-  deskB: { clinics: 1, profiles: 4, patients: 2, rooms: 1, appointments: 2, consultations: 0, prescriptions: 0, invoices: 1, invoice_lines: 1, payments: 0, invoice_balances: 1, audit_log: 0 },
-  patientB: { clinics: 1, profiles: 1, patients: 1, rooms: 0, appointments: 1, consultations: 0, prescriptions: 0, invoices: 1, invoice_lines: 1, payments: 0, invoice_balances: 1, audit_log: 0 },
+  inactiveDeskA: { clinics: 0, profiles: 1, patients: 0, rooms: 0, appointments: 0, consultations: 0, prescriptions: 0, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0, wards: 0, beds: 0, admissions: 0, admission_summaries: 0, bed_stays: 0, bed_reservations: 0, discharge_clearances: 0, care_tasks: 0, observations: 0 },
+  adminB: { clinics: 1, profiles: 5, patients: 2, rooms: 1, appointments: 2, consultations: 0, prescriptions: 0, invoices: 1, invoice_lines: 1, payments: 0, invoice_balances: 1, audit_log: "some", wards: 1, beds: 1, admissions: 1, admission_summaries: 0, bed_stays: 1, bed_reservations: 0, discharge_clearances: 0, care_tasks: 0, observations: 0 },
+  doctorB: { clinics: 1, profiles: 5, patients: 2, rooms: 1, appointments: 2, consultations: 1, prescriptions: 0, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0, wards: 1, beds: 1, admissions: 1, admission_summaries: 0, bed_stays: 1, bed_reservations: 0, discharge_clearances: 0, care_tasks: 0, observations: 0 },
+  deskB: { clinics: 1, profiles: 5, patients: 2, rooms: 1, appointments: 2, consultations: 0, prescriptions: 0, invoices: 1, invoice_lines: 1, payments: 0, invoice_balances: 1, audit_log: 0, wards: 1, beds: 1, admissions: 1, admission_summaries: 0, bed_stays: 1, bed_reservations: 0, discharge_clearances: 0, care_tasks: 0, observations: 0 },
+  nurseA: { clinics: 1, profiles: 9, patients: 7, rooms: 0, appointments: 0, consultations: 0, prescriptions: 0, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0, wards: 2, beds: 5, admissions: 3, admission_summaries: 0, bed_stays: 1, bed_reservations: 0, discharge_clearances: 0, care_tasks: 2, observations: 1 },
+  nurseB: { clinics: 1, profiles: 5, patients: 2, rooms: 0, appointments: 0, consultations: 0, prescriptions: 0, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0, wards: 1, beds: 1, admissions: 1, admission_summaries: 0, bed_stays: 1, bed_reservations: 0, discharge_clearances: 0, care_tasks: 0, observations: 0 },
+  patientB: { clinics: 1, profiles: 1, patients: 1, rooms: 0, appointments: 1, consultations: 0, prescriptions: 0, invoices: 1, invoice_lines: 1, payments: 0, invoice_balances: 1, audit_log: 0, wards: 0, beds: 0, admissions: 0, admission_summaries: 0, bed_stays: 0, bed_reservations: 0, discharge_clearances: 0, care_tasks: 0, observations: 0 },
 };
 
 const HOME_CLINIC: Record<UserKey, string> = {
   adminA: CLINIC_A, doctorA: CLINIC_A, doctorA2: CLINIC_A, deskA: CLINIC_A, labA: CLINIC_A, pharmA: CLINIC_A,
-  patientA: CLINIC_A, inactiveDeskA: CLINIC_A,
+  patientA: CLINIC_A, inactiveDeskA: CLINIC_A, nurseA: CLINIC_A, nurseB: CLINIC_B,
   adminB: CLINIC_B, doctorB: CLINIC_B, deskB: CLINIC_B, patientB: CLINIC_B,
 };
 
