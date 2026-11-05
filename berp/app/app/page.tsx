@@ -15,11 +15,11 @@ export default async function Overview({ searchParams }: { searchParams: Promise
     sb.from("sales_orders").select("id,number,status,order_date,customers(name)").in("status", ["draft", "confirmed", "partially_dispatched", "dispatched"]).order("created_at", { ascending: false }).limit(8),
     sb.from("purchase_requests").select("id", { count: "exact", head: true }).eq("status", "pending"),
     sb.from("stock_levels").select("sku,item_name,warehouse_name,on_hand,reserved,reorder_level"),
-    finance ? sb.from("invoices").select("total_paise,paid_paise,status").neq("status", "reversed") : Promise.resolve({ data: [] as any[] }),
+    finance ? sb.from("invoices").select("total_paise,paid_paise,credited_paise,status").neq("status", "reversed") : Promise.resolve({ data: [] as any[] }),
     finance ? sb.from("trial_balance").select("code,name,balance_paise").in("code", ["1000"]) : Promise.resolve({ data: [] as any[] }),
   ]);
   const low = (stock.data ?? []).filter((s: any) => Number(s.on_hand) - Number(s.reserved) <= Number(s.reorder_level) && Number(s.reorder_level) > 0);
-  const receivable = (inv.data ?? []).reduce((a: number, i: any) => a + (Number(i.total_paise) - Number(i.paid_paise)), 0);
+  const receivable = (inv.data ?? []).reduce((a: number, i: any) => a + (Number(i.total_paise) - Number(i.paid_paise) - Number(i.credited_paise)), 0);
   const cash = (tb.data ?? [])[0]?.balance_paise ?? 0;
   const Kpi = ({ label, value, href }: { label: string; value: React.ReactNode; href: string }) => (
     <Link href={href} className="card block p-4 hover:bg-canvas"><p className="text-sm text-muted">{label}</p><p className="mt-1 text-2xl font-semibold">{value}</p></Link>

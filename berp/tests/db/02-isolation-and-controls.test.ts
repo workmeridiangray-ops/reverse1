@@ -18,6 +18,8 @@ describe("tenant isolation", () => {
     try {
       await conn.query("set role anon");
       await expect(conn.query("select * from public.customers")).rejects.toThrow(/permission denied/);
+      const plans = await conn.query("select code from public.plans order by price_monthly_paise");
+      expect(plans.rows.map((r: any) => r.code)).toEqual(["starter", "growth", "scale"]); // pricing is public, nothing else is
     } finally { await conn.query("reset role"); conn.release(); }
   });
   test("cannot write into another tenant, move a row between tenants, or reference its records", async () => {

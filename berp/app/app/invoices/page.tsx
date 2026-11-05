@@ -23,7 +23,7 @@ export default async function Invoices({ searchParams }: { searchParams: Promise
       {data?.length ? (
         <Table head={["Invoice", "Customer", "Date", "Total", "Paid", "Balance", "Status"]} numeric={[3, 4, 5]}>
           {data.map((i: any) => <tr key={i.id}><td className="td"><Link className="font-medium text-brand underline" href={`/app/invoices/${i.id}`}>{i.number}</Link></td><td className="td">{i.customers?.name}</td><td className="td">{i.invoice_date}</td>
-            <td className="td num"><Money paise={Number(i.total_paise)} /></td><td className="td num"><Money paise={Number(i.paid_paise)} /></td><td className="td num"><Money paise={Number(i.total_paise) - Number(i.paid_paise)} /></td><td className="td"><Status value={i.status} /></td></tr>)}
+            <td className="td num"><Money paise={Number(i.total_paise)} /></td><td className="td num"><Money paise={Number(i.paid_paise)} /></td><td className="td num"><Money paise={Number(i.total_paise) - Number(i.paid_paise) - Number(i.credited_paise)} /></td><td className="td"><Status value={i.status} /></td></tr>)}
         </Table>
       ) : <Empty title="No invoices yet" hint="Invoices are created from dispatched sales orders." />}
       {canPay && byCust.size > 0 && (
@@ -38,7 +38,7 @@ export default async function Invoices({ searchParams }: { searchParams: Promise
                 <label className="text-sm">Reference<input name="reference" className="input mt-1" placeholder="UTR / cheque no." /></label>
               </div>
               {byCust.get(cust)!.map((i: any) => (
-                <label key={i.id} className="flex items-center justify-between gap-3 text-sm"><span>{i.number} · balance <Money paise={Number(i.total_paise) - Number(i.paid_paise)} /></span>
+                <label key={i.id} className="flex items-center justify-between gap-3 text-sm"><span>{i.number} · balance <Money paise={Number(i.total_paise) - Number(i.paid_paise) - Number(i.credited_paise)} /></span>
                   <input name={`a_${i.id}`} inputMode="decimal" className="input w-36" placeholder="Allocate ₹" aria-label={`Amount to allocate to ${i.number}`} /></label>))}
               <SubmitButton>Record receipt</SubmitButton></form>
           )}

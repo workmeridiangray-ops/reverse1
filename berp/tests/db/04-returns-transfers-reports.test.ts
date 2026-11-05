@@ -22,9 +22,9 @@ describe("credit notes and returns", () => {
   test("a restocked return reverses revenue, tax, receivable and cost exactly once", async () => {
     await as("ownerA", async (c) => {
       const { inv, il } = await sold(c, 4);
-      expect(Number(il.cogs_paise)).toBe(60000); // 4 × 15,000 captured at dispatch
+      expect(Number(il!.cogs_paise)).toBe(60000); // 4 × 15,000 captured at dispatch
       const before = { ar: await bal(c, "ar"), stock: await onHand(c), inv: await bal(c, "inventory"), cogs: await bal(c, "cogs") };
-      const cn = (await c.q("select public.create_credit_note($1,$2,'damaged on arrival',true) id", [inv, JSON.stringify([{ invoice_line_id: il.id, qty: 1 }])]))[0].id;
+      const cn = (await c.q("select public.create_credit_note($1,$2,'damaged on arrival',true) id", [inv, JSON.stringify([{ invoice_line_id: il.id, qty: 1 }])]))[0]!.id;
       const n = (await c.q<Row>("select subtotal_paise s, tax_paise t, total_paise tot from public.credit_notes where id=$1", [cn]))[0]!;
       expect([n.s, n.t, n.tot]).toEqual([25050, 4509, 29559]);
       expect(before.ar - (await bal(c, "ar"))).toBe(29559);

@@ -32,7 +32,7 @@ export default async function Items({ searchParams }: { searchParams: Promise<{ 
       {edit && (
         <form action={saveItem} className="card mt-6 grid gap-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
           <h2 className="font-semibold sm:col-span-full">Add item</h2>
-          <Field label="SKU" name="sku" hint="Letters, numbers, . _ -"><TextInput name="sku" required pattern="[A-Za-z0-9._-]{1,40}" /></Field>
+          <Field label="SKU" name="sku" hint="Letters, numbers, . _ -"><TextInput name="sku" required pattern="[A-Za-z0-9._\-]{1,40}" /></Field>
           <Field label="Name" name="name"><TextInput name="name" required /></Field>
           <Field label="Type" name="kind"><select id="kind" name="kind" className="input"><option value="stock">Stock item</option><option value="service">Service</option></select></Field>
           <Field label="Unit" name="unit"><TextInput name="unit" defaultValue="nos" /></Field>

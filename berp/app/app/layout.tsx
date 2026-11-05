@@ -9,10 +9,16 @@ const NAV: { href: string; label: string; roles?: Role[] }[] = [
   { href: "/app/inventory", label: "Inventory" },
   { href: "/app/invoices", label: "Invoices & receipts", roles: ["owner", "manager", "accountant", "viewer", "sales"] },
   { href: "/app/finance", label: "Finance", roles: ["owner", "manager", "accountant", "viewer"] },
+  { href: "/app/reports", label: "Reports", roles: ["owner", "manager", "accountant", "viewer"] },
+  { href: "/app/projects", label: "Projects" },
+  { href: "/app/people", label: "People" },
+  { href: "/app/assets", label: "Assets" },
   { href: "/app/customers", label: "Customers" },
   { href: "/app/suppliers", label: "Suppliers" },
   { href: "/app/items", label: "Items" },
+  { href: "/app/import", label: "Import", roles: ["owner", "manager"] },
   { href: "/app/settings", label: "Settings", roles: ["owner", "manager"] },
+  { href: "/app/help", label: "Help" },
 ];
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -27,6 +33,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <aside className="border-b border-line bg-surface md:border-b-0 md:border-r">
         <div className="flex items-center justify-between gap-2 px-4 py-3 md:block">
           <Link href="/app" className="text-lg font-semibold tracking-tight">BERP</Link>
+          <form action={signOut} className="md:hidden"><button className="btn min-h-0 px-3 py-1 text-sm" type="submit">Sign out</button></form>
           <div className="md:mt-3">
             <p className="truncate text-sm font-semibold" title={t.name}>{t.name}</p>
             <p className="text-xs text-muted">{ctx.role} · {t.plan_code}{ctx.workspaces.length > 1 && <> · <Link className="underline" href="/workspaces">switch</Link></>}</p>

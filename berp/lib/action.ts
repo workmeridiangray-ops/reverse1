@@ -16,6 +16,7 @@ export async function act(back: string, to: string, ok: string, fn: (sb: Awaited
     const msg = (e as Error).message || "Something went wrong";
     redirect(`${back}${back.includes("?") ? "&" : "?"}error=${encodeURIComponent(msg)}`);
   }
+  if (/^https:\/\//.test(dest)) redirect(dest);
   redirect(`${dest}${dest.includes("?") ? "&" : "?"}ok=${encodeURIComponent(ok)}`);
 }
 

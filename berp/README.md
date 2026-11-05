@@ -4,50 +4,56 @@ Next.js 15 + Supabase (Postgres, Auth, RLS). Trading and service ERP in INR with
 sales → stock reservation → purchasing → receipt → dispatch → invoice → collection, with a
 balanced double-entry ledger underneath. Built from `Modular_Business_ERP_SaaS_Full_Scope`.
 
-## What is built (this release)
+## What is built
 
 | Area | Status |
 |---|---|
-| Public site (home, pricing from the `plans` table), sign-up with 14-day trial, sign-in, workspace picker/switcher | Built |
-| Tenancy: every row carries `tenant_id`; RLS from the caller's *active workspace*; roles owner/manager/sales/purchasing/warehouse/accountant/viewer | Built, tested |
-| Plans & entitlements: user/branch/warehouse limits enforced in the DB, downgrade blocked while over limit, trial expiry and suspension make a workspace read-only | Built, tested |
-| Masters: customers (credit limit), suppliers, items/services, tax codes, branches, warehouses — retired, never deleted | Built |
-| Sales: draft → confirm (credit check + override reason, atomic reservation) → dispatch (partial) → invoice → cancel with reason | Built, tested |
-| Purchasing: shortage → purchase request → approve → PO → partial receipt (idempotent, over-receipt blocked) → three-way-matched bill with tolerance + manager exception → supplier payment | Built, tested |
-| Inventory: append-only movement ledger; on-hand / reserved / available; adjustments with reason; backorders auto-reserve on receipt | Built, tested |
-| Finance: auto-posted balanced journals, trial balance, manual journal, reversal, period close | Built, tested |
-| Platform super-admin: list workspaces, suspend/reactivate with a reason; no access to customer documents | Built, tested |
-| Audit trail (field names only, append-only) | Built, tested |
+| Public site (home, pricing from the database), sign-up with 14-day trial, sign-in, workspace picker/switcher, help | Built, browser-tested |
+| Tenancy: every row carries `tenant_id`; RLS from the caller's *active workspace*; seven roles | Built, tested |
+| Plans & entitlements: user/branch/warehouse limits in the DB; downgrade blocked while over limit; trial expiry, 7-day payment grace, suspension | Built, tested |
+| Subscription billing: Razorpay checkout + HMAC-verified, idempotent webhook that activates / past-dues / cancels a workspace | Built; **not run against Razorpay** (needs your keys) |
+| Masters: customers (credit limit, terms), suppliers, items/services, tax codes, branches, warehouses — retired, never deleted; CSV import (all-or-nothing, 2,000 rows) | Built, tested |
+| Sales: draft → confirm (credit check + manager override) → partial dispatch → invoice → cancel; credit notes / customer returns with optional restock | Built, tested |
+| Purchasing: shortage → request → approval → PO → partial receipt (idempotent) → three-way-matched bill → supplier payment | Built, tested |
+| Inventory: append-only ledger; on-hand/reserved/available; adjustments; warehouse transfers with in-transit stock; backorders auto-reserve | Built, tested |
+| Finance: auto-posted balanced journals, trial balance, manual journals + reversal, period close | Built, tested |
+| Reports: receivables & payables ageing, stock valuation, sales margin (cost at dispatch), CSV export | Built, tested |
+| Projects: budget, time & expense approval (no self-approval), milestone billing through the normal invoice chain, cost summary restricted to managers | Built, tested |
+| People: employee records private to owner/manager, leave requests with overlap and self-approval rules, offboarding revokes access | Built, tested |
+| Assets & maintenance: register, warranty/service dates, work orders consume spares and post expense, disposal with reason | Built, tested |
+| Read-only REST API with hashed, revocable, rate-limited keys (`/api/v1/*`) | Built, browser-tested |
+| Platform super-admin; audit trail (append-only) | Built, tested |
 
-## Not in this release (see docs/LAUNCH.md)
+## Not built (separate scopes in the source document)
 
-Payment provider for subscription billing (plan changes are recorded, money is not collected),
-transactional email beyond Supabase Auth mail, CSV import, barcode labels, transfers between
-warehouses, batch/serial tracking, unit conversions, customer returns/credit notes, projects,
-workforce, assets, approval-rule studio, report builder, API keys/webhooks, and the manufacturing
-and industry packages. These are separate scopes in the source document.
+Approval-rule studio and custom fields/templates, outbound webhooks, report builder, SSO/2FA,
+batch/serial/expiry tracking, unit conversions, barcode labels and handheld scanning, courier
+integrations, payroll/attendance devices/recruitment, GST filing and e-invoicing, bank feeds, native apps,
+additional languages and currencies, and the manufacturing / restaurant / school / healthcare /
+construction packages.
 
 ## Run locally
 
 ```bash
 npm install
 npx supabase start                  # local Postgres + Auth (needs Docker)
-cp .env.example .env.local          # fill URL + anon key from `npx supabase status`
+cp .env.example .env.local          # fill from `npx supabase status`
 npm run dev
 ```
 
 ## Tests
 
 ```bash
-npm run test:unit   # money/tax rules, design-token contrast (WCAG AA)
-npm run test:db     # real PostgreSQL (no Docker): applies every migration, then 29 tests
-npm run typecheck && npm run build
+npm run typecheck
+npm run test:unit   # money/tax rules, CSV validation, billing signatures, design-token contrast
+npm run test:db     # real PostgreSQL (no Docker): all migrations, then 41 tests
+npm run test:e2e    # real PostgreSQL + real PostgREST + the built app + headless Chromium (35 checks)
 ```
 
-`test:db` proves: the whole order-to-cash chain reconciles stock and ledger; tenants cannot see
-or write each other's rows; posted records cannot be edited or deleted; unbalanced journals are
-rejected at commit; closed periods reject postings; concurrent orders cannot over-reserve; plan
-limits; credit and bill-tolerance overrides; SQL and TypeScript rounding agree on >1,000 inputs.
+`test:e2e` needs a PostgREST binary (`POSTGREST_BIN=/path/to/postgrest`, v12.x). Authentication is the
+only simulated piece (`scripts/e2e/stack.mjs` stands in for Supabase Auth); every query, RLS policy,
+RPC and form is the real thing. It signs up, runs the whole order-to-cash chain, credit note,
+reports, CSV import, projects/people/assets, API key use, tenant isolation and a mobile check.
 
 ## Rules that matter
 
