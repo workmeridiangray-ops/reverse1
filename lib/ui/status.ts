@@ -79,6 +79,21 @@ export const CONSENT_VISUAL: Record<ConsentState, StatusVisual> = {
   outdated: { tone: "warn", icon: "alert", label: "Consent outdated" },
 };
 
+export const BED_VISUAL: Record<"available" | "occupied" | "needs_cleaning" | "being_cleaned" | "out_of_service", StatusVisual> = {
+  available: { tone: "ok", icon: "check", label: "Available" },
+  occupied: { tone: "brand", icon: "user", label: "Occupied" },
+  needs_cleaning: { tone: "warn", icon: "alert", label: "Needs cleaning" },
+  being_cleaned: { tone: "info", icon: "clock", label: "Being cleaned" },
+  out_of_service: { tone: "neutral", icon: "wrench", label: "Out of service" },
+};
+
+export const ADMISSION_VISUAL: Record<"requested" | "admitted" | "discharged" | "cancelled", StatusVisual> = {
+  requested: { tone: "warn", icon: "hourglass", label: "Waiting for a bed" },
+  admitted: { tone: "brand", icon: "user", label: "Admitted" },
+  discharged: { tone: "ok", icon: "check", label: "Discharged" },
+  cancelled: { tone: "neutral", icon: "x", label: "Cancelled" },
+};
+
 export const NOTE_VISUAL = {
   critical: { tone: "critical", icon: "flag", label: "Critical" },
   unsigned: { tone: "warn", icon: "pencil", label: "Unsigned note" },
@@ -94,4 +109,6 @@ export const ALL_VISUAL_SETS = {
   ROOM_VISUAL,
   CONSENT_VISUAL,
   NOTE_VISUAL,
+  BED_VISUAL,
+  ADMISSION_VISUAL,
 } as const;

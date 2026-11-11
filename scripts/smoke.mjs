@@ -17,8 +17,9 @@ const A = "a2000000-0000-4000-8000-000000000001";
 const PLAN = [
   ["desk@cedarlane.test", ["/reception", "/patients", `/patients/${A}`, `/patients/${A}/edit`, "/patients/new", "/appointments", "/appointments/new",
     "/appointments/a3000000-0000-4000-8000-000000000008", "/billing", "/billing/new", "/billing/a6000000-0000-4000-8000-000000000001"]],
-  ["dr.okafor@cedarlane.test", ["/doctor", "/doctor/notes/a4000000-0000-4000-8000-000000000001", "/doctor/notes/a4000000-0000-4000-8000-000000000002", "/appointments"]],
-  ["admin@cedarlane.test", ["/admin", "/admin/audit"]],
+  ["dr.okafor@cedarlane.test", ["/doctor", "/admissions", "/admissions/a9000000-0000-4000-8000-000000000001", "/doctor/notes/a4000000-0000-4000-8000-000000000001", "/doctor/notes/a4000000-0000-4000-8000-000000000002", "/appointments"]],
+  ["admin@cedarlane.test", ["/admin", "/admin/audit", "/admin/wards", "/wards", "/admissions", "/admissions/a9000000-0000-4000-8000-000000000001"]],
+  ["nurse@cedarlane.test", ["/wards", "/admissions", "/admissions/a9000000-0000-4000-8000-000000000001", "/admissions/a9000000-0000-4000-8000-000000000002"]],
   ["lab@cedarlane.test", ["/lab"]],
   ["pharmacy@cedarlane.test", ["/pharmacy"]],
   ["amal.haddad@patient.test", ["/me"]],
@@ -29,6 +30,8 @@ const FORBIDDEN = [
   ["dr.okafor@cedarlane.test", "/billing", "/doctor"],
   ["lab@cedarlane.test", "/patients", "/lab"],
   ["desk@cedarlane.test", "/admin", "/reception"],
+  ["nurse@cedarlane.test", "/billing", "/wards"],
+  ["lab@cedarlane.test", "/wards", "/lab"],
 ];
 
 let failures = 0;

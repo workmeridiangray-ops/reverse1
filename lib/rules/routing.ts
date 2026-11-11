@@ -6,7 +6,7 @@
  * a mis-routed user only ever sees rows their role is allowed to read.
  */
 
-export const ROLES = ["admin", "doctor", "receptionist", "lab", "pharmacist", "patient"] as const;
+export const ROLES = ["admin", "doctor", "receptionist", "nurse", "lab", "pharmacist", "patient"] as const;
 export type Role = (typeof ROLES)[number];
 
 export function isRole(value: unknown): value is Role {
@@ -17,6 +17,7 @@ export const HOME_BY_ROLE: Readonly<Record<Role, string>> = {
   admin: "/admin",
   doctor: "/doctor",
   receptionist: "/reception",
+  nurse: "/wards",
   lab: "/lab",
   pharmacist: "/pharmacy",
   patient: "/me",
@@ -26,6 +27,7 @@ export const ROLE_LABEL: Readonly<Record<Role, string>> = {
   admin: "Administrator",
   doctor: "Doctor",
   receptionist: "Reception",
+  nurse: "Nurse",
   lab: "Laboratory",
   pharmacist: "Pharmacy",
   patient: "Patient",
@@ -39,14 +41,18 @@ export const ROUTE_ACCESS: ReadonlyArray<readonly [string, readonly Role[]]> = [
   ["/lab", ["lab", "admin"]],
   ["/pharmacy", ["pharmacist", "admin"]],
   ["/me", ["patient"]],
-  ["/patients", ["admin", "receptionist", "doctor"]],
+  ["/patients", ["admin", "receptionist", "doctor", "nurse"]],
   ["/patients/new", ["admin", "receptionist"]],
   ["/appointments", ["admin", "receptionist", "doctor"]],
   ["/appointments/new", ["admin", "receptionist"]],
   ["/billing", ["admin", "receptionist"]],
+  ["/wards", ["admin", "receptionist", "doctor", "nurse"]],
+  ["/admissions", ["admin", "receptionist", "doctor", "nurse", "pharmacist"]],
+  ["/admissions/new", ["admin", "receptionist", "doctor"]],
 ];
 
-export const PUBLIC_PATHS: readonly string[] = ["/login", "/auth"];
+/** Signed-out visitors may open these: the marketing site, the demo request form and policies. */
+export const PUBLIC_PATHS: readonly string[] = ["/", "/login", "/auth", "/features", "/pricing", "/demo", "/privacy", "/terms"];
 
 function matches(path: string, prefix: string): boolean {
   return path === prefix || path.startsWith(`${prefix}/`);
@@ -92,6 +98,8 @@ export function navFor(role: Role): NavItem[] {
       { href: "/patients", label: "Patients" },
       { href: "/appointments", label: "Appointments" },
       { href: "/billing", label: "Billing" },
+      { href: "/wards", label: "Wards" },
+      { href: "/admissions", label: "Admissions" },
       { href: "/admin/audit", label: "Audit log" },
     ],
     receptionist: [
@@ -99,14 +107,25 @@ export function navFor(role: Role): NavItem[] {
       { href: "/patients", label: "Patients" },
       { href: "/appointments", label: "Appointments" },
       { href: "/billing", label: "Billing" },
+      { href: "/wards", label: "Wards" },
+      { href: "/admissions", label: "Admissions" },
     ],
     doctor: [
       { href: "/doctor", label: "My day" },
       { href: "/patients", label: "Patients" },
       { href: "/appointments", label: "Schedule" },
+      { href: "/admissions", label: "Inpatients" },
+    ],
+    nurse: [
+      { href: "/wards", label: "Ward census" },
+      { href: "/admissions", label: "Admissions" },
+      { href: "/patients", label: "Patients" },
     ],
     lab: [{ href: "/lab", label: "Lab" }],
-    pharmacist: [{ href: "/pharmacy", label: "Pharmacy" }],
+    pharmacist: [
+      { href: "/pharmacy", label: "Pharmacy" },
+      { href: "/admissions", label: "Discharge clearances" },
+    ],
     patient: [{ href: "/me", label: "My care" }],
   };
   return items[role];

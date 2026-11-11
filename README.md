@@ -4,10 +4,13 @@ Clinic management for small and mid-size clinics. Six roles (admin, doctor,
 receptionist, lab, pharmacist, patient), every table behind row-level security,
 and the business rules in small pure modules with their own tests.
 
-**Status: Phase 1** — schema, auth and role routing, front desk, doctor's day,
-patient and appointment CRUD, basic billing. Prescribing with allergy checks
-and lab results (Phase 2), pharmacy, the patient portal and analytics
-(Phase 3) are not built yet.
+**Status: Phase 1 + inpatient care.** Schema, auth and role routing, front desk,
+doctor's day, patient and appointment CRUD, billing, plus wards and beds,
+admissions, bed allocation/transfer/reservation, nursing observations and
+tasks, discharge governance, a public marketing site and demo-request intake.
+**Not built:** theatre, lab/imaging, pharmacy stock, purchasing/assets, patient
+portal, subscriptions/payments, multi-hospital groups, SSO/2FA, migration
+tooling, platform super-admin. See `docs/STATUS.md` for the full scope map.
 
 > Clinical rules are placeholders until a clinician reviews them. Look for
 > `CLINICAL PLACEHOLDER` and `CLINICAL_REVIEW_REQUIRED` in the code.
@@ -23,7 +26,7 @@ cp .env.example .env.local       # paste ANON_KEY from `npx supabase status`
 npm run dev                      # http://127.0.0.1:3000
 ```
 
-Demo accounts (password `tendwell-demo-pass`): `desk@cedarlane.test`,
+Demo accounts (password `tendwell-demo-pass`): `desk@cedarlane.test`, `nurse@cedarlane.test`,
 `dr.okafor@cedarlane.test`, `admin@cedarlane.test`, `lab@cedarlane.test`,
 `pharmacy@cedarlane.test`, `amal.haddad@patient.test`, and a second clinic
 `desk@northgate.test` to see isolation.
@@ -34,6 +37,8 @@ Demo accounts (password `tendwell-demo-pass`): `desk@cedarlane.test`,
 npm run test:unit    # pure rules, no database
 npm run db:reset     # re-seed, then:
 npm run test:db      # RLS, audit and parity tests against real local Supabase
+npm run db:local     # no Docker? plain Postgres 16 + Supabase shim, migrations and seed (tests/db except auth-e2e)
+npm run db:types:local  # regenerate lib/supabase/database.types.ts without Docker
 npm run test:smoke   # with `npm run dev` running: every role, every screen, axe WCAG AA
 npm run typecheck
 ```

@@ -1,7 +1,7 @@
 import "server-only";
 import type { ServerClient } from "@/lib/supabase/server";
 
-export type AuditedTable = "patients" | "appointments" | "consultations" | "prescriptions" | "invoices";
+export type AuditedTable = "patients" | "appointments" | "consultations" | "prescriptions" | "invoices" | "admissions";
 
 /**
  * Record that the current user opened a patient-level record. Call from every

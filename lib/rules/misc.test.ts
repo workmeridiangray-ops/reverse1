@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { APPOINTMENT_STATUSES, canTransition, isTerminal } from "./appointment-status";
 import { CLINICAL_REVIEW_REQUIRED, sortWorklist, validateCriticalFlag, type WorklistItem } from "./clinical-priority";
 import { consentState, validatePatient } from "./patient";
-import { canAccess, HOME_BY_ROLE, navFor, resolveDestination, ROLES, safeNextPath } from "./routing";
+import { canAccess, HOME_BY_ROLE, isPublicPath, navFor, resolveDestination, ROLES, safeNextPath } from "./routing";
 
 describe("appointment status machine", () => {
   it("allows the normal visit path", () => {
@@ -107,6 +107,21 @@ describe("routing", () => {
     expect(safeNextPath("https://evil.example")).toBe("/");
     expect(safeNextPath("/\\evil.example")).toBe("/");
     expect(safeNextPath(null)).toBe("/");
+  });
+  it("nurses work on wards; reception cannot read nursing screens' roles", () => {
+    expect(resolveDestination("nurse", "/")).toBe("/wards");
+    expect(canAccess("nurse", "/admissions/abc")).toBe(true);
+    expect(canAccess("nurse", "/admissions/new")).toBe(false);
+    expect(canAccess("nurse", "/billing")).toBe(false);
+    expect(canAccess("nurse", "/admin")).toBe(false);
+    expect(canAccess("lab", "/wards")).toBe(false);
+    expect(canAccess("patient", "/admissions")).toBe(false);
+    expect(canAccess("pharmacist", "/admissions/abc")).toBe(true);
+    expect(canAccess("pharmacist", "/wards")).toBe(false);
+  });
+  it("exposes only marketing, demo, policy and login pages to signed-out visitors", () => {
+    for (const p of ["/", "/pricing", "/features", "/demo", "/privacy", "/terms", "/login"]) expect(isPublicPath(p), p).toBe(true);
+    for (const p of ["/patients", "/wards", "/admissions/x", "/billing", "/pricing-secret", "/demox"]) expect(isPublicPath(p), p).toBe(false);
   });
   it("only puts reachable links in each role's nav", () => {
     for (const role of ROLES) for (const item of navFor(role)) expect(canAccess(role, item.href), `${role} ${item.href}`).toBe(true);
