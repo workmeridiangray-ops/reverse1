@@ -40,10 +40,16 @@ export function validatePatient(input: PatientInput, today: string): FieldErrors
   if (!(SEX_AT_BIRTH as readonly string[]).includes(input.sexAtBirth)) {
     errors.sexAtBirth = "Choose sex at birth (choose Unknown if not stated).";
   }
-  const phone = input.phone?.trim();
-  if (phone && !/^\+?[0-9 ()\-]{6,20}$/.test(phone)) errors.phone = "Enter a valid phone number.";
-  const email = input.email?.trim();
-  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = "Enter a valid email address.";
+  return { ...errors, ...validateContact(input.phone, input.email) };
+}
+
+/** Phone and email checks shared by staff registration and the patient's own portal. */
+export function validateContact(phone: string | null | undefined, email: string | null | undefined): Pick<FieldErrors, "phone" | "email"> {
+  const errors: Pick<FieldErrors, "phone" | "email"> = {};
+  const p = phone?.trim();
+  if (p && !/^\+?[0-9 ()\-]{6,20}$/.test(p)) errors.phone = "Enter a valid phone number.";
+  const e = email?.trim();
+  if (e && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) errors.email = "Enter a valid email address.";
   return errors;
 }
 
