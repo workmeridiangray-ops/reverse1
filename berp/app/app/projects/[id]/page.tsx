@@ -5,7 +5,7 @@ import { requireCtx, can } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
 import { Flash, Money, PageHeader, Status, Table } from "@/components/ui/kit";
 import { SubmitButton } from "@/components/ui/SubmitButton";
-import { addMilestone, billMilestone, closeProject, decideEntry, logExpense, logTime } from "../../actions2";
+import { addMilestone, billMilestone, closeProject, approveEntry, rejectEntry, logExpense, logTime } from "../../actions2";
 
 export const metadata: Metadata = { title: "Project" };
 
@@ -25,10 +25,10 @@ export default async function Project({ params, searchParams }: { params: Promis
   const today = new Date().toISOString().slice(0, 10);
   const open = p.status === "open";
   const Decide = ({ kind, row }: { kind: string; row: any }) => row.status === "submitted" && mgr && row.user_id !== ctx.userId ? (
-    <form action={decideEntry} className="flex flex-wrap items-center gap-2"><input type="hidden" name="project" value={id} /><input type="hidden" name="kind" value={kind} /><input type="hidden" name="id" value={row.id} />
+    <form className="flex flex-wrap items-center gap-2"><input type="hidden" name="project" value={id} /><input type="hidden" name="kind" value={kind} /><input type="hidden" name="id" value={row.id} />
       {kind === "time" && <input name="rate" inputMode="decimal" placeholder="₹/hour cost" aria-label="Cost rate per hour" className="input w-28" />}
       <input name="reason" placeholder="Reason (to reject)" aria-label="Reason" className="input w-40" />
-      <button className="btn btn-primary" name="decision" value="approve">Approve</button><button className="btn btn-danger" name="decision" value="reject">Reject</button></form>) : null;
+      <button className="btn btn-primary" formAction={approveEntry}>Approve</button><button className="btn btn-danger" formAction={rejectEntry}>Reject</button></form>) : null;
   return (
     <>
       <PageHeader title={`${p.number} · ${p.name}`} sub={`${p.customers?.name ?? "No customer"} · budget ${(Number(p.budget_paise) / 100).toLocaleString("en-IN")}`} actions={<Status value={p.status} />} />

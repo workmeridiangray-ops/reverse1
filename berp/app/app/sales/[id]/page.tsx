@@ -7,6 +7,7 @@ import { Flash, Money, PageHeader, Qty, Status, Table } from "@/components/ui/ki
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { lineNet, lineTax } from "@/lib/rules/money";
 import { cancelOrder, confirmOrder, dispatchOrder, invoiceOrder, requestPurchases } from "../../actions";
+import { requestApproval } from "../../actions2";
 
 export const metadata: Metadata = { title: "Sales order" };
 
@@ -16,6 +17,7 @@ export default async function Order({ params, searchParams }: { params: Promise<
   if (!o) notFound();
   const { data: lines } = await sb.from("sales_order_lines").select("*, items(sku,name,unit,kind)").eq("order_id", id).order("line_no");
   const { data: res } = await sb.from("reservations").select("so_line_id,qty").in("so_line_id", (lines ?? []).map((l: any) => l.id));
+  const { data: apps } = await sb.from("approvals").select("status,required_role,decision_reason,amount_paise").eq("subject", "sales_order").eq("subject_id", id).order("created_at", { ascending: false });
   const { data: invs } = await sb.from("invoices").select("id,number,total_paise,status").eq("order_id", id);
   const reserved = (lid: string) => (res ?? []).filter((r: any) => r.so_line_id === lid).reduce((a: number, r: any) => a + Number(r.qty), 0);
   const total = (lines ?? []).reduce((a: number, l: any) => { const n = lineNet(l.qty, Number(l.unit_price_paise), l.discount_bp); return a + n + lineTax(n, l.tax_rate_bp); }, 0);
@@ -41,9 +43,14 @@ export default async function Order({ params, searchParams }: { params: Promise<
           <form action={confirmOrder} className="card space-y-3 p-5"><input type="hidden" name="id" value={id} />
             <h2 className="font-semibold">Confirm and reserve stock</h2>
             <p className="text-sm text-muted">Credit limit: {o.customers?.credit_limit_paise == null ? "none" : <Money paise={Number(o.customers.credit_limit_paise)} />}. If this order exceeds it, a manager must give a reason.</p>
+            {!!apps?.length && <p className="rounded-md bg-info-bg p-2 text-sm text-info">Approval: {apps[0]!.status}{apps[0]!.status === "pending" ? ` — waiting for a ${apps[0]!.required_role}` : ""}{apps[0]!.decision_reason ? ` (${apps[0]!.decision_reason})` : ""}</p>}
             <label className="block text-sm font-medium" htmlFor="override">Credit override reason (only if needed)</label>
             <input id="override" name="override" className="input" />
             <SubmitButton>Confirm order</SubmitButton></form>
+        )}
+        {o.status === "draft" && sellRoles && apps?.[0]?.status !== "pending" && (
+          <form action={requestApproval} className="card space-y-2 p-5"><input type="hidden" name="subject" value="sales_order" /><input type="hidden" name="id" value={id} /><input type="hidden" name="back" value={`/app/sales/${id}`} />
+            <h2 className="font-semibold">Needs approval?</h2><p className="text-sm text-muted">If this order is above your company's approval threshold, confirming is blocked until a manager approves. Ask for it here.</p><SubmitButton variant="plain">Request approval</SubmitButton></form>
         )}
         {live && shortLines.length > 0 && can(ctx.role, "owner", "manager", "sales", "purchasing") && (
           <form action={requestPurchases} className="card space-y-3 p-5"><input type="hidden" name="id" value={id} /><h2 className="font-semibold">Shortage</h2>

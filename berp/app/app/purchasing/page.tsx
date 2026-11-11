@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Empty, Flash, PageHeader, Qty, Status, Table } from "@/components/ui/kit";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { approveRequest, rejectRequest } from "../actions";
+import { requestApproval } from "../actions2";
 
 export const metadata: Metadata = { title: "Purchasing" };
 
@@ -31,6 +32,7 @@ export default async function Purchasing({ searchParams }: { searchParams: Promi
                     <label className="text-xs">Supplier<select name="supplier" required className="input mt-1">{(sups ?? []).map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
                     <label className="text-xs">Unit cost (₹)<input name="cost" required inputMode="decimal" defaultValue={((r.items?.cost_paise ?? 0) / 100).toFixed(2)} className="input mt-1 w-28" /></label>
                     <SubmitButton>Approve</SubmitButton></form>
+                  <form action={requestApproval}><input type="hidden" name="subject" value="purchase_request" /><input type="hidden" name="id" value={r.id} /><input type="hidden" name="back" value="/app/purchasing" /><button className="btn text-sm" title="Use when the amount is above your approval threshold">Request manager approval</button></form>
                   <form action={rejectRequest} className="flex items-end gap-2"><input type="hidden" name="id" value={r.id} /><input name="reason" required minLength={3} placeholder="Reason to reject" aria-label="Rejection reason" className="input" /><SubmitButton variant="danger">Reject</SubmitButton></form>
                 </div>) : r.decision_reason ?? ""}</td></tr>
           ))}

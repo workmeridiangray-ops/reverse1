@@ -22,6 +22,7 @@ PIDS+=($!)
 JWT_SECRET="$JWT_SECRET" PORT=$API POSTGREST_URL=http://127.0.0.1:3001 node scripts/e2e/stack.mjs >"$DIR/stack.log" 2>&1 &
 PIDS+=($!)
 mkjwt() { JWT_SECRET="$JWT_SECRET" node -e "const c=require('crypto'),b=x=>Buffer.from(x).toString('base64url');const h=b(JSON.stringify({alg:'HS256',typ:'JWT'})),p=b(JSON.stringify({role:process.argv[1],iss:'e2e',exp:4102444800}));console.log(h+'.'+p+'.'+c.createHmac('sha256',process.env.JWT_SECRET).update(h+'.'+p).digest('base64url'))" "$1"; }
+export CRON_SECRET="e2e-cron-secret-0123456789"
 export NEXT_PUBLIC_SUPABASE_URL="http://127.0.0.1:$API" NEXT_PUBLIC_SUPABASE_ANON_KEY="$(mkjwt anon)" SUPABASE_SERVICE_ROLE_KEY="$(mkjwt service_role)"
 sleep 2; curl -sf "http://127.0.0.1:$API/rest/v1/plans" -H "apikey: $NEXT_PUBLIC_SUPABASE_ANON_KEY" -H "authorization: Bearer $NEXT_PUBLIC_SUPABASE_ANON_KEY" >/dev/null || { echo "stack not up:"; curl -si "http://127.0.0.1:$API/rest/v1/plans" -H "authorization: Bearer $NEXT_PUBLIC_SUPABASE_ANON_KEY"; tail "$DIR/pgrst.log" "$DIR/stack.log"; exit 1; }
 npx next build >"$DIR/build.log" 2>&1 || { tail -30 "$DIR/build.log"; exit 1; }

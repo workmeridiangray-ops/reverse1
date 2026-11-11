@@ -3,7 +3,7 @@ import { requireCtx, can } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
 import { Empty, Field, Flash, PageHeader, Status, Table, TextInput } from "@/components/ui/kit";
 import { SubmitButton } from "@/components/ui/SubmitButton";
-import { addEmployee, decideLeave, linkEmployee, offboard, requestLeave } from "../actions2";
+import { addEmployee, approveLeave, rejectLeave, linkEmployee, offboard, requestLeave } from "../actions2";
 
 export const metadata: Metadata = { title: "People" };
 
@@ -42,7 +42,7 @@ export default async function People({ searchParams }: { searchParams: Promise<{
       <Table head={["Employee", "From", "To", "Type", "Reason", "Status", ""]}>
         {(leave ?? []).map((l: any) => <tr key={l.id}><td className="td">{l.employees?.full_name}</td><td className="td">{l.from_date}</td><td className="td">{l.to_date}</td><td className="td">{l.kind}</td><td className="td">{l.reason || "—"}</td><td className="td"><Status value={l.status} />{l.decision_reason && <span className="ml-2 text-xs text-muted">{l.decision_reason}</span>}</td>
           <td className="td">{mgr && l.status === "pending" && l.employees?.user_id !== ctx.userId && (
-            <form action={decideLeave} className="flex flex-wrap gap-1"><input type="hidden" name="id" value={l.id} /><input name="reason" placeholder="Reason (to reject)" aria-label="Reason" className="input w-36" /><button className="btn btn-primary" name="decision" value="approve">Approve</button><button className="btn btn-danger" name="decision" value="reject">Reject</button></form>)}</td></tr>)}
+            <form className="flex flex-wrap gap-1"><input type="hidden" name="id" value={l.id} /><input name="reason" placeholder="Reason (to reject)" aria-label="Reason" className="input w-36" /><button className="btn btn-primary" formAction={approveLeave}>Approve</button><button className="btn btn-danger" formAction={rejectLeave}>Reject</button></form>)}</td></tr>)}
         {!leave?.length && <tr><td className="td text-muted" colSpan={7}>No leave requests.</td></tr>}
       </Table>
       {mine && !mine.left_on && (

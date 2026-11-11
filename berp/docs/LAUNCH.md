@@ -4,11 +4,11 @@ Everything the application can do without your accounts or decisions is built an
 The items below need accounts, keys or sign-off. Nothing here has been done for you.
 
 ## 1. Infrastructure (once)
-1. Create a Supabase project (Mumbai for INR customers). `supabase link`, then `supabase db push` (migrations 0100–0700 in order).
+1. Create a Supabase project (Mumbai for INR customers). `supabase link`, then `supabase db push` (migrations 0100–1000 in order).
 2. Auth → enable email confirmations, set Site URL / redirect URLs to the production domain, configure SMTP so verification mail leaves from your domain.
 3. Sign up yourself, then promote: `insert into public.platform_admins select id from auth.users where email='you@…';`
 4. Deploy `berp/` (Vercel / Render / Hostinger Node). Environment:
-   `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and **server-only** `SUPABASE_SERVICE_ROLE_KEY` (used only by the webhook and `/api/v1`, which filter by tenant explicitly).
+   `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and **server-only** `SUPABASE_SERVICE_ROLE_KEY` (used only by the payment webhook, `/api/v1` and the delivery worker, which filter by tenant explicitly), and `CRON_SECRET` (any random string of 16+ characters).
 5. Turn on backups (PITR on a paid plan) and **test a restore** before onboarding customers.
 6. Run `npm run test:e2e` once against a staging Supabase-compatible stack, or do the sign-up → collected-payment walkthrough by hand on staging.
 
@@ -18,6 +18,10 @@ The items below need accounts, keys or sign-off. Nothing here has been done for 
 3. Webhook URL: `https://YOUR-DOMAIN/api/webhooks/razorpay`; events: `subscription.charged`, `subscription.halted`, `subscription.cancelled`, `subscription.completed`, `payment.failed`.
 4. Do a test-mode purchase end to end. The checkout call and webhook mapping are unit-tested but have **not** been exercised against Razorpay itself.
 5. Behaviour: failed renewal → `past_due`, writes allowed for 7 days then read-only; success restores `active`; cancellation → read-only (`cancelled`). Confirm grace length and proration with your accountant.
+
+## 2b. Outbound webhook worker
+`vercel.json` calls `/api/cron/webhooks` every minute (per-minute cron needs a paid Vercel plan; elsewhere, schedule a POST with `Authorization: Bearer $CRON_SECRET`). Without it, events queue but are never sent.
+Verify once on staging: create a webhook to a request-catcher URL, confirm an order, and check the delivery arrives with a valid `X-BERP-Signature`. Delivery code is unit-tested and DB-tested; the network leg could not run in the build sandbox.
 
 ## 3. Decisions before real customers
 - Accountant sign-off on posting rules (inventory / GRNI / COGS / GST / maintenance accounts).

@@ -36,9 +36,12 @@ describe("tenant isolation", () => {
       expect(await c.q("select 1 from public.customers")).not.toHaveLength(0);
       await c.q("select public.create_workspace('Outsider Co')");
       expect(await c.q("select 1 from public.customers")).toHaveLength(0);
+      const names = (await c.q<Row>("select t.name from public.memberships m join public.tenants t on t.id = m.tenant_id where m.user_id = auth.uid() order by t.name")).map((r) => r.name);
+      expect(names).toEqual(["Acme Traders", "Outsider Co"]); // both workspaces are listable, active or not
       await c.q("select public.switch_workspace($1)", [TENANT.A]);
       expect(await c.q("select 1 from public.customers")).not.toHaveLength(0);
     });
+    expect(await as("ownerB", (c) => c.q("select name from public.tenants"))).toHaveLength(1); // still only their own company
     await admin("delete from public.memberships where user_id=$1 and tenant_id=$2", [U.outsider, TENANT.A]);
   });
 });

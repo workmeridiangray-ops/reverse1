@@ -28,13 +28,12 @@ export async function receiveTransfer(f: FormData) {
 }
 
 // ---- CSV import (all-or-nothing)
-export async function importCsv(f: FormData) {
+async function runImport(f: FormData, dry: boolean) {
   const kind = str(f, "kind") as ImportKind;
   if (!["customers", "suppliers", "items"].includes(kind)) redirect("/app/import?error=Unknown%20import%20type");
   const file = f.get("file");
   if (!(file instanceof File) || file.size === 0) redirect("/app/import?error=Choose%20a%20CSV%20file");
   if (file.size > 2_000_000) redirect("/app/import?error=File%20is%20larger%20than%202%20MB");
-  const dry = f.get("mode") === "validate";
   await act("/app/import", "/app/import", dry ? "Validated" : "Imported", async (sb) => {
     await requireCtx();
     const { data: taxes } = await sb.from("tax_codes").select("id,code");
@@ -50,6 +49,9 @@ export async function importCsv(f: FormData) {
     return `/app/import?done=${res.rows.length}&kind=${kind}`;
   });
 }
+
+export async function importCsv(f: FormData) { await runImport(f, false); }
+export async function validateCsv(f: FormData) { await runImport(f, true); }
 
 // ---- projects
 export async function createProject(f: FormData) {
@@ -70,12 +72,14 @@ export async function logExpense(f: FormData) {
   const id = str(f, "project"); const back = `/app/projects/${id}`;
   await act(back, back, "Expense submitted", async (sb) => { must(await sb.rpc("log_expense", { p_project: id, p_date: str(f, "date"), p_amount: parseInr(str(f, "amount")), p_desc: str(f, "description") })); });
 }
-export async function decideEntry(f: FormData) {
+async function decideEntryAs(f: FormData, approve: boolean) {
   const back = `/app/projects/${str(f, "project")}`;
   await act(back, back, "Decision recorded", async (sb) => {
-    must(await sb.rpc("decide_project_entry", { p_kind: str(f, "kind"), p_id: str(f, "id"), p_approve: str(f, "decision") === "approve", p_reason: str(f, "reason") || null, p_rate_paise: str(f, "rate") ? parseInr(str(f, "rate")) : null }));
+    must(await sb.rpc("decide_project_entry", { p_kind: str(f, "kind"), p_id: str(f, "id"), p_approve: approve, p_reason: str(f, "reason") || null, p_rate_paise: str(f, "rate") ? parseInr(str(f, "rate")) : null }));
   });
 }
+export async function approveEntry(f: FormData) { await decideEntryAs(f, true); }
+export async function rejectEntry(f: FormData) { await decideEntryAs(f, false); }
 export async function billMilestone(f: FormData) {
   const back = `/app/projects/${str(f, "project")}`;
   await act(back, back, "Milestone invoiced", async (sb) => {
@@ -106,9 +110,11 @@ export async function linkEmployee(f: FormData) {
 export async function requestLeave(f: FormData) {
   await act("/app/people", "/app/people", "Leave requested", async (sb) => { must(await sb.rpc("request_leave", { p_from: str(f, "from"), p_to: str(f, "to"), p_kind: str(f, "kind"), p_reason: str(f, "reason") })); });
 }
-export async function decideLeave(f: FormData) {
-  await act("/app/people", "/app/people", "Decision recorded", async (sb) => { must(await sb.rpc("decide_leave", { p_id: str(f, "id"), p_approve: str(f, "decision") === "approve", p_reason: str(f, "reason") || null })); });
+async function decideLeaveAs(f: FormData, approve: boolean) {
+  await act("/app/people", "/app/people", "Decision recorded", async (sb) => { must(await sb.rpc("decide_leave", { p_id: str(f, "id"), p_approve: approve, p_reason: str(f, "reason") || null })); });
 }
+export async function approveLeave(f: FormData) { await decideLeaveAs(f, true); }
+export async function rejectLeave(f: FormData) { await decideLeaveAs(f, false); }
 export async function offboard(f: FormData) {
   await act("/app/people", "/app/people", "Employee offboarded and access revoked", async (sb) => { must(await sb.rpc("offboard_employee", { p_employee: str(f, "id"), p_last_day: str(f, "day") })); });
 }
@@ -161,4 +167,43 @@ export async function startCheckout(f: FormData) {
     if (!res.ok || !j.short_url) throw new Error("The payment provider rejected the request. Try again or contact support.");
     return j.short_url as string;
   });
+}
+
+// ---- approvals
+export async function requestApproval(f: FormData) {
+  const back = str(f, "back");
+  await act(back, back, "Approval requested", async (sb) => { must(await sb.rpc("request_approval", { p_subject: str(f, "subject"), p_id: str(f, "id") })); });
+}
+async function decideApprovalAs(f: FormData, approve: boolean) {
+  await act("/app/approvals", "/app/approvals", "Decision recorded", async (sb) => {
+    must(await sb.rpc("decide_approval", { p_id: str(f, "id"), p_approve: approve, p_reason: str(f, "reason") || null }));
+  });
+}
+export async function approveApproval(f: FormData) { await decideApprovalAs(f, true); }
+export async function rejectApproval(f: FormData) { await decideApprovalAs(f, false); }
+export async function saveApprovalRule(f: FormData) {
+  await act("/app/settings", "/app/settings", "Rule saved", async (sb) => {
+    must(await sb.rpc("save_approval_rule", { p_subject: str(f, "subject"), p_min: parseInr(str(f, "min")), p_role: str(f, "role"), p_from: str(f, "from") || new Date().toISOString().slice(0, 10) }));
+  });
+}
+export async function deactivateRule(f: FormData) {
+  await act("/app/settings", "/app/settings", "Rule turned off", async (sb) => { must(await sb.rpc("deactivate_approval_rule", { p_rule: str(f, "id") })); });
+}
+
+// ---- outbound webhooks
+export async function createWebhook(f: FormData) {
+  await act("/app/settings", "/app/settings", "Webhook created", async (sb) => {
+    const { checkWebhookUrl } = await import("@/lib/webhook");
+    const url = str(f, "url"); const chk = checkWebhookUrl(url);
+    if (!chk.ok) throw new Error(`Webhook URL rejected: ${chk.reason}`);
+    const events = f.getAll("events").map(String);
+    const secret = must(await sb.rpc("create_webhook", { p_url: url, p_events: events })) as string;
+    return `/app/settings?newsecret=${encodeURIComponent(secret)}`;
+  });
+}
+export async function toggleWebhook(f: FormData) {
+  await act("/app/settings", "/app/settings", "Webhook updated", async (sb) => { must(await sb.rpc("set_webhook_active", { p_id: str(f, "id"), p_active: str(f, "active") === "true" })); });
+}
+export async function retryDelivery(f: FormData) {
+  await act("/app/settings", "/app/settings", "Delivery queued again", async (sb) => { must(await sb.rpc("retry_webhook_delivery", { p_id: str(f, "id") })); });
 }

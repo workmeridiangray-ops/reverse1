@@ -21,12 +21,14 @@ balanced double-entry ledger underneath. Built from `Modular_Business_ERP_SaaS_F
 | Projects: budget, time & expense approval (no self-approval), milestone billing through the normal invoice chain, cost summary restricted to managers | Built, tested |
 | People: employee records private to owner/manager, leave requests with overlap and self-approval rules, offboarding revokes access | Built, tested |
 | Assets & maintenance: register, warranty/service dates, work orders consume spares and post expense, disposal with reason | Built, tested |
+| Approval rules: amount thresholds route sales orders / purchase requests to a manager or owner; routing stamped per request; no self-approval; effective-dated | Built, tested |
 | Read-only REST API with hashed, revocable, rate-limited keys (`/api/v1/*`) | Built, browser-tested |
+| Outbound webhooks: transactional outbox, HMAC-signed, retried with backoff, SSRF-guarded, delivery history and manual retry | Built, tested; **live delivery to a public URL not exercised** (sandbox has no outside network) |
 | Platform super-admin; audit trail (append-only) | Built, tested |
 
 ## Not built (separate scopes in the source document)
 
-Approval-rule studio and custom fields/templates, outbound webhooks, report builder, SSO/2FA,
+Approval delegation, multi-step approval chains, custom fields and document templates, report builder, SSO/2FA,
 batch/serial/expiry tracking, unit conversions, barcode labels and handheld scanning, courier
 integrations, payroll/attendance devices/recruitment, GST filing and e-invoicing, bank feeds, native apps,
 additional languages and currencies, and the manufacturing / restaurant / school / healthcare /
@@ -45,9 +47,9 @@ npm run dev
 
 ```bash
 npm run typecheck
-npm run test:unit   # money/tax rules, CSV validation, billing signatures, design-token contrast
-npm run test:db     # real PostgreSQL (no Docker): all migrations, then 41 tests
-npm run test:e2e    # real PostgreSQL + real PostgREST + the built app + headless Chromium (35 checks)
+npm run test:unit   # money/tax rules, CSV validation, billing and webhook signatures, SSRF guards, design-token contrast
+npm run test:db     # real PostgreSQL (no Docker): all migrations, then 50 tests
+npm run test:e2e    # real PostgreSQL + real PostgREST + the built app + headless Chromium (48 checks)
 ```
 
 `test:e2e` needs a PostgREST binary (`POSTGREST_BIN=/path/to/postgrest`, v12.x). Authentication is the

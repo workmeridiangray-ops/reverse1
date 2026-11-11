@@ -18,6 +18,7 @@ const ok = (m) => console.log(`✓ ${String(++step).padStart(2, "0")} ${m}`);
 const fail = async (m) => { await page.screenshot({ path: `${OUT}/FAIL.png`, fullPage: true }).catch(() => {}); console.error(`✗ ${m}\n  at ${page.url()}\n  body: ${(await page.locator("body").innerText().catch(() => "")).slice(0, 600)}`); await browser.close(); process.exit(1); };
 const see = async (text, msg) => { try { await page.getByText(text, { exact: false }).first().waitFor({ timeout: 8000 }); } catch { await fail(`expected to see "${text}" — ${msg ?? ""}`); } };
 const go = async (path) => { await page.goto(BASE + path); };
+const seeOn = async (p, text) => { try { await p.getByText(text, { exact: false }).first().waitFor({ timeout: 8000 }); } catch { console.error(`✗ expected "${text}" on ${p.url()}\n  body: ${(await p.locator("body").innerText().catch(() => "")).slice(0, 700)}`); await browser.close(); process.exit(1); } };
 const shot = (n) => page.screenshot({ path: `${OUT}/${n}.png`, fullPage: true });
 const submit = async (name) => { await page.getByRole("button", { name }).first().click(); await page.waitForLoadState("networkidle"); };
 
@@ -78,6 +79,7 @@ writeFileSync(`${OUT}/bad.csv`, "name,email\nGood Co,good@x.in\nBad Co,not-an-em
 writeFileSync(`${OUT}/good.csv`, "name,email,credit_limit\nNorth Mart,n@x.in,25000\nSouth Mart,s@x.in,\n");
 await go("/app/import"); await page.locator("select[name=kind]").selectOption("customers"); await page.setInputFiles("input[name=file]", `${OUT}/bad.csv`); await page.getByRole("button", { name: "Import" }).last().click();
 await see("nothing imported"); await see("line 3"); ok("bad CSV refused with the failing line");
+await page.locator("select[name=kind]").selectOption("customers"); await page.setInputFiles("input[name=file]", `${OUT}/good.csv`); await page.getByRole("button", { name: "Validate only" }).click(); await see("All 2 rows are valid"); await go("/app/customers"); if (await page.getByText("North Mart").count()) await fail("validate-only must not import"); ok("validate-only checks without importing"); await go("/app/import");
 await page.locator("select[name=kind]").selectOption("customers"); await page.setInputFiles("input[name=file]", `${OUT}/good.csv`); await page.getByRole("button", { name: "Import" }).last().click(); await see("Imported 2 customers"); ok("good CSV imported");
 await go("/app/customers"); await see("North Mart"); ok("imported customers visible");
 
@@ -100,6 +102,39 @@ if ((await call(null)).status !== 401) await fail("missing key must be 401");
 if ((await fetch(`${BASE}/api/webhooks/razorpay`, { method: "POST", body: "{}" })).status !== 401) await fail("unsigned webhook must be 401");
 ok("API: valid key returns tenant data without cost; bad/missing key 401; unsigned webhook 401");
 
+// 10b — approval rules, separation of duties, and webhooks (three people)
+const stamp = Date.now();
+const person = async (name, mail) => { const c = await browser.newContext({ viewport: { width: 1280, height: 900 } }); const p = await c.newPage(); p.setDefaultTimeout(10000);
+  await p.goto(BASE + "/signup"); await p.getByLabel("Your name").fill(name); await p.getByLabel("Company name").fill(name + " Co"); await p.getByLabel("Work email").fill(mail); await p.getByLabel("Password").fill("a-long-test-password");
+  await p.getByRole("button", { name: "Create workspace" }).click(); await p.waitForLoadState("networkidle"); return p; };
+const samMail = `sam${stamp}@example.test`, miaMail = `mia${stamp}@example.test`;
+const sam = await person("Sam Sales", samMail), mia = await person("Mia Manager", miaMail);
+await go("/app/settings");
+for (const [mail, role] of [[samMail, "sales"], [miaMail, "manager"]]) { await page.locator("input[name=email]").first().fill(mail); await page.locator("select[name=role]").first().selectOption(role); await submit("Add member"); await see("Member added"); }
+ok("owner added a salesperson and a manager");
+const join = async (p) => { await p.goto(BASE + "/workspaces"); await p.locator("li", { hasText: "Acme Traders" }).getByRole("button", { name: "Open" }).click(); await p.waitForURL("**/app**"); await p.waitForLoadState("networkidle"); };
+await join(sam); await join(mia);
+await page.locator("select[name=subject]").selectOption("sales_order"); await page.locator("input[name=min]").fill("1000"); await page.locator("select[name=role]").last().selectOption("manager"); await submit("Add rule"); await see("Rule saved"); ok("approval rule: sales orders from ₹1,000 need a manager");
+await page.getByLabel("Endpoint URL (https only)").fill("http://insecure.example.com/h"); await page.evaluate(() => document.querySelector("input[name=url]").setAttribute("type", "text")); await submit("Create webhook"); await see("only https"); ok("http webhook endpoint refused");
+await page.getByLabel("Endpoint URL (https only)").fill("https://hooks.example.com/berp"); await submit("Create webhook"); await see("Signing secret"); await see("whsec_"); ok("webhook created; signing secret shown once");
+await sam.goto(BASE + "/app/sales/new"); await sam.getByLabel("Customer").selectOption({ label: "Kiran Stores" }); await sam.getByLabel("Line 1 item").selectOption({ index: 1 }); await sam.getByLabel("Line 1 quantity").fill("1");
+await sam.getByRole("button", { name: "Create draft order" }).click(); await sam.waitForLoadState("networkidle"); await seeOn(sam, "draft");
+await sam.getByRole("button", { name: "Confirm order" }).click(); await seeOn(sam, "approval required"); ok("salesperson cannot confirm an order above the threshold");
+await sam.getByRole("button", { name: "Request approval" }).click(); await seeOn(sam, "Approval requested");
+await sam.goto(BASE + "/app/approvals"); if (await sam.getByRole("button", { name: "Approve" }).count()) await fail("requester must not see Approve"); ok("requester has no approve button");
+await mia.goto(BASE + "/app/approvals"); await mia.getByRole("button", { name: "Reject" }).click(); await seeOn(mia, "reason is required"); ok("rejection without a reason refused");
+await mia.getByRole("button", { name: "Approve" }).click(); await seeOn(mia, "Decision recorded"); ok("manager approved");
+await sam.goBack().catch(() => {}); await sam.goto(BASE + "/app/sales"); await sam.getByRole("link", { name: /^SO-/ }).first().click(); 
+await sam.getByRole("button", { name: "Confirm order" }).click(); await seeOn(sam, "Order confirmed"); ok("order confirms after approval");
+await go("/app/settings"); await see("sales_order.confirmed"); await see("pending"); ok("confirmation queued a webhook delivery");
+const cronNo = await fetch(`${BASE}/api/cron/webhooks`); if (cronNo.status !== 401) await fail("cron without secret must be 401");
+const cron = await (await fetch(`${BASE}/api/cron/webhooks`, { headers: { authorization: `Bearer ${process.env.CRON_SECRET}` } })).json();
+if (!(cron.claimed >= 1) || cron.delivered !== 0) await fail("cron result: " + JSON.stringify(cron));
+await go("/app/settings"); await see("attempts", "").catch(() => {}); ok(`worker claimed ${cron.claimed}, delivered ${cron.delivered} (no outside network here), failure recorded for retry`);
+
+await mia.goto(BASE + "/app/projects"); await mia.getByRole("link", { name: "PRJ-00001" }).click(); await mia.waitForLoadState("networkidle");
+await mia.getByLabel("Cost rate per hour").fill("500"); await mia.getByRole("button", { name: "Approve" }).first().click(); await seeOn(mia, "Decision recorded"); await seeOn(mia, "₹2,000.00");
+ok("manager approved the owner's time at ₹500/h → labour ₹2,000.00 in the cost summary");
 // 11 — isolation: a second company sees nothing of the first
 const ctx2 = await browser.newContext(); const p2 = await ctx2.newPage();
 await p2.goto(BASE + "/signup"); await p2.getByLabel("Your name").fill("Other Owner"); await p2.getByLabel("Company name").fill("Other Co"); await p2.getByLabel("Work email").fill("other" + Date.now() + "@example.test"); await p2.getByLabel("Password").fill("another-long-password");

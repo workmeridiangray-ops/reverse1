@@ -4,6 +4,7 @@ import { signOut } from "../(auth)/actions";
 
 const NAV: { href: string; label: string; roles?: Role[] }[] = [
   { href: "/app", label: "Overview" },
+  { href: "/app/approvals", label: "Approvals", roles: ["owner", "manager", "sales", "purchasing"] },
   { href: "/app/sales", label: "Sales orders" },
   { href: "/app/purchasing", label: "Purchasing" },
   { href: "/app/inventory", label: "Inventory" },
