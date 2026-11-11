@@ -17,10 +17,8 @@ Honest map of the 22-section scope document against this repository.
 | 13 Billing | Phase 1 invoices, payments, insurance | Tariff versions, packages, deposits ledger, refunds, payer contracts not built. |
 | 16 Governance, 17 Super admin, 18 Integrations | **Not built** (audit log exists) | |
 
-## Verification limits in this build environment
-* No Docker daemon and no access to download GoTrue/PostgREST, so
-  `tests/db/auth-e2e` and `scripts/smoke.mjs` (real sign-in) were **not run**.
-  The database layer was tested on Postgres 16 with a Supabase shim
-  (`scripts/local-pg.sh`). Screens behind login were type-checked and built but
-  **not exercised in a browser**.
-* No deployment target or credentials were provided; nothing is deployed.
+## Verification (final run)
+* Real local Supabase (Docker): `npm run db:reset` then `npm run test:db` = 758/758 pass, including `auth-e2e`.
+* `scripts/smoke.mjs`: every role, every screen, axe WCAG A/AA, role-redirects: all pass.
+* `scripts/journey.mjs` (`npm run test:journey`): desk request -> nurse bed -> observations/tasks -> doctor authorisation -> pharmacy and nursing clearances -> final discharge -> bed cleaning -> other-clinic isolation: 18/18 pass. Needs `npm run db:reset` first.
+* Not done: lint (no ESLint config in the repo), phone-width checks of logged-in screens, load/restore drills, deployment (no target or credentials supplied).
