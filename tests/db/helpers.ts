@@ -59,6 +59,25 @@ export const ID = {
   invGeorge: "a6000000-0000-4000-8000-000000000002",
   invRaviDraft: "a6000000-0000-4000-8000-000000000003",
   invJon: "b6000000-0000-4000-8000-000000000001",
+  owen: "a2000000-0000-4000-8000-000000000006",
+  sofia: "a2000000-0000-4000-8000-000000000005",
+  allergyAmal: "c1000000-0000-4000-8000-000000000001",
+  nkdaGeorge: "c1000000-0000-4000-8000-000000000002",
+  allergyOwen: "c1000000-0000-4000-8000-000000000003",
+  typeHb: "a7000000-0000-4000-8000-000000000001",
+  typeK: "a7000000-0000-4000-8000-000000000002",
+  typeFerr: "a7000000-0000-4000-8000-000000000003",
+  typeGlu: "a7000000-0000-4000-8000-000000000004",
+  typeHbB: "b7000000-0000-4000-8000-000000000001",
+  orderAmal: "a9000000-0000-4000-8000-000000000001",
+  orderRavi: "a9000000-0000-4000-8000-000000000002",
+  orderGeorge: "a9000000-0000-4000-8000-000000000003",
+  orderJon: "b9000000-0000-4000-8000-000000000001",
+  resHbAmal: "ca000000-0000-4000-8000-000000000001",
+  resFerrAmal: "ca000000-0000-4000-8000-000000000002",
+  resKRavi: "ca000000-0000-4000-8000-000000000003",
+  resGluGeorge: "ca000000-0000-4000-8000-000000000004",
+  resHbJon: "cb000000-0000-4000-8000-000000000001",
 } as const;
 
 export type Q = <T = Record<string, unknown>>(sql: string, params?: readonly unknown[]) => Promise<T[]>;
@@ -114,4 +133,20 @@ export async function attempt(q: Q, sql: string, params?: readonly unknown[]): P
     await q("rollback to savepoint t");
     return { ok: false, rows: 0, error: (e as Error).message };
   }
+}
+
+/** Switch the signed-in user inside an open transaction (null = back to the database owner). */
+export async function act(q: Q, user: UserKey | null): Promise<void> {
+  if (user === null) {
+    await q("reset role");
+    return;
+  }
+  await q("reset role");
+  await q(`select set_config('request.jwt.claims', $1, true)`, [JSON.stringify({ sub: U[user], role: "authenticated", aud: "authenticated" })]);
+  await q("set local role authenticated");
+}
+
+/** Start as the database owner (to arrange data), then `act()` as users. Always rolled back. */
+export function scenario<T>(fn: (q: Q) => Promise<T>): Promise<T> {
+  return asOwner(fn);
 }

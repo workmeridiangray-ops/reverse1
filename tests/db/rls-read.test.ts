@@ -20,7 +20,12 @@ type Table =
   | "invoice_lines"
   | "payments"
   | "invoice_balances"
-  | "audit_log";
+  | "audit_log"
+  | "patient_allergies"
+  | "lab_test_types"
+  | "lab_reference_ranges"
+  | "lab_orders"
+  | "lab_results";
 
 const TABLES: Table[] = [
   "clinics",
@@ -35,24 +40,29 @@ const TABLES: Table[] = [
   "payments",
   "invoice_balances",
   "audit_log",
+  "patient_allergies",
+  "lab_test_types",
+  "lab_reference_ranges",
+  "lab_orders",
+  "lab_results",
 ];
 
 // Expected visible row counts from supabase/seed.sql. "audit" = any (>0).
 const EXPECTED: Record<UserKey, Partial<Record<Table, number | "some">>> = {
-  adminA: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 10, consultations: 0, prescriptions: 0, invoices: 3, invoice_lines: 4, payments: 2, invoice_balances: 3, audit_log: "some" },
-  doctorA: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 10, consultations: 3, prescriptions: 2, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0 },
-  doctorA2: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 10, consultations: 3, prescriptions: 2, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0 },
-  deskA: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 10, consultations: 0, prescriptions: 0, invoices: 3, invoice_lines: 4, payments: 2, invoice_balances: 3, audit_log: 0 },
-  labA: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 0, consultations: 0, prescriptions: 0, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0 },
-  pharmA: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 0, consultations: 0, prescriptions: 2, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0 },
+  adminA: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 10, consultations: 0, prescriptions: 0, invoices: 3, invoice_lines: 4, payments: 2, invoice_balances: 3, audit_log: "some", patient_allergies: 0, lab_test_types: 4, lab_reference_ranges: 6, lab_orders: 0, lab_results: 0 },
+  doctorA: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 10, consultations: 3, prescriptions: 2, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0, patient_allergies: 3, lab_test_types: 4, lab_reference_ranges: 6, lab_orders: 3, lab_results: 4 },
+  doctorA2: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 10, consultations: 3, prescriptions: 2, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0, patient_allergies: 3, lab_test_types: 4, lab_reference_ranges: 6, lab_orders: 3, lab_results: 4 },
+  deskA: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 10, consultations: 0, prescriptions: 0, invoices: 3, invoice_lines: 4, payments: 2, invoice_balances: 3, audit_log: 0, patient_allergies: 0, lab_test_types: 0, lab_reference_ranges: 0, lab_orders: 0, lab_results: 0 },
+  labA: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 0, consultations: 0, prescriptions: 0, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0, patient_allergies: 0, lab_test_types: 4, lab_reference_ranges: 6, lab_orders: 3, lab_results: 4 },
+  pharmA: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 0, consultations: 0, prescriptions: 2, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0, patient_allergies: 3, lab_test_types: 0, lab_reference_ranges: 0, lab_orders: 0, lab_results: 0 },
   // Amal: own record, own 2 appointments, only the ACTIVE prescription, own ISSUED invoice and its lines/payments.
-  patientA: { clinics: 1, profiles: 1, patients: 1, rooms: 0, appointments: 2, consultations: 0, prescriptions: 1, invoices: 1, invoice_lines: 2, payments: 1, invoice_balances: 1, audit_log: 0 },
+  patientA: { clinics: 1, profiles: 1, patients: 1, rooms: 0, appointments: 2, consultations: 0, prescriptions: 1, invoices: 1, invoice_lines: 2, payments: 1, invoice_balances: 1, audit_log: 0, patient_allergies: 0, lab_test_types: 1, lab_reference_ranges: 0, lab_orders: 0, lab_results: 1 },
   // Deactivated staff: everything resolves to nothing.
-  inactiveDeskA: { clinics: 0, profiles: 1, patients: 0, rooms: 0, appointments: 0, consultations: 0, prescriptions: 0, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0 },
-  adminB: { clinics: 1, profiles: 4, patients: 2, rooms: 1, appointments: 2, consultations: 0, prescriptions: 0, invoices: 1, invoice_lines: 1, payments: 0, invoice_balances: 1, audit_log: "some" },
-  doctorB: { clinics: 1, profiles: 4, patients: 2, rooms: 1, appointments: 2, consultations: 1, prescriptions: 0, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0 },
-  deskB: { clinics: 1, profiles: 4, patients: 2, rooms: 1, appointments: 2, consultations: 0, prescriptions: 0, invoices: 1, invoice_lines: 1, payments: 0, invoice_balances: 1, audit_log: 0 },
-  patientB: { clinics: 1, profiles: 1, patients: 1, rooms: 0, appointments: 1, consultations: 0, prescriptions: 0, invoices: 1, invoice_lines: 1, payments: 0, invoice_balances: 1, audit_log: 0 },
+  inactiveDeskA: { clinics: 0, profiles: 1, patients: 0, rooms: 0, appointments: 0, consultations: 0, prescriptions: 0, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0, patient_allergies: 0, lab_test_types: 0, lab_reference_ranges: 0, lab_orders: 0, lab_results: 0 },
+  adminB: { clinics: 1, profiles: 4, patients: 2, rooms: 1, appointments: 2, consultations: 0, prescriptions: 0, invoices: 1, invoice_lines: 1, payments: 0, invoice_balances: 1, audit_log: "some", patient_allergies: 0, lab_test_types: 2, lab_reference_ranges: 3, lab_orders: 0, lab_results: 0 },
+  doctorB: { clinics: 1, profiles: 4, patients: 2, rooms: 1, appointments: 2, consultations: 1, prescriptions: 0, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0, patient_allergies: 1, lab_test_types: 2, lab_reference_ranges: 3, lab_orders: 1, lab_results: 1 },
+  deskB: { clinics: 1, profiles: 4, patients: 2, rooms: 1, appointments: 2, consultations: 0, prescriptions: 0, invoices: 1, invoice_lines: 1, payments: 0, invoice_balances: 1, audit_log: 0, patient_allergies: 0, lab_test_types: 0, lab_reference_ranges: 0, lab_orders: 0, lab_results: 0 },
+  patientB: { clinics: 1, profiles: 1, patients: 1, rooms: 0, appointments: 1, consultations: 0, prescriptions: 0, invoices: 1, invoice_lines: 1, payments: 0, invoice_balances: 1, audit_log: 0, patient_allergies: 0, lab_test_types: 0, lab_reference_ranges: 0, lab_orders: 0, lab_results: 0 },
 };
 
 const HOME_CLINIC: Record<UserKey, string> = {
@@ -128,6 +138,55 @@ describe("minimum necessary access for staff", () => {
     for (const u of ["labA", "pharmA"] as const) {
       expect(await as(u, (q) => q(`select id from public.appointments`)), u).toHaveLength(0);
     }
+  });
+});
+
+describe("table privileges", () => {
+  it("no table in public grants TRUNCATE (which ignores RLS) to a request role", async () => {
+    const rows = await as("adminA", (q) =>
+      q<{ table_name: string; grantee: string }>(
+        `select table_name, grantee from information_schema.role_table_grants
+          where table_schema = 'public' and privilege_type = 'TRUNCATE' and grantee in ('anon', 'authenticated')`,
+      ),
+    );
+    expect(rows).toEqual([]);
+  });
+  it("anon has no privileges of any kind on public tables", async () => {
+    const rows = await as("adminA", (q) =>
+      q<{ table_name: string }>(
+        `select distinct table_name from information_schema.role_table_grants where table_schema = 'public' and grantee = 'anon'`,
+      ),
+    );
+    expect(rows).toEqual([]);
+  });
+  it("no table has RLS disabled", async () => {
+    const rows = await as("adminA", (q) =>
+      q<{ relname: string }>(
+        `select c.relname from pg_class c join pg_namespace n on n.oid = c.relnamespace
+          where n.nspname = 'public' and c.relkind = 'r' and not c.relrowsecurity`,
+      ),
+    );
+    expect(rows).toEqual([]);
+  });
+});
+
+describe("minimum necessary access: Phase 2", () => {
+  it("reception and admin cannot read allergies or lab data", async () => {
+    for (const u of ["deskA", "adminA"] as const) {
+      expect(await as(u, (q) => q(`select id from public.patient_allergies`)), u).toHaveLength(0);
+      expect(await as(u, (q) => q(`select id from public.lab_results`)), u).toHaveLength(0);
+    }
+  });
+  it("the pharmacist sees allergies but not lab results", async () => {
+    expect((await as("pharmA", (q) => q(`select id from public.patient_allergies`))).length).toBeGreaterThan(0);
+    expect(await as("pharmA", (q) => q(`select id from public.lab_results`))).toHaveLength(0);
+  });
+  it("a patient sees only RELEASED results: the unreleased ferritin is hidden by the database", async () => {
+    const rows = await as("patientA", (q) => q<{ flag: string; released_at: Date | null }>(`select flag, released_at from public.lab_results`));
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.released_at).toBeInstanceOf(Date);
+    const hidden = await as("patientA", (q) => q(`select id from public.lab_results where id = 'ca000000-0000-4000-8000-000000000002'`));
+    expect(hidden).toHaveLength(0);
   });
 });
 

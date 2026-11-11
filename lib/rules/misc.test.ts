@@ -200,3 +200,30 @@ describe("searchTerm", () => {
     expect(searchTerm("x".repeat(100))?.length).toBe(60);
   });
 });
+
+import { canTransitionLabOrder, LAB_ORDER_STATUSES, needsDoctorAttention, visibleToPatient } from "./lab-orders";
+
+describe("lab order status machine", () => {
+  it("allows the normal path and early results", () => {
+    expect(canTransitionLabOrder("ordered", "collected")).toBe(true);
+    expect(canTransitionLabOrder("collected", "resulted")).toBe(true);
+    expect(canTransitionLabOrder("ordered", "resulted")).toBe(true);
+  });
+  it("closes resulted and cancelled orders", () => {
+    for (const to of LAB_ORDER_STATUSES) {
+      if (to !== "resulted") expect(canTransitionLabOrder("resulted", to)).toBe(false);
+      if (to !== "cancelled") expect(canTransitionLabOrder("cancelled", to)).toBe(false);
+    }
+    expect(canTransitionLabOrder("collected", "ordered")).toBe(false);
+  });
+  it("flags critical unacknowledged results for the doctor", () => {
+    expect(needsDoctorAttention({ flag: "critical_high", acknowledgedAt: null })).toBe(true);
+    expect(needsDoctorAttention({ flag: "critical_low", acknowledgedAt: "2026-11-11" })).toBe(false);
+    expect(needsDoctorAttention({ flag: "high", acknowledgedAt: null })).toBe(false);
+  });
+  it("shows results to patients only once released", () => {
+    expect(visibleToPatient({ releasedAt: null, value: 5 })).toBe(false);
+    expect(visibleToPatient({ releasedAt: "2026-11-11", value: 5 })).toBe(true);
+    expect(visibleToPatient({ releasedAt: "2026-11-11", value: null })).toBe(false);
+  });
+});
