@@ -8,6 +8,9 @@ import type { InsuranceStatus, InvoiceState, PaymentStatus } from "@/lib/rules/i
 import type { RoomState } from "@/lib/rules/reception";
 import type { ConsentState } from "@/lib/rules/patient";
 import { STATUS_LABEL } from "@/lib/rules/appointment-status";
+import type { StoredAllergyStatus } from "@/lib/rules/allergy";
+import { FLAG_LABEL, type ResultFlag } from "@/lib/rules/lab-flags";
+import { LAB_ORDER_LABEL, type LabOrderStatus } from "@/lib/rules/lab-orders";
 
 export type Tone = "ok" | "warn" | "danger" | "info" | "neutral" | "critical" | "brand";
 export type IconName =
@@ -86,6 +89,34 @@ export const NOTE_VISUAL = {
   none: { tone: "neutral", icon: "dot", label: "No note yet" },
 } as const satisfies Record<string, StatusVisual>;
 
+export const LAB_FLAG_VISUAL: Record<ResultFlag, StatusVisual> = {
+  normal: { tone: "ok", icon: "check", label: FLAG_LABEL.normal },
+  low: { tone: "warn", icon: "alert", label: FLAG_LABEL.low },
+  high: { tone: "warn", icon: "alert", label: FLAG_LABEL.high },
+  critical_low: { tone: "critical", icon: "flag", label: FLAG_LABEL.critical_low },
+  critical_high: { tone: "critical", icon: "flag", label: FLAG_LABEL.critical_high },
+  unflagged: { tone: "neutral", icon: "dot", label: FLAG_LABEL.unflagged },
+};
+
+export const LAB_ORDER_VISUAL: Record<LabOrderStatus, StatusVisual> = {
+  ordered: { tone: "neutral", icon: "clock", label: LAB_ORDER_LABEL.ordered },
+  collected: { tone: "info", icon: "hourglass", label: LAB_ORDER_LABEL.collected },
+  resulted: { tone: "ok", icon: "check", label: LAB_ORDER_LABEL.resulted },
+  cancelled: { tone: "neutral", icon: "x", label: LAB_ORDER_LABEL.cancelled },
+};
+
+export const ALLERGY_CHECK_VISUAL: Record<StoredAllergyStatus, StatusVisual> = {
+  clear: { tone: "ok", icon: "shield", label: "Allergy check clear" },
+  overridden: { tone: "danger", icon: "alert", label: "Allergy warning overridden" },
+  unchecked: { tone: "warn", icon: "alert", label: "Allergy check not run" },
+  no_allergy_record: { tone: "warn", icon: "alert", label: "No allergy record" },
+};
+
+export const RESULT_RELEASE_VISUAL = {
+  released: { tone: "ok", icon: "check", label: "Released to patient" },
+  held: { tone: "neutral", icon: "lock", label: "Not released" },
+} as const satisfies Record<string, StatusVisual>;
+
 export const ALL_VISUAL_SETS = {
   APPOINTMENT_VISUAL,
   PAYMENT_VISUAL,
@@ -94,4 +125,8 @@ export const ALL_VISUAL_SETS = {
   ROOM_VISUAL,
   CONSENT_VISUAL,
   NOTE_VISUAL,
+  LAB_FLAG_VISUAL,
+  LAB_ORDER_VISUAL,
+  ALLERGY_CHECK_VISUAL,
+  RESULT_RELEASE_VISUAL,
 } as const;

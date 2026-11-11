@@ -5,12 +5,15 @@ import { localDateKey } from "@/lib/rules/time";
 import type { Session } from "@/lib/auth/session";
 import type { ServerClient } from "@/lib/supabase/server";
 import { getDayAppointments } from "./reception";
+import { describeResult, type ResultFlag } from "@/lib/rules/lab-flags";
 
 export interface DoctorWorklistRow extends WorklistItem {
   patientId: string;
   reason: string | null;
   roomName: string | null;
   noteSigned: boolean;
+  /** consultation to open for a lab-result item (the note it was ordered from), if any */
+  openConsultationId?: string | null;
 }
 
 /**
@@ -70,6 +73,40 @@ export async function getDoctorWorklist(supabase: ServerClient, session: Session
       criticalReason: note.critical_reason,
       carriedOver: true,
       reason: note.appointment?.reason ?? null,
+      roomName: null,
+    });
+  }
+
+  // Critical lab results this doctor ordered and has not acknowledged: always pulled to the top.
+  const { data: labs, error: labErr } = await supabase
+    .from("lab_results")
+    .select(
+      `id, value, unit, flag, entered_at, patient_id,
+       test:lab_test_types!lab_results_test_type_id_clinic_id_fkey(name),
+       patient:patients!lab_results_patient_id_clinic_id_fkey(given_name, family_name),
+       order:lab_orders!lab_results_order_id_clinic_id_fkey!inner(ordered_by, consultation_id)`,
+    )
+    .in("flag", ["critical_low", "critical_high"])
+    .is("acknowledged_at", null)
+    .eq("order.ordered_by", session.userId)
+    .order("entered_at");
+  if (labErr) throw new Error(labErr.message);
+  for (const l of labs ?? []) {
+    rows.push({
+      appointmentId: null,
+      consultationId: null,
+      openConsultationId: l.order?.consultation_id ?? null,
+      labResultId: l.id,
+      patientId: l.patient_id,
+      patientName: l.patient ? `${l.patient.given_name} ${l.patient.family_name}` : "Unknown patient",
+      startsAt: l.entered_at ? new Date(l.entered_at) : null,
+      appointmentStatus: null,
+      unsignedNote: false,
+      noteSigned: false,
+      critical: true,
+      criticalReason: describeResult(l.test?.name ?? "Result", Number(l.value), l.unit, l.flag as ResultFlag),
+      carriedOver: false,
+      reason: "Critical lab result: acknowledge",
       roomName: null,
     });
   }

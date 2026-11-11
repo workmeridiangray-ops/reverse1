@@ -7,8 +7,10 @@
  * rule. A clinician must review and sign off `PRIORITY_ORDER` and the
  * definition of "critical" before this is used with real patients.
  *
- * In Phase 1, "critical" is a flag a clinician sets by hand on a consultation
- * (with a written reason). Automatic critical lab results arrive in Phase 2.
+ * "Critical" is either a flag a clinician sets by hand on a consultation (with
+ * a written reason) or a lab result flagged critical that its ordering doctor
+ * has not yet acknowledged. What counts as critical numerically comes from the
+ * laboratory's reference ranges, which are also placeholders until reviewed.
  * ============================================================================
  */
 import type { AppointmentStatus } from "./scheduling";
@@ -27,6 +29,8 @@ export interface WorklistItem {
   criticalReason: string | null;
   /** note belongs to a previous day (carried over until signed) */
   carriedOver: boolean;
+  /** set when the item is a critical lab result waiting for acknowledgement */
+  labResultId?: string | null;
 }
 
 export type WorklistBucket = "critical" | "unsigned" | "today" | "done";

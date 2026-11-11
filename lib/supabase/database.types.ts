@@ -203,6 +203,196 @@ isOneToOne: false
       referencedColumns: ["id","clinic_id"]
     }
                   ]
+                },"lab_orders": {
+                  Row: {
+                    "cancelled_reason": string | null,"clinic_id": string,"clinical_notes": string | null,"collected_at": string | null,"collected_by": string | null,"consultation_id": string | null,"created_at": string,"id": string,"ordered_at": string,"ordered_by": string,"patient_id": string,"status": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "cancelled_reason"?: string | null,"clinic_id": string,"clinical_notes"?: string | null,"collected_at"?: string | null,"collected_by"?: string | null,"consultation_id"?: string | null,"created_at"?: string,"id"?: string,"ordered_at"?: string,"ordered_by": string,"patient_id": string,"status"?: string,"updated_at"?: string
+                  }
+                  Update: {
+                    "cancelled_reason"?: string | null,"clinic_id"?: string,"clinical_notes"?: string | null,"collected_at"?: string | null,"collected_by"?: string | null,"consultation_id"?: string | null,"created_at"?: string,"id"?: string,"ordered_at"?: string,"ordered_by"?: string,"patient_id"?: string,"status"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "lab_orders_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "lab_orders_collected_by_clinic_id_fkey"
+      columns: ["collected_by","clinic_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "lab_orders_consultation_id_clinic_id_fkey"
+      columns: ["consultation_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "consultations"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "lab_orders_ordered_by_clinic_id_fkey"
+      columns: ["ordered_by","clinic_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "lab_orders_patient_id_clinic_id_fkey"
+      columns: ["patient_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id","clinic_id"]
+    }
+                  ]
+                },"lab_reference_ranges": {
+                  Row: {
+                    "age_max_years": number,"age_min_years": number,"clinic_id": string,"created_at": string,"critical_high": number | null,"critical_low": number | null,"high": number | null,"id": string,"low": number | null,"note": string | null,"reviewed_at": string | null,"reviewed_by_name": string | null,"sex": string,"test_type_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "age_max_years"?: number,"age_min_years"?: number,"clinic_id": string,"created_at"?: string,"critical_high"?: number | null,"critical_low"?: number | null,"high"?: number | null,"id"?: string,"low"?: number | null,"note"?: string | null,"reviewed_at"?: string | null,"reviewed_by_name"?: string | null,"sex"?: string,"test_type_id": string
+                  }
+                  Update: {
+                    "age_max_years"?: number,"age_min_years"?: number,"clinic_id"?: string,"created_at"?: string,"critical_high"?: number | null,"critical_low"?: number | null,"high"?: number | null,"id"?: string,"low"?: number | null,"note"?: string | null,"reviewed_at"?: string | null,"reviewed_by_name"?: string | null,"sex"?: string,"test_type_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "lab_reference_ranges_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "lab_reference_ranges_test_type_id_clinic_id_fkey"
+      columns: ["test_type_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "lab_test_types"
+      referencedColumns: ["id","clinic_id"]
+    }
+                  ]
+                },"lab_results": {
+                  Row: {
+                    "acknowledged_at": string | null,"acknowledged_by": string | null,"clinic_id": string,"comment": string | null,"created_at": string,"entered_at": string | null,"entered_by": string | null,"flag": string | null,"id": string,"order_id": string,"patient_id": string,"range_id": string | null,"range_reviewed": boolean | null,"ref_critical_high": number | null,"ref_critical_low": number | null,"ref_high": number | null,"ref_low": number | null,"released_at": string | null,"released_by": string | null,"test_type_id": string,"unit": string,"updated_at": string,"value": number | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "acknowledged_at"?: string | null,"acknowledged_by"?: string | null,"clinic_id": string,"comment"?: string | null,"created_at"?: string,"entered_at"?: string | null,"entered_by"?: string | null,"flag"?: string | null,"id"?: string,"order_id": string,"patient_id": string,"range_id"?: string | null,"range_reviewed"?: boolean | null,"ref_critical_high"?: number | null,"ref_critical_low"?: number | null,"ref_high"?: number | null,"ref_low"?: number | null,"released_at"?: string | null,"released_by"?: string | null,"test_type_id": string,"unit": string,"updated_at"?: string,"value"?: number | null
+                  }
+                  Update: {
+                    "acknowledged_at"?: string | null,"acknowledged_by"?: string | null,"clinic_id"?: string,"comment"?: string | null,"created_at"?: string,"entered_at"?: string | null,"entered_by"?: string | null,"flag"?: string | null,"id"?: string,"order_id"?: string,"patient_id"?: string,"range_id"?: string | null,"range_reviewed"?: boolean | null,"ref_critical_high"?: number | null,"ref_critical_low"?: number | null,"ref_high"?: number | null,"ref_low"?: number | null,"released_at"?: string | null,"released_by"?: string | null,"test_type_id"?: string,"unit"?: string,"updated_at"?: string,"value"?: number | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "lab_results_acknowledged_by_clinic_id_fkey"
+      columns: ["acknowledged_by","clinic_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "lab_results_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "lab_results_entered_by_clinic_id_fkey"
+      columns: ["entered_by","clinic_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "lab_results_order_id_clinic_id_fkey"
+      columns: ["order_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "lab_orders"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "lab_results_patient_id_clinic_id_fkey"
+      columns: ["patient_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "lab_results_range_id_clinic_id_fkey"
+      columns: ["range_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "lab_reference_ranges"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "lab_results_released_by_clinic_id_fkey"
+      columns: ["released_by","clinic_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "lab_results_test_type_id_clinic_id_fkey"
+      columns: ["test_type_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "lab_test_types"
+      referencedColumns: ["id","clinic_id"]
+    }
+                  ]
+                },"lab_test_types": {
+                  Row: {
+                    "active": boolean,"clinic_id": string,"code": string,"created_at": string,"id": string,"name": string,"unit": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"clinic_id": string,"code": string,"created_at"?: string,"id"?: string,"name": string,"unit": string
+                  }
+                  Update: {
+                    "active"?: boolean,"clinic_id"?: string,"code"?: string,"created_at"?: string,"id"?: string,"name"?: string,"unit"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "lab_test_types_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"patient_allergies": {
+                  Row: {
+                    "allergen": string | null,"allergen_class": string | null,"clinic_id": string,"created_at": string,"id": string,"kind": string,"patient_id": string,"reaction": string | null,"recorded_at": string,"recorded_by": string | null,"removed_at": string | null,"removed_by": string | null,"removed_reason": string | null,"severity": Database["public"]['Enums']["allergy_severity"] | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "allergen"?: string | null,"allergen_class"?: string | null,"clinic_id": string,"created_at"?: string,"id"?: string,"kind": string,"patient_id": string,"reaction"?: string | null,"recorded_at"?: string,"recorded_by"?: string | null,"removed_at"?: string | null,"removed_by"?: string | null,"removed_reason"?: string | null,"severity"?: Database["public"]['Enums']["allergy_severity"] | null
+                  }
+                  Update: {
+                    "allergen"?: string | null,"allergen_class"?: string | null,"clinic_id"?: string,"created_at"?: string,"id"?: string,"kind"?: string,"patient_id"?: string,"reaction"?: string | null,"recorded_at"?: string,"recorded_by"?: string | null,"removed_at"?: string | null,"removed_by"?: string | null,"removed_reason"?: string | null,"severity"?: Database["public"]['Enums']["allergy_severity"] | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "patient_allergies_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "patient_allergies_patient_id_clinic_id_fkey"
+      columns: ["patient_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "patient_allergies_recorded_by_clinic_id_fkey"
+      columns: ["recorded_by","clinic_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "patient_allergies_removed_by_clinic_id_fkey"
+      columns: ["removed_by","clinic_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id","clinic_id"]
+    }
+                  ]
                 },"patients": {
                   Row: {
                     "address": string | null,"archived_at": string | null,"auth_user_id": string | null,"clinic_id": string,"consent_communication": boolean,"consent_data_processing_at": string | null,"consent_recorded_by": string | null,"consent_treatment_at": string | null,"consent_version": string | null,"created_at": string,"date_of_birth": string,"email": string | null,"family_name": string,"given_name": string,"id": string,"mrn": string,"phone": string | null,"sex_at_birth": Database["public"]['Enums']["sex_at_birth"],"updated_at": string
@@ -269,14 +459,14 @@ isOneToOne: false
                   ]
                 },"prescriptions": {
                   Row: {
-                    "allergy_override_reason": string | null,"clinic_id": string,"consultation_id": string | null,"created_at": string,"dose": string,"drug_name": string,"duration_days": number | null,"frequency": string,"id": string,"patient_id": string,"prescriber_id": string,"route": string,"status": Database["public"]['Enums']["prescription_status"],"updated_at": string
+                    "allergy_check_status": string,"allergy_override_reason": string | null,"clinic_id": string,"consultation_id": string | null,"created_at": string,"dose": string,"drug_classes": (string)[],"drug_name": string,"duration_days": number | null,"frequency": string,"id": string,"patient_id": string,"prescriber_id": string,"route": string,"status": Database["public"]['Enums']["prescription_status"],"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "allergy_override_reason"?: string | null,"clinic_id": string,"consultation_id"?: string | null,"created_at"?: string,"dose": string,"drug_name": string,"duration_days"?: number | null,"frequency": string,"id"?: string,"patient_id": string,"prescriber_id": string,"route": string,"status"?: Database["public"]['Enums']["prescription_status"],"updated_at"?: string
+                    "allergy_check_status"?: string,"allergy_override_reason"?: string | null,"clinic_id": string,"consultation_id"?: string | null,"created_at"?: string,"dose": string,"drug_classes"?: (string)[],"drug_name": string,"duration_days"?: number | null,"frequency": string,"id"?: string,"patient_id": string,"prescriber_id": string,"route": string,"status"?: Database["public"]['Enums']["prescription_status"],"updated_at"?: string
                   }
                   Update: {
-                    "allergy_override_reason"?: string | null,"clinic_id"?: string,"consultation_id"?: string | null,"created_at"?: string,"dose"?: string,"drug_name"?: string,"duration_days"?: number | null,"frequency"?: string,"id"?: string,"patient_id"?: string,"prescriber_id"?: string,"route"?: string,"status"?: Database["public"]['Enums']["prescription_status"],"updated_at"?: string
+                    "allergy_check_status"?: string,"allergy_override_reason"?: string | null,"clinic_id"?: string,"consultation_id"?: string | null,"created_at"?: string,"dose"?: string,"drug_classes"?: (string)[],"drug_name"?: string,"duration_days"?: number | null,"frequency"?: string,"id"?: string,"patient_id"?: string,"prescriber_id"?: string,"route"?: string,"status"?: Database["public"]['Enums']["prescription_status"],"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -377,12 +567,15 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "log_record_access":
+            "create_lab_order":
+{ Args: { "p_consultation": string,"p_notes"?: string,"p_patient": string,"p_tests": (string)[] }; Returns: string
+                           },
+"log_record_access":
 { Args: { "p_reason"?: string,"p_record_id": string,"p_table": string }; Returns: undefined
                            }
           }
           Enums: {
-            "app_role": "admin"|"doctor"|"receptionist"|"lab"|"pharmacist"|"patient","appointment_status": "scheduled"|"arrived"|"in_room"|"completed"|"cancelled"|"no_show","insurance_status": "none"|"pending"|"settled"|"denied","invoice_state": "draft"|"issued"|"void","payment_method": "cash"|"card"|"bank_transfer"|"other","prescription_status": "draft"|"active"|"cancelled"|"dispensed","sex_at_birth": "female"|"male"|"intersex"|"unknown"
+            "allergy_severity": "mild"|"moderate"|"severe","app_role": "admin"|"doctor"|"receptionist"|"lab"|"pharmacist"|"patient","appointment_status": "scheduled"|"arrived"|"in_room"|"completed"|"cancelled"|"no_show","insurance_status": "none"|"pending"|"settled"|"denied","invoice_state": "draft"|"issued"|"void","payment_method": "cash"|"card"|"bank_transfer"|"other","prescription_status": "draft"|"active"|"cancelled"|"dispensed","sex_at_birth": "female"|"male"|"intersex"|"unknown"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -498,7 +691,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "app_role": ["admin", "doctor", "receptionist", "lab", "pharmacist", "patient"],"appointment_status": ["scheduled", "arrived", "in_room", "completed", "cancelled", "no_show"],"insurance_status": ["none", "pending", "settled", "denied"],"invoice_state": ["draft", "issued", "void"],"payment_method": ["cash", "card", "bank_transfer", "other"],"prescription_status": ["draft", "active", "cancelled", "dispensed"],"sex_at_birth": ["female", "male", "intersex", "unknown"]
+            "allergy_severity": ["mild", "moderate", "severe"],"app_role": ["admin", "doctor", "receptionist", "lab", "pharmacist", "patient"],"appointment_status": ["scheduled", "arrived", "in_room", "completed", "cancelled", "no_show"],"insurance_status": ["none", "pending", "settled", "denied"],"invoice_state": ["draft", "issued", "void"],"payment_method": ["cash", "card", "bank_transfer", "other"],"prescription_status": ["draft", "active", "cancelled", "dispensed"],"sex_at_birth": ["female", "male", "intersex", "unknown"]
           }
         }
 } as const

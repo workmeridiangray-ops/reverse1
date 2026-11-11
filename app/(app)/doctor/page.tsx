@@ -12,6 +12,7 @@ import { APPOINTMENT_VISUAL, NOTE_VISUAL } from "@/lib/ui/status";
 import { createClient } from "@/lib/supabase/server";
 import { setAppointmentStatus } from "../appointments/status-actions";
 import { startNote } from "./actions";
+import { acknowledgeResult } from "./clinical-actions";
 
 export const metadata: Metadata = { title: "My day" };
 export const dynamic = "force-dynamic";
@@ -23,9 +24,9 @@ const BUCKET_TITLE: Record<WorklistBucket, { title: string; hint: string }> = {
   done: { title: "Finished", hint: "" },
 };
 
-export default async function DoctorHome({ searchParams }: { searchParams: Promise<{ error?: string; signed?: string }> }) {
+export default async function DoctorHome({ searchParams }: { searchParams: Promise<{ error?: string; signed?: string; ok?: string }> }) {
   const session = await requireRole("doctor");
-  const { error, signed } = await searchParams;
+  const { error, signed, ok } = await searchParams;
   const supabase = await createClient();
   const now = new Date();
   const { rows, counts } = await getDoctorWorklist(supabase, session, now);
@@ -49,10 +50,11 @@ export default async function DoctorHome({ searchParams }: { searchParams: Promi
         }
       />
       {error ? <div className="mb-gutter"><Alert tone="danger" title="That didn't work">{error}</Alert></div> : null}
+      {ok ? <div className="mb-gutter"><Alert tone="ok" title={ok} /></div> : null}
       {signed ? <div className="mb-gutter"><Alert tone="ok" title="Note signed">It is now locked. Corrections will be added as addenda.</Alert></div> : null}
       {CLINICAL_REVIEW_REQUIRED ? (
         <p className="mb-gutter text-sm text-ink-500">
-          Ordering is an engineering default awaiting clinician review. Automatic critical results arrive with lab integration.
+          Ordering is an engineering default awaiting clinician review. Critical lab limits come from reference ranges that also await review.
         </p>
       ) : null}
 
@@ -69,7 +71,7 @@ export default async function DoctorHome({ searchParams }: { searchParams: Promi
             </div>
             <ul className="overflow-hidden rounded-lg border border-line bg-surface shadow-card">
               {items.map((r) => {
-                const key = r.consultationId ?? r.appointmentId ?? r.patientId;
+                const key = r.labResultId ?? r.consultationId ?? r.appointmentId ?? r.patientId;
                 const accent = r.critical ? "shadow-[inset_5px_0_0_theme(colors.critical.bg)]" : r.unsignedNote ? "shadow-[inset_5px_0_0_theme(colors.warn.line)]" : "";
                 return (
                   <li key={key} className={`grid gap-4 border-b border-line px-6 py-4 last:border-b-0 md:grid-cols-[6rem_1fr_auto_auto] md:items-center ${accent}`}>
@@ -107,7 +109,17 @@ export default async function DoctorHome({ searchParams }: { searchParams: Promi
                           <Button type="submit" size="sm" variant="secondary">Finish visit</Button>
                         </form>
                       ) : null}
-                      {r.consultationId ? (
+                      {r.labResultId ? (
+                        <>
+                          {r.openConsultationId ? (
+                            <Link href={`/doctor/notes/${r.openConsultationId}`} className="inline-flex min-h-touch items-center px-2 text-sm font-bold">Open note</Link>
+                          ) : null}
+                          <form action={acknowledgeResult}>
+                            <input type="hidden" name="id" value={r.labResultId} /><input type="hidden" name="back" value="/doctor" />
+                            <Button type="submit" size="sm" variant="primary">Acknowledge<span className="sr-only"> result for {r.patientName}</span></Button>
+                          </form>
+                        </>
+                      ) : r.consultationId ? (
                         <Link href={`/doctor/notes/${r.consultationId}`} className="inline-flex min-h-touch items-center rounded border border-brand-700 bg-brand-700 px-3 text-sm font-bold text-white no-underline hover:bg-brand-800">
                           {r.unsignedNote ? "Continue note" : "View note"}<span className="sr-only"> for {r.patientName}</span>
                         </Link>

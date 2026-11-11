@@ -36,8 +36,8 @@ export const ROUTE_ACCESS: ReadonlyArray<readonly [string, readonly Role[]]> = [
   ["/admin", ["admin"]],
   ["/reception", ["receptionist", "admin"]],
   ["/doctor", ["doctor"]],
-  ["/lab", ["lab", "admin"]],
-  ["/pharmacy", ["pharmacist", "admin"]],
+  ["/lab", ["lab"]],
+  ["/pharmacy", ["pharmacist"]],
   ["/me", ["patient"]],
   ["/patients", ["admin", "receptionist", "doctor"]],
   ["/patients/new", ["admin", "receptionist"]],
@@ -92,6 +92,7 @@ export function navFor(role: Role): NavItem[] {
       { href: "/patients", label: "Patients" },
       { href: "/appointments", label: "Appointments" },
       { href: "/billing", label: "Billing" },
+      { href: "/admin/lab", label: "Lab ranges" },
       { href: "/admin/audit", label: "Audit log" },
     ],
     receptionist: [
