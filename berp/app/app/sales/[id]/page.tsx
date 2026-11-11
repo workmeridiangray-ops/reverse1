@@ -15,7 +15,7 @@ export default async function Order({ params, searchParams }: { params: Promise<
   const { id } = await params; const q = await searchParams; const ctx = await requireCtx(); const sb = await createClient();
   const { data: o } = await sb.from("sales_orders").select("*, customers(name,credit_limit_paise), warehouses(name)").eq("id", id).maybeSingle();
   if (!o) notFound();
-  const { data: lines } = await sb.from("sales_order_lines").select("*, items(sku,name,unit,kind)").eq("order_id", id).order("line_no");
+  const { data: lines } = await sb.from("sales_order_lines").select("*, items(sku,name,unit,kind,tracking)").eq("order_id", id).order("line_no");
   const { data: res } = await sb.from("reservations").select("so_line_id,qty").in("so_line_id", (lines ?? []).map((l: any) => l.id));
   const { data: apps } = await sb.from("approvals").select("status,required_role,decision_reason,amount_paise").eq("subject", "sales_order").eq("subject_id", id).order("created_at", { ascending: false });
   const { data: invs } = await sb.from("invoices").select("id,number,total_paise,status").eq("order_id", id);
@@ -60,8 +60,13 @@ export default async function Order({ params, searchParams }: { params: Promise<
           <form action={dispatchOrder} className="card space-y-3 p-5"><input type="hidden" name="id" value={id} /><h2 className="font-semibold">Dispatch</h2>
             <p className="text-sm text-muted">Only reserved quantity can ship.</p>
             {(lines ?? []).filter((l: any) => Number(l.qty) > Number(l.qty_dispatched)).map((l: any) => (
-              <label key={l.id} className="flex items-center justify-between gap-3 text-sm"><span>{l.items?.sku} · reserved <Qty v={reserved(l.id)} /> of <Qty v={Number(l.qty) - Number(l.qty_dispatched)} /> open</span>
-                <input className="input w-28" name={`d_${l.id}`} inputMode="decimal" placeholder="Qty" aria-label={`Dispatch quantity for ${l.items?.sku}`} /></label>))}
+              <div key={l.id} className="space-y-1">
+                <label className="flex items-center justify-between gap-3 text-sm"><span>{l.items?.sku} · reserved <Qty v={reserved(l.id)} /> of <Qty v={Number(l.qty) - Number(l.qty_dispatched)} /> open</span>
+                  <input className="input w-28" name={`d_${l.id}`} inputMode="decimal" placeholder="Qty" aria-label={`Dispatch quantity for ${l.items?.sku}`} /></label>
+                {l.items?.tracking && l.items.tracking !== "none" && (
+                  <label className="block text-xs text-muted">{l.items.tracking === "batch" ? "Lots to ship (LOT, qty per line) — leave empty to ship the earliest-expiring unexpired stock" : "Serial numbers to ship, one per line — leave empty to pick any in stock"}
+                    <textarea name={`lots_${l.id}`} rows={2} className="input mt-1 py-2 font-mono text-xs text-ink" aria-label={`Lots or serials for ${l.items?.sku}`} /></label>)}
+              </div>))}
             <label className="block text-sm font-medium" htmlFor="carrier">Carrier / AWB reference</label><input id="carrier" name="carrier" className="input" />
             <SubmitButton>Record dispatch</SubmitButton></form>
         )}

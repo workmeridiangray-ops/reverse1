@@ -13,7 +13,7 @@ export default async function PO({ params, searchParams }: { params: Promise<{ i
   const { data: po } = await sb.from("purchase_orders").select("*, suppliers(name), warehouses(name)").eq("id", id).maybeSingle();
   if (!po) notFound();
   const [{ data: lines }, { data: grns }] = await Promise.all([
-    sb.from("purchase_order_lines").select("*, items(sku,name,unit)").eq("po_id", id),
+    sb.from("purchase_order_lines").select("*, items(sku,name,unit,tracking)").eq("po_id", id),
     sb.from("goods_receipts").select("id,number,created_at").eq("po_id", id).order("created_at"),
   ]);
   const finOk = can(ctx.role, "owner", "manager", "accountant", "viewer");
@@ -33,7 +33,10 @@ export default async function PO({ params, searchParams }: { params: Promise<{ i
         {canReceive && (
           <form action={receiveGoods} className="card space-y-3 p-5"><input type="hidden" name="id" value={id} /><input type="hidden" name="key" value={key} />
             <h2 className="font-semibold">Receive goods</h2><p className="text-sm text-muted">Partial receipts are fine. Receiving more than ordered is blocked. Stock waiting on orders is reserved automatically.</p>
-            {(lines ?? []).filter((l: any) => Number(l.qty_received) < Number(l.qty)).map((l: any) => (
+            {(lines ?? []).filter((l: any) => Number(l.qty_received) < Number(l.qty)).map((l: any) => l.items?.tracking && l.items.tracking !== "none" ? (
+              <label key={l.id} className="block text-sm"><span className="font-medium">{l.items?.sku} · open <Qty v={Number(l.qty) - Number(l.qty_received)} /> · {l.items.tracking === "batch" ? "one lot per line: LOT, qty, expiry (optional)" : "one serial per line (add , expiry if it has one)"}</span>
+                <textarea name={`lots_${l.id}`} rows={3} className="input mt-1 py-2 font-mono text-xs" placeholder={l.items.tracking === "batch" ? "B-2026-11, 40, 2027-11-30" : "SN-0001\nSN-0002"} aria-label={`Lots received for ${l.items?.sku}`} /></label>
+            ) : (
               <label key={l.id} className="flex items-center justify-between gap-3 text-sm"><span>{l.items?.sku} · open <Qty v={Number(l.qty) - Number(l.qty_received)} /></span><input className="input w-28" name={`r_${l.id}`} inputMode="decimal" placeholder="Qty" aria-label={`Received quantity for ${l.items?.sku}`} /></label>))}
             <SubmitButton>Post receipt</SubmitButton></form>
         )}

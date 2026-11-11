@@ -135,6 +135,28 @@ await go("/app/settings"); await see("attempts", "").catch(() => {}); ok(`worker
 await mia.goto(BASE + "/app/projects"); await mia.getByRole("link", { name: "PRJ-00001" }).click(); await mia.waitForLoadState("networkidle");
 await mia.getByLabel("Cost rate per hour").fill("500"); await mia.getByRole("button", { name: "Approve" }).first().click(); await seeOn(mia, "Decision recorded"); await seeOn(mia, "₹2,000.00");
 ok("manager approved the owner's time at ₹500/h → labour ₹2,000.00 in the cost summary");
+// 10c — batch tracking, FEFO, expiry, traceability, labels, scan
+const iso = (n) => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
+await go("/app/items"); await page.getByLabel("SKU").fill("MILK-1"); await page.getByLabel("Name").fill("Milk 1L"); await page.getByLabel("Sale price (₹)").fill("50"); await page.getByLabel("Cost (₹)").fill("30");
+await page.getByLabel("Tracking").selectOption("batch"); await page.getByLabel("Barcode").fill("8901000000017"); await submit("Save item"); await see("Item saved"); ok("batch-tracked item with barcode saved");
+await page.getByLabel("SKU").fill("MILK-2"); await page.getByLabel("Name").fill("Dup barcode"); await page.getByLabel("Barcode").fill("8901000000017"); await submit("Save item"); await see("unique", "duplicate barcode should be refused"); ok("duplicate barcode refused");
+await go("/app/sales/new"); await page.getByLabel("Customer").selectOption({ label: "Kiran Stores" }); await page.getByLabel("Line 1 item").selectOption({ label: "MILK-1 · Milk 1L (nos)" }); await page.getByLabel("Line 1 quantity").fill("10");
+await submit("Create draft order"); await submit("Confirm order"); await see("Order confirmed"); await submit("Request purchases"); await see("Purchase requests created");
+await page.getByLabel("Unit cost (₹)").first().fill("30"); await submit("Approve"); await see("PO-");
+await page.getByLabel("Lots received for MILK-1").fill("not a valid line"); await submit("Post receipt"); await see("use  LOT, quantity"); ok("malformed lot input refused");
+await page.getByLabel("Lots received for MILK-1").fill(`M-OLD, 4, ${iso(-5)}\nM-NEW, 6, ${iso(120)}`); await submit("Post receipt"); await see("Goods received"); ok("received 2 lots (one already expired)");
+await go("/app/sales"); await page.getByRole("link", { name: /SO-0000[0-9]+/ }).first().waitFor();
+const milkOrder = await page.locator("tr", { hasText: "confirmed" }).filter({ hasText: "Kiran" }).first().getByRole("link").first(); await milkOrder.click();
+await page.getByLabel("Dispatch quantity for MILK-1").fill("10"); await submit("Record dispatch"); await see("not enough unexpired"); ok("expired stock is refused at dispatch");
+await page.getByLabel("Dispatch quantity for MILK-1").fill("6"); await submit("Record dispatch"); await see("Dispatch recorded"); ok("6 unexpired units dispatched");
+await go("/app/inventory/lots"); await see("M-OLD"); await see("expired"); await go("/app/inventory/lots?q=M-NEW"); await see("including sold out"); await page.locator("tr", { hasText: "M-NEW" }).getByRole("link", { name: "Trace" }).last().click(); await see("History of M-NEW"); await see("dispatch"); await see("Kiran Stores"); await see("Prime Components"); ok("lot history shows supplier receipt and customer shipment");
+await go("/app/reports?r=expiry"); await see("M-OLD"); ok("expiry report lists the expired lot");
+await go("/app/inventory/labels"); await page.locator("select[name=item]").selectOption({ label: "MILK-1 · Milk 1L" }); await page.getByLabel("Copies").fill("3"); await submit("Preview"); const labelSvgs = await page.locator('svg[aria-label^="Barcode"]').count();
+if (labelSvgs !== 3) await fail(`expected 3 barcode labels, got ${labelSvgs}`); const barcodeSvg = await page.locator('svg[aria-label^="Barcode"]').first().evaluate((e) => e.outerHTML); writeFileSync(`${OUT}/label-sample.svg`, barcodeSvg); await shot("06-labels"); ok("3 barcode labels rendered");
+await go("/app/scan"); await page.getByLabel("Scan or type a code").fill("8901000000017"); await page.keyboard.press("Enter"); await see("MILK-1 · Milk 1L"); ok("scan by barcode finds the item");
+await page.getByLabel("Scan or type a code").fill("M-NEW"); await page.keyboard.press("Enter"); await see("full history"); ok("scan by lot finds the lot");
+await page.getByLabel("Scan or type a code").fill("nope-123"); await page.keyboard.press("Enter"); await see("Nothing found"); ok("unknown code gives a clear message");
+
 // 11 — isolation: a second company sees nothing of the first
 const ctx2 = await browser.newContext(); const p2 = await ctx2.newPage();
 await p2.goto(BASE + "/signup"); await p2.getByLabel("Your name").fill("Other Owner"); await p2.getByLabel("Company name").fill("Other Co"); await p2.getByLabel("Work email").fill("other" + Date.now() + "@example.test"); await p2.getByLabel("Password").fill("another-long-password");

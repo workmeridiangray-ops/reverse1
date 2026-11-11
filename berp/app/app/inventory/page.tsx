@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { requireCtx, can } from "@/lib/session";
 import { createClient } from "@/lib/supabase/server";
-import { Empty, Field, Flash, PageHeader, Qty, Table, TextInput } from "@/components/ui/kit";
+import { Empty, Field, Flash, LinkBtn, PageHeader, Qty, Table, TextInput } from "@/components/ui/kit";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { adjustStock } from "../actions";
 import { createTransfer, receiveTransfer } from "../actions2";
@@ -20,7 +20,7 @@ export default async function Inventory({ searchParams }: { searchParams: Promis
   const adj = can(ctx.role, "owner", "manager", "warehouse");
   return (
     <>
-      <PageHeader title="Inventory" sub="On hand, reserved and available are tracked separately. Movements are permanent; corrections are new movements." />
+      <PageHeader title="Inventory" sub="On hand, reserved and available are tracked separately. Movements are permanent; corrections are new movements." actions={<><LinkBtn href="/app/inventory/lots">Lots &amp; serials</LinkBtn><LinkBtn href="/app/inventory/labels">Print labels</LinkBtn><LinkBtn href="/app/scan">Scan</LinkBtn></>} />
       <Flash ok={q.ok} error={q.error} />
       {levels?.length ? (
         <Table head={["SKU", "Item", "Warehouse", "On hand", "Reserved", "Available", "Reorder at"]} numeric={[3, 4, 5, 6]}>
@@ -36,6 +36,8 @@ export default async function Inventory({ searchParams }: { searchParams: Promis
           <Field label="Warehouse" name="warehouse"><select id="warehouse" name="warehouse" required className="input">{(whs ?? []).map((w: any) => <option key={w.id} value={w.id}>{w.name}</option>)}</select></Field>
           <Field label="Change (+/−)" name="delta" hint="e.g. 25 or -3"><TextInput name="delta" required inputMode="decimal" /></Field>
           <Field label="Reason" name="reason"><TextInput name="reason" required minLength={3} placeholder="Cycle count, damage…" /></Field>
+          <Field label="Lot / serial (tracked items)" name="lot"><TextInput name="lot" placeholder="Required for batch/serial items" /></Field>
+          <Field label="Expiry (new lots)" name="expiry"><TextInput name="expiry" type="date" /></Field>
           <div className="sm:col-span-full"><SubmitButton>Post adjustment</SubmitButton></div>
         </form>
       )}

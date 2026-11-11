@@ -20,9 +20,9 @@ export default async function Items({ searchParams }: { searchParams: Promise<{ 
       <PageHeader title="Items and services" />
       <Flash ok={q.ok} error={q.error} />
       {data?.length ? (
-        <Table head={["SKU", "Name", "Type", "Unit", "Sale price", ...(showCost ? ["Cost"] : []), "Tax", "Status", ""]} numeric={[4, ...(showCost ? [5] : [])]}>
+        <Table head={["SKU", "Name", "Type", "Tracking", "Barcode", "Unit", "Sale price", ...(showCost ? ["Cost"] : []), "Tax", "Status", ""]} numeric={[6, ...(showCost ? [7] : [])]}>
           {data.map((i: any) => (
-            <tr key={i.id}><td className="td font-mono">{i.sku}</td><td className="td font-medium">{i.name}</td><td className="td">{i.kind}</td><td className="td">{i.unit}</td>
+            <tr key={i.id}><td className="td font-mono">{i.sku}</td><td className="td font-medium">{i.name}</td><td className="td">{i.kind}</td><td className="td">{i.tracking === "none" ? "—" : i.tracking}</td><td className="td font-mono text-xs">{i.barcode ?? "—"}</td><td className="td">{i.unit}</td>
               <td className="td num"><Money paise={Number(i.sale_price_paise)} /></td>{showCost && <td className="td num"><Money paise={Number(i.cost_paise)} /></td>}
               <td className="td">{i.tax_codes?.code ?? "—"}</td><td className="td">{i.active ? "Active" : "Retired"}</td>
               <td className="td">{edit && <form action={setActive}><input type="hidden" name="table" value="items" /><input type="hidden" name="back" value="/app/items" /><input type="hidden" name="id" value={i.id} /><input type="hidden" name="active" value={String(!i.active)} /><button className="btn">{i.active ? "Retire" : "Reactivate"}</button></form>}</td></tr>
@@ -35,6 +35,8 @@ export default async function Items({ searchParams }: { searchParams: Promise<{ 
           <Field label="SKU" name="sku" hint="Letters, numbers, . _ -"><TextInput name="sku" required pattern="[A-Za-z0-9._\-]{1,40}" /></Field>
           <Field label="Name" name="name"><TextInput name="name" required /></Field>
           <Field label="Type" name="kind"><select id="kind" name="kind" className="input"><option value="stock">Stock item</option><option value="service">Service</option></select></Field>
+          <Field label="Tracking" name="tracking" hint="Batch/serial can't be changed after the first stock movement."><select id="tracking" name="tracking" className="input"><option value="none">None</option><option value="batch">Batch / lot with expiry</option><option value="serial">Serial numbers</option></select></Field>
+          <Field label="Barcode" name="barcode" hint="Optional. Printable characters, unique in your company."><TextInput name="barcode" maxLength={40} /></Field>
           <Field label="Unit" name="unit"><TextInput name="unit" defaultValue="nos" /></Field>
           <Field label="Sale price (₹)" name="price"><TextInput name="price" inputMode="decimal" placeholder="1000.00" /></Field>
           <Field label="Cost (₹)" name="cost"><TextInput name="cost" inputMode="decimal" placeholder="600.00" /></Field>

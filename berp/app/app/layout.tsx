@@ -8,6 +8,7 @@ const NAV: { href: string; label: string; roles?: Role[] }[] = [
   { href: "/app/sales", label: "Sales orders" },
   { href: "/app/purchasing", label: "Purchasing" },
   { href: "/app/inventory", label: "Inventory" },
+  { href: "/app/scan", label: "Scan" },
   { href: "/app/invoices", label: "Invoices & receipts", roles: ["owner", "manager", "accountant", "viewer", "sales"] },
   { href: "/app/finance", label: "Finance", roles: ["owner", "manager", "accountant", "viewer"] },
   { href: "/app/reports", label: "Reports", roles: ["owner", "manager", "accountant", "viewer"] },

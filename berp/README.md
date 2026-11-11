@@ -22,6 +22,8 @@ balanced double-entry ledger underneath. Built from `Modular_Business_ERP_SaaS_F
 | People: employee records private to owner/manager, leave requests with overlap and self-approval rules, offboarding revokes access | Built, tested |
 | Assets & maintenance: register, warranty/service dates, work orders consume spares and post expense, disposal with reason | Built, tested |
 | Approval rules: amount thresholds route sales orders / purchase requests to a manager or owner; routing stamped per request; no self-approval; effective-dated | Built, tested |
+| Batch / serial tracking with expiry: lots on receipts, adjustments, dispatch (earliest-expiry-first, expired stock refused), returns go back to their original lots; lot history for recalls; expiry report | Built, tested (transfers and work-order spares of tracked items are refused until specified) |
+| Barcodes: item barcodes, Code 128 label sheets for items and lots, scan lookup page (USB/Bluetooth scanners type the code) | Built; encoder verified by an independent decoder |
 | Read-only REST API with hashed, revocable, rate-limited keys (`/api/v1/*`) | Built, browser-tested |
 | Outbound webhooks: transactional outbox, HMAC-signed, retried with backoff, SSRF-guarded, delivery history and manual retry | Built, tested; **live delivery to a public URL not exercised** (sandbox has no outside network) |
 | Platform super-admin; audit trail (append-only) | Built, tested |
@@ -29,7 +31,7 @@ balanced double-entry ledger underneath. Built from `Modular_Business_ERP_SaaS_F
 ## Not built (separate scopes in the source document)
 
 Approval delegation, multi-step approval chains, custom fields and document templates, report builder, SSO/2FA,
-batch/serial/expiry tracking, unit conversions, barcode labels and handheld scanning, courier
+unit conversions, handheld offline scanning, lot-tracked transfers and spares, courier
 integrations, payroll/attendance devices/recruitment, GST filing and e-invoicing, bank feeds, native apps,
 additional languages and currencies, and the manufacturing / restaurant / school / healthcare /
 construction packages.
@@ -48,8 +50,8 @@ npm run dev
 ```bash
 npm run typecheck
 npm run test:unit   # money/tax rules, CSV validation, billing and webhook signatures, SSRF guards, design-token contrast
-npm run test:db     # real PostgreSQL (no Docker): all migrations, then 50 tests
-npm run test:e2e    # real PostgreSQL + real PostgREST + the built app + headless Chromium (48 checks)
+npm run test:db     # real PostgreSQL (no Docker): all migrations, then 55 tests
+npm run test:e2e    # real PostgreSQL + real PostgREST + the built app + headless Chromium (60 checks)
 ```
 
 `test:e2e` needs a PostgREST binary (`POSTGREST_BIN=/path/to/postgrest`, v12.x). Authentication is the

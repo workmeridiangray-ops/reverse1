@@ -24,6 +24,12 @@ describe("csv", () => {
     expect(bad.rows).toHaveLength(1);
     expect(bad.errors.map((e) => e.message).join("|")).toMatch(/may only use letters.*does not exist.*not a valid amount.*duplicate sku/s);
   });
+  test("items: tracking and barcode columns are validated", () => {
+    const r = validateImport("items", "sku,name,tracking,barcode\nA,A,batch,890123\nB,B,lot,\nC,C,serial,890123\nD,D,none,caf\u00e9", {});
+    expect(r.rows).toHaveLength(1);
+    expect(r.rows[0]).toMatchObject({ sku: "A", tracking: "batch", barcode: "890123" });
+    expect(r.errors.map((e) => e.message).join("|")).toMatch(/tracking must be.*duplicate barcode.*printable/s);
+  });
   test("files over the row limit are refused whole; exports neutralise spreadsheet formulas", () => {
     const big = "name\n" + Array.from({ length: 2001 }, (_, i) => `n${i}`).join("\n");
     expect(validateImport("suppliers", big, {}).errors[0]!.message).toMatch(/Too many rows/);

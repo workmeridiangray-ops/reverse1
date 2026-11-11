@@ -1,6 +1,7 @@
 "use server";
 import { act, must, num, str } from "@/lib/action";
 import { parseInr } from "@/lib/rules/money";
+import { parseLots, totalQty, type Tracking } from "@/lib/rules/lots";
 
 // ---- masters
 export async function saveCustomer(f: FormData) {
@@ -21,7 +22,8 @@ export async function saveItem(f: FormData) {
     must(await sb.from("items").insert({
       tenant_id: (await sb.rpc("current_tenant")).data, sku: str(f, "sku"), name: str(f, "name"), kind: str(f, "kind") || "stock", unit: str(f, "unit") || "nos",
       sale_price_paise: parseInr(str(f, "price") || "0"), cost_paise: parseInr(str(f, "cost") || "0"),
-      tax_code_id: str(f, "tax_code_id") || null, reorder_level: num(f, "reorder") || 0 }).select());
+      tax_code_id: str(f, "tax_code_id") || null, reorder_level: num(f, "reorder") || 0,
+      tracking: str(f, "tracking") || "none", barcode: str(f, "barcode") || null }).select());
   });
 }
 export async function setActive(f: FormData) {
@@ -63,7 +65,22 @@ export async function requestPurchases(f: FormData) {
 export async function dispatchOrder(f: FormData) {
   const id = str(f, "id"); const back = `/app/sales/${id}`;
   await act(back, back, "Dispatch recorded", async (sb) => {
-    const lines = [...f.keys()].filter((k) => k.startsWith("d_")).map((k) => ({ so_line_id: k.slice(2), qty: Number(f.get(k)) })).filter((l) => l.qty > 0);
+    const ids = [...f.keys()].filter((k) => k.startsWith("d_") || k.startsWith("lots_")).map((k) => k.replace(/^(d_|lots_)/, ""));
+    const { data: sls } = await sb.from("sales_order_lines").select("id, items(sku, tracking)").in("id", [...new Set(ids)]);
+    const lines: { so_line_id: string; qty: number; lots?: { code: string; qty: number }[] }[] = [];
+    for (const sl of (sls ?? []) as any[]) {
+      const tracking = (sl.items?.tracking ?? "none") as Tracking;
+      let qty = Number(str(f, `d_${sl.id}`) || 0);
+      const text = str(f, `lots_${sl.id}`);
+      if (tracking !== "none" && text) {
+        const { lots, errors } = parseLots(text, tracking);
+        if (errors.length) throw new Error(`${sl.items.sku}: ${errors[0]}`);
+        const sum = totalQty(lots);
+        if (qty && qty !== sum) throw new Error(`${sl.items.sku}: the lots add up to ${sum} but the quantity is ${qty}`);
+        qty = sum;
+        if (qty > 0) lines.push({ so_line_id: sl.id, qty, lots: lots.map((l) => ({ code: l.code, qty: l.qty })) });
+      } else if (qty > 0) lines.push({ so_line_id: sl.id, qty });
+    }
     if (!lines.length) throw new Error("Enter a quantity to dispatch");
     must(await sb.rpc("dispatch_order", { p_order: id, p_lines: lines, p_carrier_ref: str(f, "carrier") || null }));
   });
@@ -86,7 +103,16 @@ export async function rejectRequest(f: FormData) {
 export async function receiveGoods(f: FormData) {
   const id = str(f, "id"); const back = `/app/purchasing/${id}`;
   await act(back, back, "Goods received", async (sb) => {
-    const lines = [...f.keys()].filter((k) => k.startsWith("r_")).map((k) => ({ po_line_id: k.slice(2), qty: Number(f.get(k)) })).filter((l) => l.qty > 0);
+    const { data: pls } = await sb.from("purchase_order_lines").select("id, items(sku, tracking)").eq("po_id", id);
+    const lines: { po_line_id: string; qty: number; lots?: { code: string; qty: number; expiry?: string }[] }[] = [];
+    for (const pl of (pls ?? []) as any[]) {
+      const tracking = (pl.items?.tracking ?? "none") as Tracking;
+      if (tracking === "none") { const q = Number(str(f, `r_${pl.id}`) || 0); if (q > 0) lines.push({ po_line_id: pl.id, qty: q }); continue; }
+      const text = str(f, `lots_${pl.id}`); if (!text) continue;
+      const { lots, errors } = parseLots(text, tracking);
+      if (errors.length) throw new Error(`${pl.items.sku}: ${errors[0]}`);
+      lines.push({ po_line_id: pl.id, qty: totalQty(lots), lots });
+    }
     if (!lines.length) throw new Error("Enter a received quantity");
     must(await sb.rpc("receive_goods", { p_po: id, p_lines: lines, p_key: str(f, "key") || null }));
   });
@@ -105,7 +131,7 @@ export async function payBill(f: FormData) {
 // ---- inventory
 export async function adjustStock(f: FormData) {
   await act("/app/inventory", "/app/inventory", "Stock adjusted", async (sb) => {
-    must(await sb.rpc("adjust_stock", { p_item: str(f, "item"), p_warehouse: str(f, "warehouse"), p_delta: Number(str(f, "delta")), p_reason: str(f, "reason") }));
+    must(await sb.rpc("adjust_stock", { p_item: str(f, "item"), p_warehouse: str(f, "warehouse"), p_delta: Number(str(f, "delta")), p_reason: str(f, "reason"), p_lot: str(f, "lot") || null, p_expiry: str(f, "expiry") || null }));
   });
 }
 

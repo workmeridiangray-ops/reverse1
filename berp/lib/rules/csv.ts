@@ -24,7 +24,7 @@ export type ImportKind = "customers" | "suppliers" | "items";
 export const TEMPLATES: Record<ImportKind, string[]> = {
   customers: ["name", "email", "phone", "gstin", "credit_limit", "payment_terms_days"],
   suppliers: ["name", "email", "phone", "gstin"],
-  items: ["sku", "name", "kind", "unit", "sale_price", "cost", "tax_code", "reorder_level"],
+  items: ["sku", "name", "kind", "unit", "sale_price", "cost", "tax_code", "reorder_level", "tracking", "barcode"],
 };
 const REQUIRED: Record<ImportKind, string[]> = { customers: ["name"], suppliers: ["name"], items: ["sku", "name"] };
 const GSTIN = /^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
@@ -77,7 +77,10 @@ export function validateImport(kind: ImportKind, text: string, taxCodes: Record<
       const tc = rec.tax_code ? taxCodes[rec.tax_code.toUpperCase()] : null;
       if (rec.tax_code && !tc) fail(`tax_code "${rec.tax_code}" does not exist in this workspace`);
       let reorder = 0; if (rec.reorder_level) { reorder = Number(rec.reorder_level); if (!(reorder >= 0) || !/^\d+(\.\d{1,3})?$/.test(rec.reorder_level)) fail("reorder_level must be a number with up to 3 decimals"); }
-      Object.assign(out, { sku: rec.sku, name: rec.name, kind: k, unit: rec.unit || "nos", sale_price_paise: money("sale_price") ?? 0, cost_paise: money("cost") ?? 0, tax_code_id: tc ?? null, reorder_level: reorder });
+      const tr = rec.tracking || "none"; if (!["none", "batch", "serial"].includes(tr)) fail("tracking must be none, batch or serial"); else if (tr !== "none" && k !== "stock") fail("only stock items can be batch or serial tracked");
+      if (rec.barcode && !/^[\x20-\x7E]{1,40}$/.test(rec.barcode)) fail("barcode must be 1–40 printable characters");
+      if (rec.barcode) { const bk = "bc:" + rec.barcode.toLowerCase(); if (seen.has(bk)) fail(`duplicate barcode "${rec.barcode}" in this file`); seen.add(bk); }
+      Object.assign(out, { tracking: tr, barcode: rec.barcode || null, sku: rec.sku, name: rec.name, kind: k, unit: rec.unit || "nos", sale_price_paise: money("sale_price") ?? 0, cost_paise: money("cost") ?? 0, tax_code_id: tc ?? null, reorder_level: reorder });
       const key = (rec.sku ?? "").toLowerCase();
       if (rec.sku && seen.has(key)) fail(`duplicate sku "${rec.sku}" in this file`); seen.add(key);
     }
