@@ -5,7 +5,45 @@ export type Database = {
   
   "public": {
           Tables: {
-            "appointments": {
+            "appointment_requests": {
+                  Row: {
+                    "appointment_id": string | null,"clinic_id": string,"created_at": string,"decline_reason": string | null,"handled_at": string | null,"handled_by": string | null,"id": string,"patient_id": string,"preferred": string,"reason": string,"status": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "appointment_id"?: string | null,"clinic_id": string,"created_at"?: string,"decline_reason"?: string | null,"handled_at"?: string | null,"handled_by"?: string | null,"id"?: string,"patient_id": string,"preferred": string,"reason": string,"status"?: string,"updated_at"?: string
+                  }
+                  Update: {
+                    "appointment_id"?: string | null,"clinic_id"?: string,"created_at"?: string,"decline_reason"?: string | null,"handled_at"?: string | null,"handled_by"?: string | null,"id"?: string,"patient_id"?: string,"preferred"?: string,"reason"?: string,"status"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "appointment_requests_appointment_id_clinic_id_fkey"
+      columns: ["appointment_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "appointments"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "appointment_requests_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "appointment_requests_handled_by_clinic_id_fkey"
+      columns: ["handled_by","clinic_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "appointment_requests_patient_id_clinic_id_fkey"
+      columns: ["patient_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id","clinic_id"]
+    }
+                  ]
+                },"appointments": {
                   Row: {
                     "cancelled_reason": string | null,"checked_in_at": string | null,"checked_in_by": string | null,"clinic_id": string,"completed_at": string | null,"created_at": string,"created_by": string | null,"doctor_id": string,"ends_at": string,"id": string,"patient_id": string,"reason": string | null,"room_id": string | null,"roomed_at": string | null,"starts_at": string,"status": Database["public"]['Enums']["appointment_status"],"updated_at": string
                   }
@@ -131,6 +169,82 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "profiles"
       referencedColumns: ["id"]
+    }
+                  ]
+                },"dispense_items": {
+                  Row: {
+                    "batch_expiry": string,"batch_id": string,"clinic_id": string,"dispense_id": string,"id": string,"mid_course": boolean,"quantity": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "batch_expiry": string,"batch_id": string,"clinic_id": string,"dispense_id": string,"id"?: string,"mid_course": boolean,"quantity": number
+                  }
+                  Update: {
+                    "batch_expiry"?: string,"batch_id"?: string,"clinic_id"?: string,"dispense_id"?: string,"id"?: string,"mid_course"?: boolean,"quantity"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "dispense_items_batch_id_clinic_id_fkey"
+      columns: ["batch_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "stock_batches"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "dispense_items_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "dispense_items_dispense_id_clinic_id_fkey"
+      columns: ["dispense_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "dispenses"
+      referencedColumns: ["id","clinic_id"]
+    }
+                  ]
+                },"dispenses": {
+                  Row: {
+                    "allergy_flagged": boolean,"clinic_id": string,"cover_days": number | null,"dispensed_at": string,"dispensed_by": string,"fefo_skipped": boolean,"id": string,"mid_course": boolean,"patient_id": string,"pharmacist_note": string | null,"prescription_id": string,"product_id": string,"quantity": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "allergy_flagged": boolean,"clinic_id": string,"cover_days"?: number | null,"dispensed_at"?: string,"dispensed_by": string,"fefo_skipped": boolean,"id"?: string,"mid_course": boolean,"patient_id": string,"pharmacist_note"?: string | null,"prescription_id": string,"product_id": string,"quantity": number
+                  }
+                  Update: {
+                    "allergy_flagged"?: boolean,"clinic_id"?: string,"cover_days"?: number | null,"dispensed_at"?: string,"dispensed_by"?: string,"fefo_skipped"?: boolean,"id"?: string,"mid_course"?: boolean,"patient_id"?: string,"pharmacist_note"?: string | null,"prescription_id"?: string,"product_id"?: string,"quantity"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "dispenses_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "dispenses_dispensed_by_clinic_id_fkey"
+      columns: ["dispensed_by","clinic_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "dispenses_patient_id_clinic_id_fkey"
+      columns: ["patient_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "dispenses_prescription_id_clinic_id_fkey"
+      columns: ["prescription_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "prescriptions"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "dispenses_product_id_clinic_id_fkey"
+      columns: ["product_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "stock_products"
+      referencedColumns: ["id","clinic_id"]
     }
                   ]
                 },"invoice_lines": {
@@ -535,6 +649,84 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"stock_batches": {
+                  Row: {
+                    "batch_number": string,"clinic_id": string,"created_at": string,"expiry_date": string,"id": string,"product_id": string,"quantity_on_hand": number,"quantity_received": number,"received_at": string,"received_by": string | null,"status": string,"status_note": string | null,"supplier": string | null,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "batch_number": string,"clinic_id": string,"created_at"?: string,"expiry_date": string,"id"?: string,"product_id": string,"quantity_on_hand"?: number,"quantity_received": number,"received_at"?: string,"received_by"?: string | null,"status"?: string,"status_note"?: string | null,"supplier"?: string | null,"updated_at"?: string
+                  }
+                  Update: {
+                    "batch_number"?: string,"clinic_id"?: string,"created_at"?: string,"expiry_date"?: string,"id"?: string,"product_id"?: string,"quantity_on_hand"?: number,"quantity_received"?: number,"received_at"?: string,"received_by"?: string | null,"status"?: string,"status_note"?: string | null,"supplier"?: string | null,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "stock_batches_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "stock_batches_product_id_clinic_id_fkey"
+      columns: ["product_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "stock_products"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "stock_batches_received_by_clinic_id_fkey"
+      columns: ["received_by","clinic_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id","clinic_id"]
+    }
+                  ]
+                },"stock_movements": {
+                  Row: {
+                    "batch_id": string,"clinic_id": string,"created_at": string,"created_by": string | null,"delta": number,"dispense_id": string | null,"id": number,"note": string | null,"reason": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "batch_id": string,"clinic_id": string,"created_at"?: string,"created_by"?: string | null,"delta": number,"dispense_id"?: string | null,"id"?: never,"note"?: string | null,"reason": string
+                  }
+                  Update: {
+                    "batch_id"?: string,"clinic_id"?: string,"created_at"?: string,"created_by"?: string | null,"delta"?: number,"dispense_id"?: string | null,"id"?: never,"note"?: string | null,"reason"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "stock_movements_batch_id_clinic_id_fkey"
+      columns: ["batch_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "stock_batches"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "stock_movements_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"stock_products": {
+                  Row: {
+                    "active": boolean,"clinic_id": string,"created_at": string,"drug_classes": (string)[],"id": string,"name": string,"reorder_level": number,"unit": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"clinic_id": string,"created_at"?: string,"drug_classes"?: (string)[],"id"?: string,"name": string,"reorder_level"?: number,"unit"?: string
+                  }
+                  Update: {
+                    "active"?: boolean,"clinic_id"?: string,"created_at"?: string,"drug_classes"?: (string)[],"id"?: string,"name"?: string,"reorder_level"?: number,"unit"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "stock_products_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    }
+                  ]
                 }
           }
           Views: {
@@ -567,11 +759,25 @@ isOneToOne: false
                 }
           }
           Functions: {
-            "create_lab_order":
+            "adjust_stock":
+{ Args: { "p_batch": string,"p_delta": number,"p_note": string,"p_reason": string }; Returns: undefined
+                           },
+"analytics_lab_durations":
+{ Args: { "p_from": string,"p_to": string }; Returns: {
+              "kind": string,"minutes": number
+            }[]
+                           },
+"create_lab_order":
 { Args: { "p_consultation": string,"p_notes"?: string,"p_patient": string,"p_tests": (string)[] }; Returns: string
+                           },
+"dispense_prescription":
+{ Args: { "p_allocations": Json,"p_cover_days": number,"p_note": string,"p_prescription": string,"p_product": string }; Returns: string
                            },
 "log_record_access":
 { Args: { "p_reason"?: string,"p_record_id": string,"p_table": string }; Returns: undefined
+                           },
+"update_my_details":
+{ Args: { "p_address": string,"p_communication": boolean,"p_email": string,"p_phone": string }; Returns: undefined
                            }
           }
           Enums: {

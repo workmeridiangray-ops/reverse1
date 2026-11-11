@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { describeSummary, formatMinutes, formatPercent, formatProportion, MIN_SAMPLE, proportion, quantile, summarizeDurations, tenthsOfPercent } from "./analytics";
+import { collectionRate, describeSummary, formatMinutes, formatPercent, formatProportion, MIN_SAMPLE, proportion, quantile, summarizeDurations, tenthsOfPercent } from "./analytics";
 import { validateMyDetails, validateRequest } from "./portal";
 
 const seq = (n: number, f: (i: number) => number = (i) => i + 1) => Array.from({ length: n }, (_, i) => f(i));
@@ -112,5 +112,24 @@ describe("portal request rules", () => {
     expect(validateMyDetails({ phone: "+44 7700 900101", email: "a@b.co" })).toEqual({});
     expect(Object.keys(validateMyDetails({ phone: "abc", email: "nope" })).sort()).toEqual(["email", "phone"]);
     expect(validateMyDetails({ phone: "", email: "" })).toEqual({}); // both optional
+  });
+});
+
+describe("collectionRate", () => {
+  const inv = (resp: number, paid: number) => ({ responsibilityMinor: resp, paidMinor: paid });
+  it("is paid-of-owed over the invoices counted, in exact minor units", () => {
+    const p = collectionRate([...Array.from({ length: 10 }, () => inv(10_000, 7_500))]);
+    expect(p).toMatchObject({ numerator: 75_000, denominator: 100_000, status: "ok", tenths: 750 });
+  });
+  it("an overpayment on one invoice does not hide a shortfall on another", () => {
+    const rows = [inv(10_000, 25_000), ...Array.from({ length: 9 }, () => inv(10_000, 0))];
+    expect(collectionRate(rows)).toMatchObject({ numerator: 10_000, denominator: 100_000, tenths: 100 });
+  });
+  it("says 'too few to judge' under 10 invoices, whatever the amounts", () => {
+    expect(collectionRate([inv(1_000_000, 999_999)]).status).toBe("too_few");
+  });
+  it("skips unusable rows and handles no invoices", () => {
+    expect(collectionRate([]).status).toBe("none");
+    expect(collectionRate([inv(0, 0), inv(-5, 1), inv(5.5, 1)]).status).toBe("none");
   });
 });

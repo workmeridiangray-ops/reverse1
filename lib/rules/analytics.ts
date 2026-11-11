@@ -114,3 +114,22 @@ export function describeSummary(s: DurationSummary, minN = MIN_SAMPLE): string {
   if (s.status === "too_few") return `Too few to judge (${s.n} observations, need ${minN})`;
   return `Median ${formatMinutes(s.median!)}, 90% within ${formatMinutes(s.p90!)}`;
 }
+
+/**
+ * Share of what patients OWE (their responsibility after insurance) that has
+ * been paid, over issued invoices. Money in minor units. The sample is the
+ * number of invoices, so a few large invoices can't pass for a trend, and an
+ * overpayment on one invoice never makes up for a shortfall on another.
+ */
+export function collectionRate(invoices: ReadonlyArray<{ responsibilityMinor: number; paidMinor: number }>, minN = MIN_SAMPLE): Proportion {
+  let owed = 0;
+  let collected = 0;
+  let counted = 0;
+  for (const i of invoices) {
+    if (!Number.isSafeInteger(i.responsibilityMinor) || !Number.isSafeInteger(i.paidMinor) || i.responsibilityMinor <= 0 || i.paidMinor < 0) continue;
+    owed += i.responsibilityMinor;
+    collected += Math.min(i.paidMinor, i.responsibilityMinor);
+    counted++;
+  }
+  return proportion(collected, owed, counted, minN);
+}

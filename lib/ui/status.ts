@@ -11,6 +11,8 @@ import { STATUS_LABEL } from "@/lib/rules/appointment-status";
 import type { StoredAllergyStatus } from "@/lib/rules/allergy";
 import { FLAG_LABEL, type ResultFlag } from "@/lib/rules/lab-flags";
 import { LAB_ORDER_LABEL, type LabOrderStatus } from "@/lib/rules/lab-orders";
+import type { BatchState, ExpiryBand } from "@/lib/rules/dispensing";
+import { REQUEST_LABEL, type RequestStatus } from "@/lib/rules/portal";
 
 export type Tone = "ok" | "warn" | "danger" | "info" | "neutral" | "critical" | "brand";
 export type IconName =
@@ -117,6 +119,39 @@ export const RESULT_RELEASE_VISUAL = {
   held: { tone: "neutral", icon: "lock", label: "Not released" },
 } as const satisfies Record<string, StatusVisual>;
 
+export const BATCH_STATE_VISUAL: Record<BatchState, StatusVisual> = {
+  usable: { tone: "ok", icon: "check", label: "In stock" },
+  expired: { tone: "danger", icon: "ban", label: "Expired" },
+  quarantined: { tone: "warn", icon: "lock", label: "Quarantined" },
+  recalled: { tone: "danger", icon: "flag", label: "Recalled" },
+  empty: { tone: "neutral", icon: "dot", label: "Empty" },
+};
+
+export const EXPIRY_BAND_VISUAL: Record<ExpiryBand, StatusVisual> = {
+  expired: { tone: "danger", icon: "ban", label: "Expired" },
+  soon: { tone: "warn", icon: "clock", label: "Expires soon" },
+  ok: { tone: "ok", icon: "check", label: "In date" },
+};
+
+export const STOCK_LEVEL_VISUAL = {
+  out: { tone: "danger", icon: "ban", label: "Out of stock" },
+  low: { tone: "warn", icon: "alert", label: "Below reorder level" },
+  ok: { tone: "ok", icon: "check", label: "Stock OK" },
+} as const satisfies Record<string, StatusVisual>;
+
+export const DISPENSE_FLAG_VISUAL = {
+  midCourse: { tone: "warn", icon: "clock", label: "Expires mid-course" },
+  fefoSkipped: { tone: "warn", icon: "alert", label: "Earlier batch skipped" },
+  allergy: { tone: "danger", icon: "alert", label: "Allergy to this class" },
+} as const satisfies Record<string, StatusVisual>;
+
+export const REQUEST_VISUAL: Record<RequestStatus, StatusVisual> = {
+  open: { tone: "info", icon: "hourglass", label: REQUEST_LABEL.open },
+  booked: { tone: "ok", icon: "check", label: REQUEST_LABEL.booked },
+  declined: { tone: "neutral", icon: "x", label: REQUEST_LABEL.declined },
+  cancelled: { tone: "neutral", icon: "x", label: REQUEST_LABEL.cancelled },
+};
+
 export const ALL_VISUAL_SETS = {
   APPOINTMENT_VISUAL,
   PAYMENT_VISUAL,
@@ -129,4 +164,9 @@ export const ALL_VISUAL_SETS = {
   LAB_ORDER_VISUAL,
   ALLERGY_CHECK_VISUAL,
   RESULT_RELEASE_VISUAL,
+  BATCH_STATE_VISUAL,
+  EXPIRY_BAND_VISUAL,
+  STOCK_LEVEL_VISUAL,
+  DISPENSE_FLAG_VISUAL,
+  REQUEST_VISUAL,
 } as const;

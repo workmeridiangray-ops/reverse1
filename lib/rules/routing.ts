@@ -43,6 +43,7 @@ export const ROUTE_ACCESS: ReadonlyArray<readonly [string, readonly Role[]]> = [
   ["/patients/new", ["admin", "receptionist"]],
   ["/appointments", ["admin", "receptionist", "doctor"]],
   ["/appointments/new", ["admin", "receptionist"]],
+  ["/appointments/requests", ["admin", "receptionist"]],
   ["/billing", ["admin", "receptionist"]],
 ];
 
@@ -91,7 +92,9 @@ export function navFor(role: Role): NavItem[] {
       { href: "/reception", label: "Front desk" },
       { href: "/patients", label: "Patients" },
       { href: "/appointments", label: "Appointments" },
+      { href: "/appointments/requests", label: "Requests" },
       { href: "/billing", label: "Billing" },
+      { href: "/admin/analytics", label: "Analytics" },
       { href: "/admin/lab", label: "Lab ranges" },
       { href: "/admin/audit", label: "Audit log" },
     ],
@@ -99,6 +102,7 @@ export function navFor(role: Role): NavItem[] {
       { href: "/reception", label: "Front desk" },
       { href: "/patients", label: "Patients" },
       { href: "/appointments", label: "Appointments" },
+      { href: "/appointments/requests", label: "Requests" },
       { href: "/billing", label: "Billing" },
     ],
     doctor: [
@@ -107,8 +111,15 @@ export function navFor(role: Role): NavItem[] {
       { href: "/appointments", label: "Schedule" },
     ],
     lab: [{ href: "/lab", label: "Lab" }],
-    pharmacist: [{ href: "/pharmacy", label: "Pharmacy" }],
-    patient: [{ href: "/me", label: "My care" }],
+    pharmacist: [
+      { href: "/pharmacy", label: "Dispensing" },
+      { href: "/pharmacy/stock", label: "Stock" },
+    ],
+    patient: [
+      { href: "/me", label: "My care" },
+      { href: "/me/request", label: "Appointments" },
+      { href: "/me/details", label: "My details" },
+    ],
   };
   return items[role];
 }
