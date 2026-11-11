@@ -3,8 +3,9 @@ import { HashRouter, Link, NavLink, Navigate, Outlet, Route, Routes, useLocation
 import { SCREENS, type Screen, type Area } from './registry';
 import { PublicLayout, Logo } from './screens/public';
 import { Icon, Toasts, Button, Empty } from './ui/kit';
-import { useSession, useStore, useRows, logout, expireSession, switchWorkspace, workspacesFor, update, setBranch, getState, scoped } from './store';
-import { TENANTS } from './data/seed';
+import { useSession, useStore, useRows, logout, expireSession, switchWorkspace, workspacesFor, update, setBranch, getState, scoped, onSyncError } from './store';
+import { toast } from './ui/kit';
+import { tenantMeta } from './data/seed';
 import { cap, dateTime, money } from './lib/format';
 
 class Boundary extends Component<{ children: ReactNode }, { err?: Error }> {
@@ -16,7 +17,8 @@ function ScrollTop() { const { pathname } = useLocation(); useEffect(() => { win
 
 /** Server-style guard: membership, status, role and area are checked on every navigation. */
 function Guard({ area, children }: { area: 'app' | 'portal' | 'admin'; children: ReactNode }) {
-  const s = useSession(); const expired = useStore((st) => st.flags.expiredSession); const members = useRows('members'); const links = useRows('portalLinks'); const loc = useLocation();
+  const s = useSession(); const expired = useStore((st) => st.flags.expiredSession); const booting = useStore((st) => !!st.flags.booting); const members = useRows('members'); const links = useRows('portalLinks'); const loc = useLocation();
+  if (booting) return <div className="auth" role="status" aria-live="polite"><div className="auth-card"><div className="skel" style={{ width: '60%' }} /><p style={{ color: 'var(--muted)' }}>Loading your workspace…</p></div></div>;
   if (!s) return <Navigate to={expired ? '/expired' : '/login'} replace state={{ from: loc.pathname }} />;
   if (s.mfaPending) return <Navigate to="/2fa" replace />;
   if (area === 'app') { if (s.customerId) return <Navigate to="/portal" replace />; if (s.platformRole) return <Navigate to="/admin" replace />; const m = getState().db.members.find((x) => x.id === s.memberId); if (!m || m.status !== 'active') { return <Navigate to="/suspended" replace />; } }
@@ -68,7 +70,7 @@ function UserMenu() {
 function AppShell({ area }: { area: 'app' | 'admin' }) {
   const s = useSession()!; const [open, setOpen] = useState(false); const loc = useLocation(); const branches = useRows('branches'); const branchId = useStore((st) => st.flags.branchId); useIdleLogout();
   useEffect(() => setOpen(false), [loc.pathname]);
-  const g = groups(area, s.platformRole ?? s.role); const T = TENANTS.find((t) => t.id === s.tenantId);
+  const g = groups(area, s.platformRole ?? s.role); const T = tenantMeta(s.tenantId);
   return <div className="app"><aside className={'side' + (open ? ' open' : '')} aria-label="Primary"><Logo to={area === 'admin' ? '/admin' : '/app'} />
     {area === 'app' ? <div className="ws"><b>{T?.name}</b><span>{cap(s.role)} · {T?.city}</span></div> : <div className="ws"><b>Platform admin</b><span>{cap(s.platformRole!.replace('platform_', ''))}</span></div>}
     <nav className="nav">{g.map(([name, list]) => <div key={name}><h4>{name}</h4>{list.map((sc) => <NavLink key={sc.path} to={sc.path} end={sc.path === '/app' || sc.path === '/admin'} className={({ isActive }) => (isActive ? 'on' : '')}><Icon n={sc.icon ?? 'chev'} size={16} />{sc.title}</NavLink>)}</div>)}
@@ -85,6 +87,7 @@ function PortalShell() {
 const NotFound = () => <div className="auth"><div className="auth-card" style={{ textAlign: 'center' }}><Logo /><h1 style={{ marginTop: 12 }}>Page not found</h1><p style={{ color: 'var(--muted)' }}>That page doesn’t exist or has moved.</p><Link to="/" className="btn primary">Go home</Link></div></div>;
 
 export default function App() {
+  useEffect(() => { onSyncError((m) => toast('Not saved: ' + m, 'err')); }, []);
   const uniq = (list: Screen[]) => { const seen = new Set<string>(); return list.filter((s) => (seen.has(s.path) ? false : (seen.add(s.path), true))); };
   const pubs = uniq(SCREENS.filter((s) => s.area === 'public')), auths = uniq(SCREENS.filter((s) => s.area === 'auth')), apps = uniq(SCREENS.filter((s) => s.area === 'app')), portals = uniq(SCREENS.filter((s) => s.area === 'portal')), admins = uniq(SCREENS.filter((s) => s.area === 'admin'));
   const rel = (p: string, base: string) => (p === base ? '' : p.slice(base.length + 1));

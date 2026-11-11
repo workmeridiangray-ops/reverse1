@@ -1,0 +1,19 @@
+# Local Supabase for Ledgerline: `supabase start` then `supabase db reset` applies migrations and seed.sql.
+project_id = "ledgerline"
+
+[api]
+port = 54331
+schemas = ["public"]
+
+[db]
+port = 54332
+major_version = 15
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[auth]
+enable_signup = true
+[auth.email]
+enable_confirmations = false

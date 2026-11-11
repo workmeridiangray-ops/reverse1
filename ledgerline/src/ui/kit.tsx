@@ -89,7 +89,7 @@ export function FieldInput({ f, value, onChange, error, id }: { f: FieldSpec; va
   if (f.type === 'checkbox') return <div className={'fld chk' + (f.half ? ' half' : '')}><label htmlFor={id}>{input}<span>{f.label}</span></label>{f.help && <small id={id + '-h'}>{f.help}</small>}</div>;
   return <div className={'fld' + (f.half ? ' half' : '')}><label htmlFor={id}><span>{f.label}{f.required && <b className="req" aria-hidden="true"> *</b>}</span></label>{input}{f.help && !error && <small id={id + '-h'}>{f.help}</small>}{error && <em id={id + '-e'} className="err">{error}</em>}</div>;
 }
-export function FormView({ spec, init = {}, submit = 'Save', onSubmit, onCancel, draftKey, busyText }: { spec: FieldSpec[]; init?: Record<string, any>; submit?: string; onSubmit: (v: Record<string, any>) => { ok: boolean; error?: string; message?: string } | void; onCancel?: () => void; draftKey?: string; busyText?: string }) {
+export function FormView({ spec, init = {}, submit = 'Save', onSubmit, onCancel, draftKey, busyText }: { spec: FieldSpec[]; init?: Record<string, any>; submit?: string; onSubmit: (v: Record<string, any>) => { ok: boolean; error?: string; message?: string } | void | Promise<{ ok: boolean; error?: string; message?: string } | void>; onCancel?: () => void; draftKey?: string; busyText?: string }) {
   const uidp = useId();
   const [vals, setVals] = useState<Record<string, any>>(() => { const base = toForm(spec, init); if (draftKey) { try { const d = sessionStorage.getItem('draft:' + draftKey); if (d) return { ...base, ...JSON.parse(d) }; } catch { /* no draft */ } } return base; });
   const [errs, setErrs] = useState<Record<string, string>>({}); const [dirty, setDirty] = useState(false); const [busy, setBusy] = useState(false); const [top, setTop] = useState('');
@@ -98,8 +98,11 @@ export function FormView({ spec, init = {}, submit = 'Save', onSubmit, onCancel,
   return <form noValidate className="form" onSubmit={(e) => {
     e.preventDefault(); const er = validate(spec, vals); setErrs(er); setTop('');
     if (Object.keys(er).length) { setTop(`Fix ${Object.keys(er).length} field${Object.keys(er).length > 1 ? 's' : ''} to continue.`); setTimeout(() => (document.querySelector('[aria-invalid="true"]') as HTMLElement | null)?.focus(), 0); return; }
-    setBusy(true); const r = onSubmit(fromForm(spec.filter((f) => !f.when || f.when(vals)), vals)); setBusy(false);
-    if (r && !r.ok) { setTop(r.error ?? 'Could not save.'); return; } setDirty(false); if (draftKey) try { sessionStorage.removeItem('draft:' + draftKey); } catch { /* ignore */ }
+    setBusy(true);
+    Promise.resolve(onSubmit(fromForm(spec.filter((f) => !f.when || f.when(vals)), vals))).then((r) => {
+      setBusy(false); if (r && !r.ok) { setTop(r.error ?? 'Could not save.'); return; }
+      setDirty(false); if (draftKey) try { sessionStorage.removeItem('draft:' + draftKey); } catch { /* ignore */ }
+    }, (err: unknown) => { setBusy(false); setTop(err instanceof Error ? err.message : 'Could not save.'); });
   }}>
     {top && <Notice kind="bad">{top}</Notice>}
     <div className="grid-f">{spec.filter((f) => !f.when || f.when(vals)).map((f) => <FieldInput key={f.k} id={uidp + f.k} f={f} value={vals[f.k]} error={errs[f.k]} onChange={(v) => { setVals((o) => ({ ...o, [f.k]: v })); setDirty(true); setErrs((o) => ({ ...o, [f.k]: '' })); }} />)}</div>

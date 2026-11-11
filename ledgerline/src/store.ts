@@ -1,27 +1,48 @@
 import { useSyncExternalStore } from 'react';
-import { seed, DEFAULT_SETTINGS, TENANTS, type DB, type Row } from './data/seed';
+import { seed, DEFAULT_SETTINGS, TENANTS, tenantMeta, registerTenant, type TenantMeta, type DB, type Row } from './data/seed';
+import { REMOTE, sb, planOps, execOps, fetchAccess, fetchTenantData, fetchPlatformData, stateFromGstin, type Access } from './remote';
 import { addDays, today, uid } from './lib/format';
 import { calcDoc, docNumber, fiscalYear, outstanding, derivedStatus, validateInvoice, checkAllocation, checkAdjustment, periodLocked, nextRun, isDuplicateBill, suggestMatch, type Line } from './lib/rules';
 
 export interface Session { memberId: string; email: string; name: string; role: string; tenantId: string; platformRole?: string; customerId?: string; mfaPending?: boolean; expired?: boolean }
-export interface State { db: DB; settings: Record<string, any>; session: Session | null; flags: { expiredSession?: boolean; branchId?: string }; version: number }
+export interface State { db: DB; settings: Record<string, any>; session: Session | null; flags: { expiredSession?: boolean; branchId?: string; booting?: boolean }; version: number; access?: Access }
 export type Res = { ok: true; id?: string; message?: string } | { ok: false; error: string };
 const KEY = 'ledgerline.v1';
 const VERSION = 1;
 
-function fresh(): State { const settings: Record<string, any> = {}; TENANTS.forEach((t) => (settings[t.id] = DEFAULT_SETTINGS(t.id))); return { db: seed(), settings, session: null, flags: {}, version: VERSION }; }
+const emptyDb = (): DB => Object.fromEntries(Object.keys(seed()).map((k) => [k, [] as Row[]]));
+function fresh(): State {
+  if (REMOTE) return { db: emptyDb(), settings: {}, session: null, flags: { booting: true }, version: VERSION };
+  const settings: Record<string, any> = {}; TENANTS.forEach((t) => (settings[t.id] = DEFAULT_SETTINGS(t.id))); return { db: seed(), settings, session: null, flags: {}, version: VERSION };
+}
 function load(): State {
+  if (REMOTE) return fresh();
   try { const raw = localStorage.getItem(KEY); if (raw) { const s = JSON.parse(raw) as State; if (s.version === VERSION && s.db?.invoices) return s; } } catch { /* storage unavailable or corrupt: start fresh */ }
   return fresh();
 }
 let state: State = load();
 const subs = new Set<() => void>();
 let saveTimer: ReturnType<typeof setTimeout> | undefined;
-function persist() { clearTimeout(saveTimer); saveTimer = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* quota or private mode: continue in memory */ } }, 150); }
-function commit(next: State) { state = next; subs.forEach((f) => f()); persist(); }
+function persist() { if (REMOTE) return; clearTimeout(saveTimer); saveTimer = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* quota or private mode: continue in memory */ } }, 150); }
+let syncChain: Promise<void> = Promise.resolve();
+let syncError: ((message: string) => void) | null = null;
+export const onSyncError = (fn: (message: string) => void) => { syncError = fn; };
+/** Remote mode: every change is sent to the database. If the database refuses (RLS or an invariant), the browser's copy is discarded and reloaded. */
+function enqueueSync(prev: State, next: State) {
+  const s = next.session; if (!s || s.mfaPending) return;
+  const ops = planOps({ db: prev.db, settings: prev.settings }, { db: next.db, settings: next.settings }, { tenantId: s.platformRole ? null : s.tenantId, platform: !!s.platformRole });
+  if (!ops.length) return;
+  syncChain = syncChain.then(() => execOps(ops)).catch(async (e: Error) => { syncError?.(friendlyDbError(e.message)); await reloadCurrent(); });
+}
+export function friendlyDbError(m: string): string {
+  if (/row-level security|permission denied/i.test(m)) return 'Your role is not allowed to make that change.';
+  if (/duplicate key|uq_/i.test(m)) return 'That would duplicate an existing number or reference.';
+  return m.replace(/^error: /i, '');
+}
+function commit(next: State, opts: { sync?: boolean } = {}) { const prev = state; state = next; subs.forEach((f) => f()); if (REMOTE) { if (opts.sync !== false) enqueueSync(prev, next); } else persist(); }
 export const getState = () => state;
 export function useStore<T>(sel: (s: State) => T): T { return useSyncExternalStore((cb) => (subs.add(cb), () => subs.delete(cb)), () => sel(state)) as T; }
-export function resetDemo() { try { localStorage.removeItem(KEY); } catch { /* ignore */ } commit(fresh()); }
+export function resetDemo() { if (REMOTE) return; try { localStorage.removeItem(KEY); } catch { /* ignore */ } commit(fresh()); }
 
 function mutate(fn: (s: State) => void) { const next: State = { ...state, db: { ...state.db }, settings: { ...state.settings }, flags: { ...state.flags } }; fn(next); commit(next); }
 const rows = (s: State, c: string) => (s.db[c] = [...(s.db[c] ?? [])]);
@@ -103,10 +124,15 @@ export function login(email: string, password: string): Res {
 }
 function setSession(sess: Session | null) { mutate((s) => { s.session = sess; s.flags.expiredSession = false; }); }
 export function verify2fa(code: string): Res { if (code.trim() !== '123456') return { ok: false, error: 'That code is not valid. Use 123456 in this demo.' }; mutate((s) => { if (s.session) s.session = { ...s.session, mfaPending: false }; }); return { ok: true }; }
-export function logout() { setSession(null); }
-export function expireSession() { mutate((s) => { s.session = null; s.flags.expiredSession = true; }); }
-export function workspacesFor(email: string): (Row & { tenant: (typeof TENANTS)[number] })[] { return state.db.members.filter((m) => m.email.toLowerCase() === email.toLowerCase() && m.status === 'active').map((m) => ({ ...m, tenant: TENANTS.find((t) => t.id === m.tenantId)! })); }
+export function logout() { if (REMOTE) { void sb!.auth.signOut(); commit({ ...state, db: emptyDb(), settings: {}, session: null, access: undefined, flags: { ...state.flags, expiredSession: false } }, { sync: false }); return; } setSession(null); }
+export function expireSession() { if (REMOTE) { void sb!.auth.signOut(); commit({ ...state, db: emptyDb(), settings: {}, session: null, access: undefined, flags: { ...state.flags, expiredSession: true } }, { sync: false }); return; } mutate((s) => { s.session = null; s.flags.expiredSession = true; }); }
+export function workspacesFor(email: string): (Row & { tenant: TenantMeta })[] { if (REMOTE) return (state.access?.members ?? []).map((m) => ({ ...m, tenant: tenantMeta(m.tenantId) })); return state.db.members.filter((m) => m.email.toLowerCase() === email.toLowerCase() && m.status === 'active').map((m) => ({ ...m, tenant: tenantMeta(m.tenantId) })); }
 export function switchWorkspace(memberId: string): Res {
+  if (REMOTE) {
+    const m = state.access?.members.find((x) => x.id === memberId); if (!m || !state.session) return { ok: false, error: 'You do not have access to that workspace.' };
+    const session: Session = { ...state.session, memberId: m.id, role: m.role, tenantId: m.tenantId };
+    commit({ ...state, session, flags: { ...state.flags } }, { sync: false }); void hydrateTenant(m.tenantId, session, state.access!); return { ok: true };
+  }
   const m = state.db.members.find((x) => x.id === memberId && x.email === state.session?.email && x.status === 'active');
   if (!m) return { ok: false, error: 'You do not have access to that workspace.' };
   mutate((s) => { s.session = { ...s.session!, memberId: m.id, role: m.role, tenantId: m.tenantId }; logAudit(s, 'Switched workspace', m.tenantId); }); return { ok: true };
@@ -120,6 +146,7 @@ export function signup(v: Row): Res {
   return { ok: true, message: 'Account created.' };
 }
 export function acceptInvite(token: string): Res {
+  if (REMOTE) return { ok: false, error: 'Sign in or create an account with the invited email address; your access is attached automatically.' };
   const m = state.db.members.find((x) => x.status === 'invited' && x.email === token);
   if (!m) return { ok: false, error: 'This invitation is no longer valid. Ask the business owner to send a new one.' };
   update('members', m.id, { status: 'active' }); return { ok: true, message: 'Invitation accepted. You can sign in now.' };
@@ -143,7 +170,7 @@ const lockedPeriods = (s: State) => (s.db.periods ?? []).filter((p) => p.tenantI
 // ---------- invoices ----------
 export function saveInvoice(v: Row): Res {
   const s0 = state; const cust = s0.db.customers.find((c) => c.id === v.customerId);
-  const T = TENANTS.find((t) => t.id === tid(s0))!;
+  const T = tenantMeta(tid(s0));
   const intra = cust ? cust.state === T.state : true; const totals = calcDoc(v.lines as Line[], { intraState: intra, docDiscountPct: v.docDiscountPct ?? 0 });
   let id = v.id as string | undefined;
   if (id) { const ex = s0.db.invoices.find((i) => i.id === id); if (ex && !['draft', 'pending_approval'].includes(ex.status)) return { ok: false, error: 'Issued invoices cannot be edited. Use a credit note and reissue.' }; }
@@ -196,7 +223,7 @@ export function correctInvoice(id: string, reason: string): Res {
 export function saveQuote(v: Row): Res {
   const cust = state.db.customers.find((c) => c.id === v.customerId); if (!cust) return { ok: false, error: 'Choose a customer.' };
   if (!v.lines?.length) return { ok: false, error: 'Add at least one line.' };
-  const T = TENANTS.find((t) => t.id === tid(state))!; const totals = calcDoc(v.lines, { intraState: cust.state === T.state, docDiscountPct: v.docDiscountPct ?? 0 });
+  const T = tenantMeta(tid(state)); const totals = calcDoc(v.lines, { intraState: cust.state === T.state, docDiscountPct: v.docDiscountPct ?? 0 });
   const st = state.settings[tid(state)].service; const needs = (v.docDiscountPct ?? 0) > st.discountApprovalPct || totals.total >= st.quoteApprovalValue;
   let id = v.id as string | undefined;
   mutate((s) => {
@@ -420,3 +447,87 @@ export function setRolePermission(role: string, perm: string, on: boolean): Res 
 }
 
 export function setBranch(branchId: string) { mutate((s) => { s.flags.branchId = branchId || undefined; }); }
+
+// ---------- remote (Supabase) sign-in, loading and workspaces ----------
+const initials = (n: string) => n.split(/\s+/).map((w) => w[0]).join('').slice(0, 3).toUpperCase() || 'LL';
+async function hydrateTenant(tenantId: string, session: Session, access: Access) {
+  const d = await fetchTenantData(tenantId);
+  const base = DEFAULT_SETTINGS(tenantId);
+  const settings = session.customerId ? { ...base, ...(d.profile ?? {}) } : d.settings ?? base;
+  const name = access.tenants[tenantId] ?? tenantId;
+  registerTenant({ id: tenantId, name, short: name.split(' ')[0], state: stateFromGstin(settings.billing?.gstin), gstin: settings.billing?.gstin ?? '', city: '', prefix: initials(name) });
+  commit({ ...state, db: { ...emptyDb(), ...d.collections, members: d.members }, settings: { ...state.settings, [tenantId]: settings }, session, access, flags: { ...state.flags, expiredSession: false, booting: false } }, { sync: false });
+  return !d.settings && !session.customerId;
+}
+async function hydratePlatform(session: Session, access: Access) {
+  const d = await fetchPlatformData();
+  commit({ ...state, db: { ...emptyDb(), ...d.collections, platformStaff: d.staff }, session, access, flags: { ...state.flags, expiredSession: false, booting: false } }, { sync: false });
+}
+async function reloadCurrent() {
+  const s = state.session; if (!REMOTE || !s || !state.access) return;
+  try { if (s.platformRole) await hydratePlatform(s, state.access); else await hydrateTenant(s.tenantId, s, state.access); } catch { /* keep the current view; the next navigation retries */ }
+}
+/** Work out who the signed-in auth user is (platform staff, business member or customer) and load their data. */
+async function enterFromAuth(preferTenant?: string): Promise<Res> {
+  let access = await fetchAccess();
+  const user = (await sb!.auth.getUser()).data.user;
+  if (!access.platform && !access.members.length && !access.portal.length && user?.user_metadata?.company) {
+    const { error } = await sb!.rpc('create_tenant', { p_name: user.user_metadata.company, p_owner_name: user.user_metadata.name ?? user.email });
+    if (error) return { ok: false, error: friendlyDbError(error.message) };
+    access = await fetchAccess();
+  }
+  const email = user?.email ?? '';
+  if (access.platform) {
+    const p = access.platform; await hydratePlatform({ memberId: 'platform', email, name: p.name, role: 'platform', tenantId: 't1', platformRole: p.role }, access);
+    return { ok: true };
+  }
+  const m = access.members.find((x) => x.tenantId === preferTenant) ?? access.members[0];
+  if (m) {
+    const session: Session = { memberId: m.id, email, name: m.name, role: m.role, tenantId: m.tenantId };
+    const needsBootstrap = await hydrateTenant(m.tenantId, session, access);
+    if (needsBootstrap && m.role === 'owner') bootstrapTenant(m.tenantId, access.tenants[m.tenantId] ?? 'My business', m.name);
+    return { ok: true };
+  }
+  const p = access.portal[0];
+  if (p) { await hydrateTenant(p.tenantId, { memberId: 'portal', email, name: email.split('@')[0], role: 'customer', tenantId: p.tenantId, customerId: p.customerId }, access); return { ok: true }; }
+  await sb!.auth.signOut();
+  return { ok: false, error: 'No workspace is linked to this account yet. Ask your owner for an invitation, or start a trial.' };
+}
+export async function signIn(email: string, password: string): Promise<Res> {
+  if (!REMOTE) return login(email, password);
+  if (!email.trim() || !password) return { ok: false, error: 'Enter your email and password.' };
+  const { error } = await sb!.auth.signInWithPassword({ email: email.trim(), password });
+  if (error) return { ok: false, error: /confirm/i.test(error.message) ? 'Confirm your email address first (check your inbox).' : 'Email or password is incorrect.' };
+  const claimed = await sb!.rpc('claim_access'); if (claimed.error) return { ok: false, error: friendlyDbError(claimed.error.message) };
+  try { return await enterFromAuth(); } catch (e) { return { ok: false, error: (e as Error).message }; }
+}
+export async function signUp(v: Row): Promise<Res> {
+  if (!REMOTE) return signup(v);
+  if (!v.name?.trim() || !v.company?.trim()) return { ok: false, error: 'Name and company are required.' };
+  if ((v.password ?? '').length < 8) return { ok: false, error: 'Password must be at least 8 characters.' };
+  const { data, error } = await sb!.auth.signUp({ email: v.email.trim(), password: v.password, options: { data: { name: v.name.trim(), company: v.company.trim() } } });
+  if (error) return { ok: false, error: error.message };
+  if (!data.session) return { ok: true, message: 'Check your email to confirm your address, then sign in.' };
+  try { const r = await enterFromAuth(); return r.ok ? { ok: true, message: 'Account created.' } : r; } catch (e) { return { ok: false, error: (e as Error).message }; }
+}
+export async function bootRemote() {
+  if (!REMOTE) return;
+  try { const { data } = await sb!.auth.getSession(); if (data.session) await enterFromAuth(); } catch { /* signed out */ }
+  commit({ ...state, flags: { ...state.flags, booting: false } }, { sync: false });
+  sb!.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT' && state.session) expireSession(); });
+}
+/** A new business starts with the same defaults the demo businesses have. These writes sync like any other change. */
+function bootstrapTenant(tenantId: string, name: string, owner: string) {
+  mutate((s) => {
+    const meta = tenantMeta(tenantId); const fy = fiscalYear(today());
+    s.settings[tenantId] = { ...DEFAULT_SETTINGS(tenantId), business: { ...DEFAULT_SETTINGS(tenantId).business, tradeName: name.split(' ')[0], legalName: name, email: s.session?.email ?? '' }, setup: { checklist: {}, sampleDataLoaded: false, activated: false } };
+    const add = (c: string, r: Row) => rows(s, c).push({ tenantId, ...r });
+    add('branches', { id: `br_${tenantId}_1`, name: 'Head office', city: '', state: meta.state, gstin: '', active: true });
+    add('legalEntities', { id: `le_${tenantId}`, name, pan: '', gstin: '', cin: '', address: '', state: meta.state, currency: 'INR', fyStart: 'April', roundTo: 'rupee', active: true });
+    ([['INV', 'Invoice'], ['QT', 'Quotation'], ['RCT', 'Receipt'], ['CN', 'Credit note'], ['DN', 'Debit note']] as const).forEach(([p, n]) => add('numbering', { id: `nm_${tenantId}_${p}`, prefix: `${initials(name)}-${p}`, name: n, nextSeq: 1, padding: 4, fy, reset: 'yearly' }));
+    [[0, 'Exempt / nil'], [5, 'GST 5%'], [12, 'GST 12%'], [18, 'GST 18%'], [28, 'GST 28%']].forEach(([rate, n]) => add('taxes', { id: `tx_${tenantId}_${rate}`, rate, name: n, hsnRequired: (rate as number) > 0, active: true }));
+    ['pcs:Pieces', 'box:Box', 'kg:Kilogram', 'hour:Hour', 'day:Day', 'month:Month'].forEach((u) => { const [code, n] = u.split(':'); add('units', { id: `un_${tenantId}_${code}`, code, name: n, active: true }); });
+    add('subscriptions', { id: `sub_${tenantId}`, planId: 'starter', planVersion: 3, cycle: 'monthly', status: 'active', renewsOn: addDays(today(), 14), started: today(), usersUsed: 1, branchesUsed: 1, entitiesUsed: 1, invoicesThisMonth: 0, storageMb: 0, graceDays: 7, renewalFailure: false, cancelAt: '' });
+    logAudit(s, `Workspace created for ${name} by ${owner}`, tenantId, true);
+  });
+}

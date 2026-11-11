@@ -10,6 +10,11 @@ export const TENANTS = [
   { id: 't1', name: 'Northwind Distributors Pvt Ltd', short: 'Northwind', state: 'MH', gstin: '27AABCN4821K1Z5', city: 'Mumbai', prefix: 'NW' },
   { id: 't2', name: 'Kestrel Advisory LLP', short: 'Kestrel', state: 'KA', gstin: '29AAFFK7712M1Z2', city: 'Bengaluru', prefix: 'KA' },
 ];
+export interface TenantMeta { id: string; name: string; short: string; state: string; gstin: string; city: string; prefix: string }
+const extraTenants = new Map<string, TenantMeta>();
+export function registerTenant(m: TenantMeta) { extraTenants.set(m.id, m); }
+/** Businesses created after the demo seed (self-service signup) register their details here. */
+export function tenantMeta(id: string): TenantMeta { return TENANTS.find((t) => t.id === id) ?? extraTenants.get(id) ?? { id, name: id, short: id, state: 'MH', gstin: '', city: '', prefix: 'LL' }; }
 export const ROLES = ['owner', 'manager', 'staff', 'customer'] as const;
 export const PLATFORM_ROLES = ['platform_owner', 'platform_billing', 'platform_support', 'platform_techops'] as const;
 export const PERMISSIONS = ['view', 'create', 'edit', 'approve', 'assign', 'export', 'refund', 'configure'] as const;
@@ -208,7 +213,7 @@ export function seed(): DB {
 }
 
 export const DEFAULT_SETTINGS = (tid: string) => {
-  const T = TENANTS.find((x) => x.id === tid)!;
+  const T = tenantMeta(tid);
   return { tenantId: tid, business: { tradeName: T.short, legalName: T.name, email: `accounts@${T.short.toLowerCase()}.example`, phone: '+91 22 4000 1100', website: `https://${T.short.toLowerCase()}.example`, industry: tid === 't1' ? 'Distribution' : 'Professional services' },
     billing: { gstin: T.gstin, address: `14 Business Park, ${T.city}`, bankName: 'HDFC Bank', accountNo: '50200012345678', ifsc: 'HDFC0000123', upi: `${T.short.toLowerCase()}@hdfcbank`, invoiceNotes: 'Payment by NEFT/UPI. Interest at 18% p.a. on overdue amounts.' },
     branding: { accent: '#244B78', logoText: T.short, footer: 'Thank you for your business.', showBank: true },

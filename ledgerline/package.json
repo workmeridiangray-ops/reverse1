@@ -8,7 +8,9 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1 --port 4173",
     "test": "vitest run",
-    "test:crawl": "node scripts/crawl.mjs"
+    "test:crawl": "node scripts/crawl.mjs",
+    "seed:gen": "node scripts/gen-seed.mjs && node scripts/gen-seed.mjs --emulated",
+    "test:db": "node --test supabase/tests/db.test.mjs"
   },
   "dependencies": {
     "@fontsource/inter": "^5.1.0",

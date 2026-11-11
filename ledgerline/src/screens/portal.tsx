@@ -4,6 +4,7 @@ import { Badge, Button, Card, DataTable, Dl, Empty, FormView, Kpi, Money, Notice
 import { DocView } from '../ui/docs';
 import { ListScreen, LinkBtn, useCtx } from './generic';
 import { StatementBody } from './money';
+import { REMOTE } from '../remote';
 import { useRows, useSession, useSettings, receiptUnapplied, recordReceipt, openDispute, insert, update, getState } from '../store';
 import { date, money, today, dateTime, cap } from '../lib/format';
 
@@ -23,6 +24,7 @@ export function PortalInvoice() {
 export const PortalStatement = () => { const sess = useSession()!; const st = useSettings(); return <><PageHeader title="Statement of account" actions={<Button icon="print" onClick={() => window.print()}>Print</Button>} /><StatementBody cid={sess.customerId!} seller={st} /></>; };
 export function PortalPay() {
   const [ctx] = useCtx(); const nav = useNavigate(); const sess = useSession()!; const q = new URLSearchParams(location.hash.split('?')[1] ?? ''); const open = ctx.invoices.filter((i) => (ctx.bal[i.id]?.out ?? 0) > 0); const [inv, setInv] = useState(q.get('invoice') ?? open[0]?.id ?? ''); const sel = open.find((i) => i.id === inv); const [amt, setAmt] = useState(sel ? String(ctx.bal[sel.id].out / 100) : ''); const [mode, setMode] = useState('upi'); const [err, setErr] = useState(''); const [done, setDone] = useState('');
+  if (REMOTE) return <><PageHeader title="Make a payment" /><Notice kind="info">Online payment needs the supplier’s payment provider to be connected. Until then, pay by bank transfer using the details on your invoice and quote the invoice number; the finance team will record it.</Notice><LinkBtn to="/portal/invoices">Back to invoices</LinkBtn></>;
   if (!open.length) return <><PageHeader title="Make a payment" /><Empty title="Nothing to pay" text="You have no open invoices." /></>;
   return <><PageHeader title="Make a payment" sub="Pay in full or in part. Payments are credited to the invoice you choose." />
     {done && <Notice kind="good">{done} <Link to="/portal/receipts">View receipts</Link></Notice>}{err && <Notice kind="bad">{err}</Notice>}
