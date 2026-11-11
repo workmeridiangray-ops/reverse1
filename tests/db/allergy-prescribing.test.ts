@@ -120,10 +120,11 @@ describe("prescribing against a recorded allergy (class match, enforced by the d
 
   it("the stored status cannot be edited afterwards", async () => {
     await as("doctorA", async (q) => {
-      await q(`update public.prescriptions set allergy_check_status = 'clear', dose = '250 mg' where id = $1`, [ID.rxActive]);
+      const [before] = await q<{ allergy_check_status: string }>(`select allergy_check_status from public.prescriptions where id = $1`, [ID.rxActive]);
+      await q(`update public.prescriptions set allergy_check_status = 'overridden', dose = '250 mg' where id = $1`, [ID.rxActive]);
       const [row] = await q<{ allergy_check_status: string; dose: string }>(`select allergy_check_status, dose from public.prescriptions where id = $1`, [ID.rxActive]);
-      expect(row?.dose).toBe("250 mg");
-      expect(row?.allergy_check_status).not.toBe("clear"); // unchanged by the client
+      expect(row?.dose).toBe("250 mg"); // the real edit went through
+      expect(row?.allergy_check_status).toBe(before?.allergy_check_status); // the forged status did not
     });
   });
 

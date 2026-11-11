@@ -225,3 +225,14 @@ export function coverDaysFor(quantity: number, dose: string, frequency: string, 
   if (per === null || perDay === undefined) return null;
   return Math.max(1, Math.floor(quantity / (per * perDay)));
 }
+
+/**
+ * Guard against picking the wrong product off the shelf. If both the
+ * prescription and the product carry drug classes, they must overlap; if
+ * either is unclassified there is nothing to compare and the pharmacist's
+ * eyes are the check. Mirrors public.dispense_prescription().
+ */
+export function productMatchesPrescription(prescribedClasses: readonly string[], productClasses: readonly string[]): boolean {
+  if (prescribedClasses.length === 0 || productClasses.length === 0) return true;
+  return prescribedClasses.some((c) => productClasses.includes(c));
+}

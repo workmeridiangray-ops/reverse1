@@ -78,6 +78,21 @@ export const ID = {
   resKRavi: "ca000000-0000-4000-8000-000000000003",
   resGluGeorge: "ca000000-0000-4000-8000-000000000004",
   resHbJon: "cb000000-0000-4000-8000-000000000001",
+  rxParacetamol: "a5000000-0000-4000-8000-000000000003",
+  prodAmox: "d1000000-0000-4000-8000-000000000001",
+  prodFerrous: "d1000000-0000-4000-8000-000000000002",
+  prodParacetamol: "d1000000-0000-4000-8000-000000000003",
+  prodIbuprofen: "d1000000-0000-4000-8000-000000000004",
+  prodParacetamolB: "e1000000-0000-4000-8000-000000000001",
+  batchF101: "d2000000-0000-4000-8000-000000000001",
+  batchF102: "d2000000-0000-4000-8000-000000000002",
+  batchAmx: "d2000000-0000-4000-8000-000000000003",
+  batchP1Expired: "d2000000-0000-4000-8000-000000000004",
+  batchP2: "d2000000-0000-4000-8000-000000000005",
+  batchP3Quarantined: "d2000000-0000-4000-8000-000000000006",
+  batchN1: "e2000000-0000-4000-8000-000000000001",
+  requestAmal: "f1000000-0000-4000-8000-000000000001",
+  requestJon: "f1000000-0000-4000-8000-000000000002",
 } as const;
 
 export type Q = <T = Record<string, unknown>>(sql: string, params?: readonly unknown[]) => Promise<T[]>;
@@ -149,4 +164,30 @@ export async function act(q: Q, user: UserKey | null): Promise<void> {
 /** Start as the database owner (to arrange data), then `act()` as users. Always rolled back. */
 export function scenario<T>(fn: (q: Q) => Promise<T>): Promise<T> {
   return asOwner(fn);
+}
+
+/** Run `fn`, report what it saw, then undo its writes (so one test can probe many what-ifs). */
+export async function probe<T>(q: Q, fn: () => Promise<T>): Promise<{ ok: true; value: T } | { ok: false; error: string }> {
+  await q("savepoint probe");
+  try {
+    const value = await fn();
+    await q("rollback to savepoint probe");
+    return { ok: true, value };
+  } catch (e) {
+    await q("rollback to savepoint probe");
+    return { ok: false, error: (e as Error).message };
+  }
+}
+
+/** Run `fn` and KEEP its writes (inside the test's rolled-back transaction); report errors without aborting the transaction. */
+export async function commitStep<T>(q: Q, fn: () => Promise<T>): Promise<{ ok: true; value: T } | { ok: false; error: string }> {
+  await q("savepoint step");
+  try {
+    const value = await fn();
+    await q("release savepoint step");
+    return { ok: true, value };
+  } catch (e) {
+    await q("rollback to savepoint step");
+    return { ok: false, error: (e as Error).message };
+  }
 }

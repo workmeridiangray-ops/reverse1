@@ -25,7 +25,13 @@ type Table =
   | "lab_test_types"
   | "lab_reference_ranges"
   | "lab_orders"
-  | "lab_results";
+  | "lab_results"
+  | "stock_products"
+  | "stock_batches"
+  | "stock_movements"
+  | "dispenses"
+  | "dispense_items"
+  | "appointment_requests";
 
 const TABLES: Table[] = [
   "clinics",
@@ -45,24 +51,30 @@ const TABLES: Table[] = [
   "lab_reference_ranges",
   "lab_orders",
   "lab_results",
+  "stock_products",
+  "stock_batches",
+  "stock_movements",
+  "dispenses",
+  "dispense_items",
+  "appointment_requests",
 ];
 
 // Expected visible row counts from supabase/seed.sql. "audit" = any (>0).
 const EXPECTED: Record<UserKey, Partial<Record<Table, number | "some">>> = {
-  adminA: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 10, consultations: 0, prescriptions: 0, invoices: 3, invoice_lines: 4, payments: 2, invoice_balances: 3, audit_log: "some", patient_allergies: 0, lab_test_types: 4, lab_reference_ranges: 6, lab_orders: 0, lab_results: 0 },
-  doctorA: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 10, consultations: 3, prescriptions: 2, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0, patient_allergies: 3, lab_test_types: 4, lab_reference_ranges: 6, lab_orders: 3, lab_results: 4 },
-  doctorA2: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 10, consultations: 3, prescriptions: 2, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0, patient_allergies: 3, lab_test_types: 4, lab_reference_ranges: 6, lab_orders: 3, lab_results: 4 },
-  deskA: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 10, consultations: 0, prescriptions: 0, invoices: 3, invoice_lines: 4, payments: 2, invoice_balances: 3, audit_log: 0, patient_allergies: 0, lab_test_types: 0, lab_reference_ranges: 0, lab_orders: 0, lab_results: 0 },
-  labA: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 0, consultations: 0, prescriptions: 0, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0, patient_allergies: 0, lab_test_types: 4, lab_reference_ranges: 6, lab_orders: 3, lab_results: 4 },
-  pharmA: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 0, consultations: 0, prescriptions: 2, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0, patient_allergies: 3, lab_test_types: 0, lab_reference_ranges: 0, lab_orders: 0, lab_results: 0 },
+  adminA: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 10, consultations: 0, prescriptions: 0, invoices: 3, invoice_lines: 4, payments: 2, invoice_balances: 3, audit_log: "some", patient_allergies: 0, lab_test_types: 4, lab_reference_ranges: 6, lab_orders: 0, lab_results: 0, stock_products: 4, stock_batches: 6, stock_movements: 6, dispenses: 0, dispense_items: 0, appointment_requests: 1 },
+  doctorA: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 10, consultations: 3, prescriptions: 3, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0, patient_allergies: 3, lab_test_types: 4, lab_reference_ranges: 6, lab_orders: 3, lab_results: 4, stock_products: 0, stock_batches: 0, stock_movements: 0, dispenses: 0, dispense_items: 0, appointment_requests: 0 },
+  doctorA2: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 10, consultations: 3, prescriptions: 3, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0, patient_allergies: 3, lab_test_types: 4, lab_reference_ranges: 6, lab_orders: 3, lab_results: 4, stock_products: 0, stock_batches: 0, stock_movements: 0, dispenses: 0, dispense_items: 0, appointment_requests: 0 },
+  deskA: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 10, consultations: 0, prescriptions: 0, invoices: 3, invoice_lines: 4, payments: 2, invoice_balances: 3, audit_log: 0, patient_allergies: 0, lab_test_types: 0, lab_reference_ranges: 0, lab_orders: 0, lab_results: 0, stock_products: 0, stock_batches: 0, stock_movements: 0, dispenses: 0, dispense_items: 0, appointment_requests: 1 },
+  labA: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 0, consultations: 0, prescriptions: 0, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0, patient_allergies: 0, lab_test_types: 4, lab_reference_ranges: 6, lab_orders: 3, lab_results: 4, stock_products: 0, stock_batches: 0, stock_movements: 0, dispenses: 0, dispense_items: 0, appointment_requests: 0 },
+  pharmA: { clinics: 1, profiles: 8, patients: 7, rooms: 4, appointments: 0, consultations: 0, prescriptions: 3, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0, patient_allergies: 3, lab_test_types: 0, lab_reference_ranges: 0, lab_orders: 0, lab_results: 0, stock_products: 4, stock_batches: 6, stock_movements: 6, dispenses: 0, dispense_items: 0, appointment_requests: 0 },
   // Amal: own record, own 2 appointments, only the ACTIVE prescription, own ISSUED invoice and its lines/payments.
-  patientA: { clinics: 1, profiles: 1, patients: 1, rooms: 0, appointments: 2, consultations: 0, prescriptions: 1, invoices: 1, invoice_lines: 2, payments: 1, invoice_balances: 1, audit_log: 0, patient_allergies: 0, lab_test_types: 1, lab_reference_ranges: 0, lab_orders: 0, lab_results: 1 },
+  patientA: { clinics: 1, profiles: 1, patients: 1, rooms: 0, appointments: 2, consultations: 0, prescriptions: 1, invoices: 1, invoice_lines: 2, payments: 1, invoice_balances: 1, audit_log: 0, patient_allergies: 1, lab_test_types: 1, lab_reference_ranges: 0, lab_orders: 0, lab_results: 1, stock_products: 0, stock_batches: 0, stock_movements: 0, dispenses: 0, dispense_items: 0, appointment_requests: 1 },
   // Deactivated staff: everything resolves to nothing.
-  inactiveDeskA: { clinics: 0, profiles: 1, patients: 0, rooms: 0, appointments: 0, consultations: 0, prescriptions: 0, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0, patient_allergies: 0, lab_test_types: 0, lab_reference_ranges: 0, lab_orders: 0, lab_results: 0 },
-  adminB: { clinics: 1, profiles: 4, patients: 2, rooms: 1, appointments: 2, consultations: 0, prescriptions: 0, invoices: 1, invoice_lines: 1, payments: 0, invoice_balances: 1, audit_log: "some", patient_allergies: 0, lab_test_types: 2, lab_reference_ranges: 3, lab_orders: 0, lab_results: 0 },
-  doctorB: { clinics: 1, profiles: 4, patients: 2, rooms: 1, appointments: 2, consultations: 1, prescriptions: 0, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0, patient_allergies: 1, lab_test_types: 2, lab_reference_ranges: 3, lab_orders: 1, lab_results: 1 },
-  deskB: { clinics: 1, profiles: 4, patients: 2, rooms: 1, appointments: 2, consultations: 0, prescriptions: 0, invoices: 1, invoice_lines: 1, payments: 0, invoice_balances: 1, audit_log: 0, patient_allergies: 0, lab_test_types: 0, lab_reference_ranges: 0, lab_orders: 0, lab_results: 0 },
-  patientB: { clinics: 1, profiles: 1, patients: 1, rooms: 0, appointments: 1, consultations: 0, prescriptions: 0, invoices: 1, invoice_lines: 1, payments: 0, invoice_balances: 1, audit_log: 0, patient_allergies: 0, lab_test_types: 0, lab_reference_ranges: 0, lab_orders: 0, lab_results: 0 },
+  inactiveDeskA: { clinics: 0, profiles: 1, patients: 0, rooms: 0, appointments: 0, consultations: 0, prescriptions: 0, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0, patient_allergies: 0, lab_test_types: 0, lab_reference_ranges: 0, lab_orders: 0, lab_results: 0, stock_products: 0, stock_batches: 0, stock_movements: 0, dispenses: 0, dispense_items: 0, appointment_requests: 0 },
+  adminB: { clinics: 1, profiles: 4, patients: 2, rooms: 1, appointments: 2, consultations: 0, prescriptions: 0, invoices: 1, invoice_lines: 1, payments: 0, invoice_balances: 1, audit_log: "some", patient_allergies: 0, lab_test_types: 2, lab_reference_ranges: 3, lab_orders: 0, lab_results: 0, stock_products: 1, stock_batches: 1, stock_movements: 1, dispenses: 0, dispense_items: 0, appointment_requests: 1 },
+  doctorB: { clinics: 1, profiles: 4, patients: 2, rooms: 1, appointments: 2, consultations: 1, prescriptions: 0, invoices: 0, invoice_lines: 0, payments: 0, invoice_balances: 0, audit_log: 0, patient_allergies: 1, lab_test_types: 2, lab_reference_ranges: 3, lab_orders: 1, lab_results: 1, stock_products: 0, stock_batches: 0, stock_movements: 0, dispenses: 0, dispense_items: 0, appointment_requests: 0 },
+  deskB: { clinics: 1, profiles: 4, patients: 2, rooms: 1, appointments: 2, consultations: 0, prescriptions: 0, invoices: 1, invoice_lines: 1, payments: 0, invoice_balances: 1, audit_log: 0, patient_allergies: 0, lab_test_types: 0, lab_reference_ranges: 0, lab_orders: 0, lab_results: 0, stock_products: 0, stock_batches: 0, stock_movements: 0, dispenses: 0, dispense_items: 0, appointment_requests: 1 },
+  patientB: { clinics: 1, profiles: 1, patients: 1, rooms: 0, appointments: 1, consultations: 0, prescriptions: 0, invoices: 1, invoice_lines: 1, payments: 0, invoice_balances: 1, audit_log: 0, patient_allergies: 1, lab_test_types: 0, lab_reference_ranges: 0, lab_orders: 0, lab_results: 0, stock_products: 0, stock_batches: 0, stock_movements: 0, dispenses: 0, dispense_items: 0, appointment_requests: 1 },
 };
 
 const HOME_CLINIC: Record<UserKey, string> = {

@@ -303,3 +303,39 @@ update public.lab_results set value = 14.0, entered_by = 'b0000000-0000-4000-800
 update public.lab_results set released_at = now(), released_by = 'a0000000-0000-4000-8000-000000000002' where id = 'ca000000-0000-4000-8000-000000000001';
 -- George's sample has been collected, no result yet.
 update public.lab_orders set status = 'collected', collected_by = 'a0000000-0000-4000-8000-000000000005' where id = 'a9000000-0000-4000-8000-000000000003';
+
+-- ===========================================================================
+-- Phase 3: pharmacy stock, a second prescription to dispense, portal requests
+-- Expiry dates are relative to the day the database is seeded.
+-- ===========================================================================
+update public.prescriptions set drug_classes = '{iron}' where id = 'a5000000-0000-4000-8000-000000000001';
+
+insert into public.prescriptions (id, clinic_id, patient_id, prescriber_id, drug_name, dose, route, frequency, duration_days, drug_classes, status) values
+  ('a5000000-0000-4000-8000-000000000003', 'aaaaaaaa-0000-4000-8000-000000000000', 'a2000000-0000-4000-8000-000000000006',
+   'a0000000-0000-4000-8000-000000000002', 'Paracetamol', '2 tablets', 'oral', 'four times daily', 5, '{paracetamol}', 'active');
+
+insert into public.stock_products (id, clinic_id, name, unit, drug_classes, reorder_level) values
+  ('d1000000-0000-4000-8000-000000000001', 'aaaaaaaa-0000-4000-8000-000000000000', 'Amoxicillin 500 mg capsules', 'capsule', '{penicillin}', 50),
+  ('d1000000-0000-4000-8000-000000000002', 'aaaaaaaa-0000-4000-8000-000000000000', 'Ferrous sulfate 200 mg tablets', 'tablet', '{iron}', 60),
+  ('d1000000-0000-4000-8000-000000000003', 'aaaaaaaa-0000-4000-8000-000000000000', 'Paracetamol 500 mg tablets', 'tablet', '{paracetamol}', 100),
+  ('d1000000-0000-4000-8000-000000000004', 'aaaaaaaa-0000-4000-8000-000000000000', 'Ibuprofen 400 mg tablets', 'tablet', '{nsaid}', 80),
+  ('e1000000-0000-4000-8000-000000000001', 'bbbbbbbb-0000-4000-8000-000000000000', 'Paracetamol 500 mg tablets', 'tablet', '{paracetamol}', 50);
+
+-- Ferrous sulfate: F-101 is in date today but runs out 20 days into a 30-day course.
+-- Paracetamol: P-1 has expired (still on the shelf), P-3 is quarantined, P-2 is good.
+-- Ibuprofen: none in stock at all.
+insert into public.stock_batches (id, clinic_id, product_id, batch_number, expiry_date, quantity_received, status, status_note, supplier) values
+  ('d2000000-0000-4000-8000-000000000001', 'aaaaaaaa-0000-4000-8000-000000000000', 'd1000000-0000-4000-8000-000000000002', 'F-101', current_date + 20, 100, 'available', null, 'Northway Pharma'),
+  ('d2000000-0000-4000-8000-000000000002', 'aaaaaaaa-0000-4000-8000-000000000000', 'd1000000-0000-4000-8000-000000000002', 'F-102', current_date + 200, 200, 'available', null, 'Northway Pharma'),
+  ('d2000000-0000-4000-8000-000000000003', 'aaaaaaaa-0000-4000-8000-000000000000', 'd1000000-0000-4000-8000-000000000001', 'AMX-7', current_date + 400, 120, 'available', null, 'Northway Pharma'),
+  ('d2000000-0000-4000-8000-000000000004', 'aaaaaaaa-0000-4000-8000-000000000000', 'd1000000-0000-4000-8000-000000000003', 'P-1', current_date - 5, 40, 'available', null, 'Brightside Supply'),
+  ('d2000000-0000-4000-8000-000000000005', 'aaaaaaaa-0000-4000-8000-000000000000', 'd1000000-0000-4000-8000-000000000003', 'P-2', current_date + 300, 300, 'available', null, 'Brightside Supply'),
+  ('d2000000-0000-4000-8000-000000000006', 'aaaaaaaa-0000-4000-8000-000000000000', 'd1000000-0000-4000-8000-000000000003', 'P-3', current_date + 100, 30, 'quarantined', 'Storage temperature alarm: awaiting supplier advice', 'Brightside Supply'),
+  ('e2000000-0000-4000-8000-000000000001', 'bbbbbbbb-0000-4000-8000-000000000000', 'e1000000-0000-4000-8000-000000000001', 'N-1', current_date + 250, 100, 'available', null, 'Brightside Supply');
+
+-- Amal has asked for a follow-up appointment from the portal; so has Jon (other clinic).
+insert into public.appointment_requests (id, clinic_id, patient_id, preferred, reason) values
+  ('f1000000-0000-4000-8000-000000000001', 'aaaaaaaa-0000-4000-8000-000000000000', 'a2000000-0000-4000-8000-000000000001',
+   'Tuesday or Wednesday mornings next week', 'Follow-up after my blood test results'),
+  ('f1000000-0000-4000-8000-000000000002', 'bbbbbbbb-0000-4000-8000-000000000000', 'b2000000-0000-4000-8000-000000000001',
+   'Any afternoon', 'Repeat prescription review');
