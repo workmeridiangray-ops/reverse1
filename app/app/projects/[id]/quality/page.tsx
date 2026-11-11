@@ -35,7 +35,7 @@ export default async function Quality({ params }: { params: Promise<{ id: string
                   <details><summary className="cursor-pointer font-bold text-danger-fg">Fail…</summary><ActionForm action={decideInspection} submitLabel="Record failure" variant="secondary">{hid}<input type="hidden" name="inspection_id" value={i.id} /><input type="hidden" name="decision" value="fail" /><TextField label="What failed" name="note" id={`f-${i.id}`} /></ActionForm></details></div>) : null}
             </Card>))}
           {c.can("inspection.manage") && live ? (
-            <Card title="Request an inspection"><ActionForm action={requestInspection} submitLabel="Request" reset>{hid}<TextField label="Title" name="title" /><TextField label="Location" name="location" optional />
+            <Card title="Request an inspection"><ActionForm action={requestInspection} submitLabel="Request" reset>{hid}<TextField label="Title" name="title" id="insp-title" /><TextField label="Location" name="location" id="insp-location" optional />
               <SelectField label="BOQ item" name="boq_item_id" optional><option value="">None</option>{items.map((i) => <option key={i.id} value={i.id}>{i.code}</option>)}</SelectField>
               <TextField label="Drawing / revision reference" name="drawing_ref" optional /><CheckboxField label="Hold point" name="hold_point" hint="Blocks verification of measurements for this item until the inspection passes" /></ActionForm></Card>) : null}
         </section>
@@ -49,7 +49,7 @@ export default async function Quality({ params }: { params: Promise<{ id: string
               {s.status === "rectified" && c.can("measure.verify") && live ? <div className="mt-2 flex gap-4"><ActionForm action={verifySnag} submitLabel="Verify">{hid}<input type="hidden" name="snag_id" value={s.id} /><input type="hidden" name="decision" value="accept" /></ActionForm><ActionForm action={verifySnag} submitLabel="Reopen" variant="secondary">{hid}<input type="hidden" name="snag_id" value={s.id} /><input type="hidden" name="decision" value="reject" /></ActionForm></div> : null}
             </Card>))}
           {c.can("snag.manage") && live ? (
-            <Card title="Raise a snag"><ActionForm action={raiseSnag} submitLabel="Raise snag" reset>{hid}<TextField label="Location" name="location" /><TextAreaField label="Defect" name="description" /><TextField label="Assigned to" name="assigned_to" optional /></ActionForm></Card>) : null}
+            <Card title="Raise a snag"><ActionForm action={raiseSnag} submitLabel="Raise snag" reset>{hid}<TextField label="Location" name="location" id="snag-location" /><TextAreaField label="Defect" name="description" id="snag-desc" /><TextField label="Assigned to" name="assigned_to" optional /></ActionForm></Card>) : null}
         </section>
       </div>
     </>

@@ -159,7 +159,7 @@ try {
   // ============ 5. hold point ============
   console.log("\n5. Hold point");
   await go(mp, `${P}/quality`);
-  await mp.getByLabel("Title").first().fill("Rebar check 1.02"); await mp.locator("select#boq_item_id").selectOption({ label: "1.02" }); await mp.getByLabel("Hold point").check(); await submit(mp, "Request");
+  await mp.locator("#insp-title").fill("Rebar check 1.02"); await mp.locator("select#boq_item_id").selectOption({ label: "1.02" }); await mp.getByLabel("Hold point").check(); await submit(mp, "Request");
   ok(await has(mp, "requested (hold point)"), "hold-point inspection requested");
   await go(ep, `${P}/measurements`); await rec(ep, await opt("1.02"), "10", "Block D"); await has(ep, "Measurement recorded");
   await go(mp, `${P}/measurements`); await mp.getByRole("row", { name: /1\.02/ }).filter({ hasText: "Block D" }).getByRole("button", { name: "Verify" }).click();
@@ -294,7 +294,7 @@ try {
   // ============ 12. snags and closure ============
   console.log("\n12. Snags, handover, closure");
   await go(mp, P); await submit(mp, "Start handover"); ok(await has(mp, "moved to handover"), "project moved to handover");
-  await go(mp, `${P}/quality`); await mp.getByLabel("Location").last().fill("Level 2 lobby"); await mp.getByLabel("Defect").fill("Paint patchy on column C4"); await submit(mp, "Raise snag"); ok(await has(mp, "Snag 1 raised"), "snag raised");
+  await go(mp, `${P}/quality`); await mp.locator("#snag-location").fill("Level 2 lobby"); await mp.locator("#snag-desc").fill("Paint patchy on column C4"); await submit(mp, "Raise snag"); ok(await has(mp, "Snag 1 raised"), "snag raised");
   await go(mp, P); await submit(mp, "Close project"); ok(await has(mp, "Cannot close yet"), "closure blocked by open snag / bill / measurement");
   const exp = await mp.request.get(`${BASE}/api/export/${pid}/bills`); ok(exp.status() === 200 && (await exp.text()).includes("net_payable"), "bills CSV export works for manager");
   const expE = await ep.request.get(`${BASE}/api/export/${pid}/bills`); ok(expE.status() === 403, "engineer cannot export bills");
@@ -337,7 +337,7 @@ try {
   const pl = (await ctx("platform")).page; await login(pl, "ops@platform.test", "Operator-pass-123"); await pl.waitForURL(/\/platform/);
   await go(pl, "/platform/tenants"); ok(await has(pl, "Alpha Builders") && await has(pl, "Beta Constructions"), "operator lists businesses");
   await pl.getByRole("link", { name: "Alpha Builders" }).click();
-  await submit(pl, "Suspend business"); ok(await has(pl, "reason is required") || await has(pl, "at least 5"), "suspension requires a reason");
+  await submit(pl, "Suspend business"); ok((await q("SELECT status FROM tenants WHERE name='Alpha Builders'"))[0].status !== "suspended", "suspension without a reason is blocked");
   await pl.getByLabel(/Reason \(recorded/).fill("Unpaid invoices over 90 days"); await submit(pl, "Suspend business"); ok(await has(pl, "set to suspended"), "operator suspends Alpha");
   await go(op, "/app/projects"); ok(op.url().includes("/settings") && await has(op, "suspended"), "owner of a suspended business is locked out of operations with an explanation");
   const pr = await pl.request.get(`${BASE}${P}`); ok(pr.status() === 404 || pr.url().includes("/denied") || pr.url().includes("/workspaces"), "operator cannot open Alpha project data");

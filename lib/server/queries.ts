@@ -1,4 +1,5 @@
 import "server-only";
+import { notFound } from "next/navigation";
 import { type Db, NotFound } from "./db";
 import { contractValue, collectionState } from "@/lib/rules/billing";
 import { amountFor } from "@/lib/rules/qty";
@@ -9,8 +10,10 @@ export interface Project {
 }
 /** Row-level security hides other tenants' and unassigned projects, so a guessed id is simply "not found". */
 export async function getProject(db: Db, id: string): Promise<Project> {
-  if (!/^[0-9a-f-]{36}$/i.test(id)) throw new NotFound();
-  return db.one<Project>("SELECT id,code,name,client_name,location,status,start_date,end_date FROM projects WHERE id = $1", [id]);
+  if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
+  const p = await db.maybe<Project>("SELECT id,code,name,client_name,location,status,start_date,end_date FROM projects WHERE id = $1", [id]);
+  if (!p) notFound();
+  return p;
 }
 
 export interface BoqRow { id: string; code: string; description: string; unit: string; qty_milli: number; rate_minor: number; source: string; delta: number; }
