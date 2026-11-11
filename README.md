@@ -20,7 +20,7 @@ Dev email is kept in the `email_outbox` table (`EMAIL_PROVIDER=log`); run `npm r
 ```bash
 npm run typecheck && npm run lint
 npm test                      # 37 tests: domain rules + real-Postgres integration (RLS, ledger, billing, auth)
-npm run build && node scripts/e2e.mjs   # browser acceptance run against a started instance (CHROMIUM_PATH=…)
+npm run build && node scripts/e2e.mjs   # browser acceptance runs: node scripts/e2e.mjs (89 checks) and node scripts/e2e-production.mjs (shop-floor chain), against a started instance (CHROMIUM_PATH=…)
 ```
 ## Docs
 `docs/deployment.md` (deploy, health, backup/restore, rollback) · `docs/admin-guide.md` · `docs/costing.md` · `docs/scope-checklist.md`
