@@ -1,0 +1,4 @@
+# Operational costing method (worked example)
+Material = Σ issued qty × unit cost on the issue movement (moving average of receipts, falling back to standard). Labour = actual minutes ÷ 60 × work-centre rate. Overhead = labour × work-centre overhead %. Scrap cost = scrap ÷ (good + scrap) × job total, shown separately and *not* spread over good units. Variance = actual − (standard unit cost × good output); positive = adverse.
+Example (see `tests/domain.test.ts`): 20 units material @ ₹50 = ₹1,000; 120 min @ ₹300/h = ₹600 labour; 50% overhead = ₹300; total ₹1,900. 9 good + 1 scrap → scrap cost ₹190; standard ₹200 × 9 = ₹1,800 → variance +₹100 adverse.
+Finished goods are valued at standard cost on receipt. Corrections never alter closed periods; they post to the current open period with a reason.

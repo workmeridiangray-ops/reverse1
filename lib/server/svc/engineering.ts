@@ -4,6 +4,7 @@ import { UserError } from "../db";
 import { audit } from "../audit";
 import { type Ctx, actor } from "./ctx";
 import type { BomDef } from "@/lib/domain/bom";
+import { notifyPerm } from "../notify";
 
 /** Effective released BOMs at a date, as pure BomDef objects keyed by item id. */
 export async function loadBoms(c: Db, onDate: string): Promise<Map<string, BomDef & { bomId: string; version: number }>> {
@@ -34,6 +35,7 @@ export async function requestRelease(c: Db, x: Ctx, bomId: string, reason: strin
   await c.query("update boms set status='pending' where id=$1", [bomId]);
   await c.query("insert into change_requests(company_id,number,bom_id,reason,affected,requested_by) values ($1,$2,$3,$4,$5,$6)", [x.companyId, num, bomId, reason, JSON.stringify(affected), x.userId]);
   await audit(c, actor(x), "eco.request", "bom", bomId, { number: num, affectedJobs: affected.length }, reason);
+  await notifyPerm(x.companyId, "eng.approve", `Engineering change ${num} awaiting approval`, "/app/changes", `${affected.length} open job(s) affected`, x.userId);
   return num;
 }
 export async function decideChange(c: Db, x: Ctx, crId: string, approve: boolean, reason: string) {

@@ -4,6 +4,7 @@ import { UserError } from "../db";
 import { audit } from "../audit";
 import { type Ctx, actor } from "./ctx";
 import * as inv from "./inventory";
+import { notifyPerm } from "../notify";
 
 export async function createPO(c: Db, x: Ctx, supplierId: string, lines: { itemId: string; qty: number; price: number; dueDate: string; suggestionId?: string }[]) {
   if (!lines.length) throw new UserError("Add at least one line.");
@@ -18,6 +19,7 @@ export async function submitPO(c: Db, x: Ctx, poId: string) {
   const r = await c.query("update purchase_orders set status='pending_approval', version=version+1 where id=$1 and status='draft' returning id", [poId]);
   if (!r.rowCount) throw new UserError("Only draft orders can be submitted.", "conflict");
   await audit(c, actor(x), "po.submit", "purchase_order", poId);
+  await notifyPerm(x.companyId, "proc.approve", "Purchase order awaiting approval", `/app/purchasing/${poId}`, undefined, x.userId);
 }
 export async function decidePO(c: Db, x: Ctx, poId: string, approve: boolean, reason: string) {
   if (!approve && !reason.trim()) throw new UserError("A reason is required when rejecting.");

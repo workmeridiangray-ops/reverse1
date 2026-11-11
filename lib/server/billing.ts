@@ -3,6 +3,7 @@ import { plat, tx, UserError } from "./db";
 import { auditPlat } from "./audit";
 import { enqueue } from "./jobs";
 import { sendEmail, APP_URL } from "./mail";
+import { notifyPerm } from "./notify";
 import { hmacHex, safeEqualHex } from "./crypto";
 import { gstOn, roundPaise } from "@/lib/domain/money";
 
@@ -70,7 +71,8 @@ export async function planChangePreview(companyId: string, versionId: string, cy
 export async function startCheckout(companyId: string, versionId: string, cycle: Cycle, coupon: string | undefined, userId: string) {
   const pv = await planChangePreview(companyId, versionId, cycle, coupon);
   if (pv.blocked) throw new UserError(`Reduce usage before downgrading: ${pv.excess.map((e) => `${e.kind} ${e.using}/${e.allowed}`).join(", ")}.`, "downgrade");
-  if (pv.total <= 0 && !pv.note.startsWith("Downgrade")) throw new UserError("Nothing to charge.");
+  if (pv.note.startsWith("Downgrade")) throw new UserError("Downgrades take effect at renewal: choose “Cancel at period end”, then pick the lower plan when you renew. No refund is given for the current period.", "downgrade");
+  if (pv.total <= 0) throw new UserError("Nothing to charge.");
   const num = "INV-" + new Date().getFullYear() + "-" + String((await plat("select count(*)+1 n from platform_invoices")).rows[0].n).padStart(5, "0") + "-" + Math.random().toString(36).slice(2, 5).toUpperCase();
   const inv = (await plat("insert into platform_invoices(company_id,number,plan_version_id,description,amount_paise,tax_paise,status,provider) values ($1,$2,$3,$4,$5,$6,'pending',$7) returning id",
     [companyId, num, versionId, `${pv.version.name} plan (${cycle})`, pv.net, pv.tax, provider()])).rows[0];
@@ -126,6 +128,7 @@ export async function settleInvoiceByOrder(orderId: string, paymentId: string | 
     await plat("update platform_invoices set status='failed' where id=$1 and status='pending'", [inv.id]);
     await plat("update subscriptions set status='past_due', grace_until=coalesce(grace_until, now()+interval '7 days') where company_id=$1 and status='active'", [inv.company_id]);
     await plat("update companies set status='past_due' where id=$1 and status='active'", [inv.company_id]);
+    await notifyPerm(inv.company_id, "admin.billing", "Payment failed", "/app/settings/billing", `Retry within ${GRACE_DAYS} days.`);
     const co = (await plat("select billing_email, name from companies where id=$1", [inv.company_id])).rows[0];
     if (co?.billing_email) await sendEmail(co.billing_email, "Payment failed — action needed", `Payment for ${inv.number} failed. You have ${GRACE_DAYS} days to retry from Settings → Billing before access is limited.\n${APP_URL()}/app/settings/billing`, inv.company_id);
     return;

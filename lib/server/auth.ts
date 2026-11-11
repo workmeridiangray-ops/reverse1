@@ -12,7 +12,7 @@ const IDLE_MS = 12 * 3600_000, ABS_MS = 7 * 24 * 3600_000;
 export type Auth = {
   user: { id: string; email: string; name: string; platformRole: string | null; totpEnabled: boolean; verified: boolean };
   session: { id: string; mfaOk: boolean; companyId: string | null };
-  company: { id: string; name: string; status: string; slug: string; demo: boolean } | null;
+  company: { id: string; name: string; status: string; slug: string; demo: boolean; trialExpired: boolean } | null;
   membership: { id: string; role: Role; plantIds: string[]; partyId: string | null } | null;
 };
 
@@ -38,8 +38,8 @@ export const getAuth = cache(async (): Promise<Auth | { expired: true } | null> 
   if (Date.now() - new Date(s.last_seen_at).getTime() > 60_000) await plat("update sessions set last_seen_at=now() where id=$1", [s.sid]);
   let company = null, membership = null;
   if (s.company_id) {
-    const m = await plat(`select m.id, m.role, m.plant_ids, m.party_id, c.id cid, c.name, c.status, c.slug, c.demo from memberships m join companies c on c.id=m.company_id where m.user_id=$1 and m.company_id=$2 and m.active`, [s.uid, s.company_id]);
-    if (m.rows[0]) { const x = m.rows[0]; company = { id: x.cid, name: x.name, status: x.status, slug: x.slug, demo: x.demo }; membership = { id: x.id, role: x.role as Role, plantIds: x.plant_ids, partyId: x.party_id }; }
+    const m = await plat(`select m.id, m.role, m.plant_ids, m.party_id, c.id cid, c.name, c.status, c.slug, c.demo, c.trial_ends_at from memberships m join companies c on c.id=m.company_id where m.user_id=$1 and m.company_id=$2 and m.active`, [s.uid, s.company_id]);
+    if (m.rows[0]) { const x = m.rows[0]; company = { id: x.cid, name: x.name, status: x.status, slug: x.slug, demo: x.demo, trialExpired: x.status === "trial" && !!x.trial_ends_at && new Date(x.trial_ends_at) < new Date() }; membership = { id: x.id, role: x.role as Role, plantIds: x.plant_ids, partyId: x.party_id }; }
   }
   return { user: { id: s.uid, email: s.email, name: s.name, platformRole: s.platform_role, totpEnabled: s.totp_enabled, verified: !!s.email_verified_at }, session: { id: s.sid, mfaOk: s.mfa_ok, companyId: s.company_id }, company, membership };
 });
@@ -56,7 +56,7 @@ export type CompanyAuth = Auth & { company: NonNullable<Auth["company"]>; member
 export async function requireCompany(perm?: Perm, opts?: { allowSuspended?: boolean }): Promise<CompanyAuth> {
   const a = await requireUser();
   if (!a.company || !a.membership) redirect("/workspaces");
-  if (!opts?.allowSuspended && (a.company.status === "suspended" || a.company.status === "closed")) redirect("/suspended");
+  if (!opts?.allowSuspended && (a.company.status === "suspended" || a.company.status === "closed" || a.company.trialExpired)) redirect("/suspended");
   if (perm && !can(a.membership.role, perm)) redirect("/denied");
   return a as CompanyAuth;
 }

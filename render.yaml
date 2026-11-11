@@ -1,0 +1,32 @@
+# Render blueprint. Fill secret values in the dashboard (sync: false) — never commit them.
+databases:
+  - name: forgeline-db
+    plan: basic-256mb
+    databaseName: mfg
+    user: mfg_owner
+services:
+  - type: web
+    name: forgeline
+    runtime: docker
+    healthCheckPath: /api/health
+    preDeployCommand: node scripts/migrate.mjs
+    envVars:
+      - { key: MIGRATE_DATABASE_URL, fromDatabase: { name: forgeline-db, property: connectionString } }
+      - { key: DATABASE_URL, sync: false }   # connection string of the restricted runtime role mfg_app (see docs/deployment.md)
+      - { key: APP_URL, sync: false }
+      - { key: CRON_SECRET, generateValue: true }
+      - { key: EMAIL_PROVIDER, value: resend }
+      - { key: EMAIL_API_KEY, sync: false }
+      - { key: EMAIL_FROM, sync: false }
+      - { key: RAZORPAY_KEY_ID, sync: false }
+      - { key: RAZORPAY_KEY_SECRET, sync: false }
+      - { key: RAZORPAY_WEBHOOK_SECRET, sync: false }
+      - { key: UPLOAD_DIR, value: /var/data/uploads }
+    disk: { name: uploads, mountPath: /var/data, sizeGB: 10 }
+  - type: worker
+    name: forgeline-worker
+    runtime: docker
+    dockerCommand: node scripts/worker.mjs
+    envVars:
+      - { key: APP_URL, sync: false }
+      - { key: CRON_SECRET, sync: false }

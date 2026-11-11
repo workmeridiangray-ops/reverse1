@@ -131,3 +131,22 @@ describe("jobs", () => {
     expect((await plat("select status from jobs where dedupe_key='d1'")).rows[0].status).toBe("queued");
   });
 });
+
+describe("notifications, downgrade and trial rules", () => {
+  it("notifies approvers when a PO is submitted, but not the submitter", async () => {
+    const { seedCompany, inCo } = await import("./helpers");
+    const proc = await import("@/lib/server/svc/procurement");
+    const w = await seedCompany("notify");
+    const po = await inCo(w, async (c) => { const p = await proc.createPO(c, w.ctx("buyer", w.user2), w.supplierId, [{ itemId: w.items.BOLT!, qty: 10, price: 100, dueDate: "2026-12-31" }]); await proc.submitPO(c, w.ctx("buyer", w.user2), p.id); return p; });
+    const rows = (await plat("select user_id, title, href from notifications where company_id=$1", [w.companyId])).rows;
+    expect(rows.map((r) => r.user_id)).toContain(w.userId);          // owner can approve
+    expect(rows.map((r) => r.user_id)).not.toContain(w.user2);       // submitter excluded
+    expect(rows[0]!.href).toBe(`/app/purchasing/${po.id}`);
+  });
+  it("downgrade checkout explains the renewal rule instead of creating a zero-value order", async () => {
+    const cid = (await plat("select id from companies where billing_email='owner@acme.test'")).rows[0].id; const uid = (await plat("select id from users where email='owner@acme.test'")).rows[0].id;
+    await plat("update memberships set active=false where company_id=$1 and role='viewer'", [cid]);
+    const starter = (await bill.currentPlanVersions()).find((p) => p.code === "starter");
+    await expect(bill.startCheckout(cid, starter.version_id, "yearly", undefined, uid)).rejects.toThrow(/Downgrades take effect at renewal|Reduce usage/);
+  });
+});

@@ -8,6 +8,7 @@ import { loadBoms } from "./engineering";
 import { componentQty } from "@/lib/domain/bom";
 import { addDays, iso } from "@/lib/domain/dates";
 import { can } from "../perms";
+import { notifyPerm } from "../notify";
 
 const OVER_ISSUE_TOLERANCE = 0.1, OVER_OUTPUT_TOLERANCE = 0;
 
@@ -195,4 +196,5 @@ export async function rescheduleOp(c: Db, x: Ctx, opId: string, start: string, e
   await c.query("insert into schedule_history(company_id,operation_id,old_start,old_end,new_start,new_end,reason,changed_by) values ($1,$2,$3,$4,$5,$6,$7,$8)", [x.companyId, opId, op.planned_start, op.planned_end, start, end, reason, x.userId]);
   await c.query("update wo_operations set planned_start=$2, planned_end=$3 where id=$1", [opId, start, end]);
   await audit(c, actor(x), "op.reschedule", "wo_operation", opId, { start, end }, reason);
+  await notifyPerm(x.companyId, "shop.operate", "Operation rescheduled", "/app/schedule", `${start} → ${end}: ${reason}`, x.userId);
 }

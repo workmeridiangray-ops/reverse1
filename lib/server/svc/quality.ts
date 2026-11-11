@@ -6,6 +6,7 @@ import { type Ctx, actor } from "./ctx";
 import * as inv from "./inventory";
 import * as prod from "./production";
 import { can } from "../perms";
+import { notifyPerm } from "../notify";
 
 export async function recordResult(c: Db, x: Ctx, inspId: string, a: { measured?: number | null; min?: number | null; max?: number | null; unit?: string; pass: boolean; notes?: string }) {
   if (!can(x.role, "qa.decide")) throw new UserError("You are not authorised to decide inspections.", "denied");
@@ -21,6 +22,7 @@ export async function recordResult(c: Db, x: Ctx, inspId: string, a: { measured?
   if (!pass) {
     const n = (await c.query("select next_number($1,'ncr','NCR') n", [x.companyId])).rows[0].n;
     await c.query("insert into ncrs(company_id,number,inspection_id,description) values ($1,$2,$3,$4)", [x.companyId, n, inspId, a.notes || "Inspection failed"]);
+    await notifyPerm(x.companyId, "qa.decide", `Nonconformance ${n} needs a disposition`, "/app/quality", undefined, x.userId);
   }
   await audit(c, actor(x), pass ? "qa.pass" : "qa.fail", "inspection", inspId, { measured: a.measured });
   return pass;
