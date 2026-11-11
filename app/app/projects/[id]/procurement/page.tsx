@@ -42,10 +42,10 @@ export default async function Procurement({ params }: { params: Promise<{ id: st
               <div className="flex items-center justify-between"><h3 className="font-bold">MR-{r.number}</h3><Badge status={r.status} /></div>
               <ul className="mt-1 text-sm">{d.rl.filter((l) => l.request_id === r.id).map((l) => <li key={l.id}>{l.description} — <Qty milli={l.qty_milli} unit={l.unit} /></li>)}</ul>
               {r.decision_reason ? <p className="mt-1 text-sm text-danger-fg">Reason: {r.decision_reason}</p> : null}
-              {r.status === "draft" && c.can("material.request") && live ? <ActionForm action={submitRequest} submitLabel="Submit">{hid}<input type="hidden" name="request_id" value={r.id} /></ActionForm> : null}
+              {r.status === "draft" && c.can("material.request") && live ? <ActionForm action={submitRequest} submitLabel="Submit">{hid}<input type="hidden" name="mr_id" value={r.id} /></ActionForm> : null}
               {r.status === "submitted" && c.can("material.approve") && live ? (r.requested_by === c.user.id ? <p className="mt-2 text-sm text-warn-fg">You raised this; someone else must approve.</p> : (
-                <div className="mt-2 flex flex-wrap gap-6"><ActionForm action={decideRequest} submitLabel="Approve">{hid}<input type="hidden" name="request_id" value={r.id} /><input type="hidden" name="decision" value="approve" /></ActionForm>
-                  <details><summary className="cursor-pointer font-bold text-danger-fg">Reject…</summary><ActionForm action={decideRequest} submitLabel="Reject" variant="secondary">{hid}<input type="hidden" name="request_id" value={r.id} /><input type="hidden" name="decision" value="reject" /><TextField label="Reason" name="reason" id={`mr-${r.id}`} /></ActionForm></details></div>)) : null}
+                <div className="mt-2 flex flex-wrap gap-6"><ActionForm action={decideRequest} submitLabel="Approve">{hid}<input type="hidden" name="mr_id" value={r.id} /><input type="hidden" name="decision" value="approve" /></ActionForm>
+                  <details><summary className="cursor-pointer font-bold text-danger-fg">Reject…</summary><ActionForm action={decideRequest} submitLabel="Reject" variant="secondary">{hid}<input type="hidden" name="mr_id" value={r.id} /><input type="hidden" name="decision" value="reject" /><TextField label="Reason" name="reason" id={`mr-${r.id}`} /></ActionForm></details></div>)) : null}
             </Card>))}
           {c.can("material.request") && live && d.p.status !== "tender" ? (
             <Card title="New request"><ActionForm action={createRequest} submitLabel="Save draft" reset>{hid}
@@ -75,7 +75,7 @@ export default async function Procurement({ params }: { params: Promise<{ id: st
           })}
           {c.can("po.manage") && live && approved.length ? (
             <Card title="Create a purchase order"><ActionForm action={createPo} submitLabel="Create PO (draft)" reset>{hid}
-              <SelectField label="Approved request" name="request_id"><option value="">Choose…</option>{approved.map((r) => <option key={r.id} value={r.id}>MR-{r.number}</option>)}</SelectField>
+              <SelectField label="Approved request" name="mr_id"><option value="">Choose…</option>{approved.map((r) => <option key={r.id} value={r.id}>MR-{r.number}</option>)}</SelectField>
               <SelectField label="Supplier" name="supplier_id"><option value="">Choose…</option>{d.suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}</SelectField>
               <p className="text-sm text-ink-700">Enter a rate (₹ per unit) for each line to order. Lines without a rate are left out. Remaining unordered quantity is used.</p>
               {approved.flatMap((r) => d.rl.filter((l) => l.request_id === r.id).map((l) => <TextField key={l.id} label={`MR-${r.number}: ${l.description} (${l.unit})`} name={`rate_${l.id}`} id={`rate_${l.id}`} inputMode="decimal" optional />))}

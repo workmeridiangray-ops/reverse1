@@ -11,8 +11,7 @@ export const metadata = { title: "Accept invitation" };
 export default async function Invite({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const { auth } = await getAuth();
-  const inv = await tx({ inviteLookup: true }, (db) => db.maybe<{ email: string; role: string; tname: string; accepted_at: Date | null; revoked_at: Date | null; expired: boolean }>(
-    `SELECT i.email, i.role, t.name tname, i.accepted_at, i.revoked_at, i.expires_at < now() expired FROM invitations i JOIN tenants t ON t.id = i.tenant_id WHERE i.token_hash = $1`, [sha256(token)]));
+  const inv = await tx({}, (db) => db.maybe<{ email: string; role: string; tname: string; accepted_at: Date | null; revoked_at: Date | null; expired: boolean }>("SELECT * FROM invite_info($1)", [sha256(token)]));
   const state = !inv ? "invalid" : inv.revoked_at ? "revoked" : inv.accepted_at ? "used" : inv.expired ? "expired" : "ok";
   if (!inv || state !== "ok") {
     const msg = { invalid: "This invitation link is not valid.", revoked: "This invitation was revoked by the sender.", used: "This invitation has already been used.", expired: "This invitation has expired.", ok: "" }[state];

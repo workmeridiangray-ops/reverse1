@@ -30,14 +30,14 @@ export const createRequest = mutation("material.request", "createRequest", async
 
 export const submitRequest = mutation("material.request", "submitRequest", async (c, db, fd) => {
   const p = await writableProject(db, str(fd, "project_id"));
-  const n = await db.exec("UPDATE material_requests SET status='submitted' WHERE id=$1 AND project_id=$2 AND status='draft'", [z.string().uuid().parse(str(fd, "request_id")), p.id]);
+  const n = await db.exec("UPDATE material_requests SET status='submitted' WHERE id=$1 AND project_id=$2 AND status='draft'", [z.string().uuid().parse(str(fd, "mr_id")), p.id]);
   if (!n) throw new UserError("Only a draft can be submitted.");
   return "Submitted for approval.";
 });
 
 export const decideRequest = mutation("material.approve", "decideRequest", async (c, db, fd) => {
   const p = await writableProject(db, str(fd, "project_id"));
-  const id = z.string().uuid().parse(str(fd, "request_id"));
+  const id = z.string().uuid().parse(str(fd, "mr_id"));
   const approve = str(fd, "decision") === "approve"; const reason = str(fd, "reason");
   if (!approve && reason.length < 5) throw new UserError("A reason is required to reject (at least 5 characters).", "reason");
   const r = await db.one<{ status: string; requested_by: string | null }>("SELECT status,requested_by FROM material_requests WHERE id=$1 AND project_id=$2 FOR UPDATE", [id, p.id]);
@@ -50,7 +50,7 @@ export const decideRequest = mutation("material.approve", "decideRequest", async
 
 export const createPo = mutation("po.manage", "createPo", async (c, db, fd) => {
   const p = await writableProject(db, str(fd, "project_id"));
-  const reqId = z.string().uuid("Choose an approved request").parse(str(fd, "request_id"));
+  const reqId = z.string().uuid("Choose an approved request").parse(str(fd, "mr_id"));
   const supplier = z.string().uuid("Choose a supplier").parse(str(fd, "supplier_id"));
   const req = await db.one<{ status: string }>("SELECT status FROM material_requests WHERE id=$1 AND project_id=$2", [reqId, p.id]);
   if (req.status !== "approved") throw new UserError("Only an approved request can be ordered.");

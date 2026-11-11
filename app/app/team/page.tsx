@@ -34,7 +34,7 @@ export default async function Team() {
         </Card>
         {manage ? (
           <Card title="Invite someone"><ActionForm action={invite} submitLabel="Send invitation" reset>
-            <TextField label="Email" name="email" type="email" /><SelectField label="Role" name="role">{ROLES.filter((r) => r !== "owner" || c.role === "owner").map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}</SelectField>
+            <TextField label="Email" name="email" type="email" /><SelectField label="Role" name="role" defaultValue="viewer">{ROLES.filter((r) => r !== "owner" || c.role === "owner").map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}</SelectField>
             <fieldset><legend className="text-sm font-bold">Projects <span className="font-normal text-ink-500">(required for client / consultant)</span></legend>
               <div className="mt-1 max-h-40 space-y-1 overflow-auto">{projects.map((p) => <label key={p.id} className="flex min-h-touch items-center gap-2"><input type="checkbox" name="project_ids" value={p.id} className="h-5 w-5" /> {p.code} — {p.name}</label>)}</div></fieldset>
           </ActionForm></Card>

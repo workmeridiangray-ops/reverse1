@@ -1,0 +1,38 @@
+# Render blueprint: web app, email worker, PostgreSQL and a persistent disk for uploaded files.
+# Secrets are never committed: values marked `sync: false` are entered in the Render dashboard.
+databases:
+  - name: siteledger-db
+    plan: basic-256mb
+    databaseName: siteledger
+    user: siteledger_owner
+
+services:
+  - type: web
+    name: siteledger-web
+    runtime: docker
+    plan: starter
+    healthCheckPath: /api/health
+    preDeployCommand: node scripts/migrate.mjs
+    disk: { name: siteledger-files, mountPath: /data, sizeGB: 20 }
+    envVars:
+      - { key: DATABASE_URL, fromDatabase: { name: siteledger-db, property: connectionString } }  # owner: migrations only
+      - { key: ERP_APP_PASSWORD, generateValue: true }
+      - { key: APP_DATABASE_URL, sync: false }   # postgresql://erp_app:<ERP_APP_PASSWORD>@<internal host>:5432/siteledger
+      - { key: DB_SSL, value: "false" }
+      - { key: APP_URL, sync: false }            # https://your-domain
+      - { key: STORAGE_DIR, value: /data/files }
+      - { key: EMAIL_MODE, value: brevo }
+      - { key: BREVO_API_KEY, sync: false }
+      - { key: MAIL_FROM, sync: false }
+      - { key: SALES_EMAIL, sync: false }
+
+  - type: worker
+    name: siteledger-worker
+    runtime: docker
+    plan: starter
+    dockerCommand: node scripts/worker.mjs
+    envVars:
+      - { key: APP_DATABASE_URL, sync: false }
+      - { key: EMAIL_MODE, value: brevo }
+      - { key: BREVO_API_KEY, sync: false }
+      - { key: MAIL_FROM, sync: false }

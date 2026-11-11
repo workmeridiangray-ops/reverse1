@@ -98,10 +98,10 @@ export default async function BillPage({ params }: { params: Promise<{ id: strin
             {c.can("receipt.record") && open && coll.outstandingMinor > 0 ? (
               <ActionForm action={recordReceipt} submitLabel="Record receipt" reset>
                 {hidden}<input type="hidden" name="invoice_id" value={inv.id} /><h3 className="font-bold">Record a receipt</h3>
-                <TextField label="Amount (₹)" name="amount" inputMode="decimal" hint={`Outstanding ${toMajorString(coll.outstandingMinor, "INR")}`} />
-                <TextField label="Received on" name="received_on" type="date" defaultValue={todayIso()} max={todayIso()} />
-                <SelectField label="Method" name="method"><option value="bank">Bank transfer</option><option value="cheque">Cheque</option><option value="upi">UPI</option><option value="cash">Cash</option></SelectField>
-                <TextField label="Reference" name="reference" optional />
+                <TextField label="Amount (₹)" name="amount" id="receipt-amount" inputMode="decimal" hint={`Outstanding ${toMajorString(coll.outstandingMinor, "INR")}`} />
+                <TextField label="Received on" name="received_on" id="receipt-date" type="date" defaultValue={todayIso()} max={todayIso()} />
+                <SelectField label="Method" name="method" id="receipt-method"><option value="bank">Bank transfer</option><option value="cheque">Cheque</option><option value="upi">UPI</option><option value="cash">Cash</option></SelectField>
+                <TextField label="Reference" name="reference" id="receipt-ref" optional />
               </ActionForm>
             ) : null}
             <div>
@@ -111,7 +111,7 @@ export default async function BillPage({ params }: { params: Promise<{ id: strin
                   {d.status === "open" && c.can("dispute.manage") && open ? <details className="mt-2"><summary className="cursor-pointer text-sm font-bold">Resolve…</summary><ActionForm action={resolveDispute} submitLabel="Mark resolved" variant="secondary">{hidden}<input type="hidden" name="dispute_id" value={d.id} /><TextField label="Resolution" name="resolution" id={`res-${d.id}`} /></ActionForm></details> : null}</li>))}</ul>}
               {(c.can("dispute.raise") || c.can("dispute.manage")) && open && coll.undisputedOutstandingMinor > 0 ? (
                 <ActionForm action={raiseDispute} submitLabel="Record dispute" reset>{hidden}<input type="hidden" name="invoice_id" value={inv.id} />
-                  <TextField label="Disputed amount (₹)" name="amount" inputMode="decimal" /><TextAreaField label="Reason" name="reason" /></ActionForm>
+                  <TextField label="Disputed amount (₹)" name="amount" id="dispute-amount" inputMode="decimal" /><TextAreaField label="Reason" name="reason" id="dispute-reason" /></ActionForm>
               ) : null}
             </div>
           </div>

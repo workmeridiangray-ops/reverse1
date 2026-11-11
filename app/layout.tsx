@@ -5,6 +5,7 @@ import "@fontsource/ibm-plex-mono/400.css";
 import "./globals.css";
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import { Toaster } from "@/components/ui/Toaster";
 import { PRODUCT_NAME, PRODUCT_TAGLINE } from "@/lib/brand";
 
 export const metadata: Metadata = {
@@ -19,6 +20,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="min-h-screen">
         <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:bg-surface focus:p-3">Skip to content</a>
         {children}
+        <Toaster />
       </body>
     </html>
   );

@@ -3,7 +3,7 @@ import { useActionState } from "react";
 import { Alert } from "@/components/ui/Layout";
 import { Button } from "@/components/ui/Button";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { type FormEvent, startTransition, useEffect, useState } from "react";
 import { importBoq } from "./actions";
 
 export function BoqImport({ projectId }: { projectId: string }) {
@@ -12,8 +12,13 @@ export function BoqImport({ projectId }: { projectId: string }) {
   const [rid, setRid] = useState("");
   useEffect(() => setRid(crypto.randomUUID()), []);
   useEffect(() => { if (state?.ok && state.message?.startsWith("Imported")) { setRid(crypto.randomUUID()); router.refresh(); } }, [state, router]);
+  function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget, (e.nativeEvent as SubmitEvent).submitter);
+    startTransition(() => action(fd));
+  }
   return (
-    <form action={action} className="flex flex-col gap-3">
+    <form onSubmit={onSubmit} className="flex flex-col gap-3">
       <input type="hidden" name="project_id" value={projectId} />
       <input type="hidden" name="request_id" value={rid} />
       <label htmlFor="boqfile" className="text-sm font-bold">CSV file <span className="font-normal text-ink-500">columns: code, description, unit, quantity, rate (₹ per unit)</span></label>
