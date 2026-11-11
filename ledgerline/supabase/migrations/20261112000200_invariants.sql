@@ -16,7 +16,7 @@ begin
   if c = 'audit' and tg_op <> 'INSERT' then raise exception 'audit entries cannot be changed or deleted' using errcode = '42501'; end if;
 
   -- 2. Issued invoices and accepted quotations are frozen apart from status/void, due date, delivery and history.
-  if c = 'invoices' and tg_op = 'UPDATE' and o->>'status' not in ('draft','pending_approval') then
+  if c = 'invoices' and tg_op = 'UPDATE' and coalesce(o->>'status','draft') not in ('draft','pending_approval') then
     if n->'lines' is distinct from o->'lines' or n->>'total' is distinct from o->>'total' or n->>'customerId' is distinct from o->>'customerId'
        or n->>'number' is distinct from o->>'number' or n->>'issueDate' is distinct from o->>'issueDate' or n->'totals' is distinct from o->'totals' then
       raise exception 'issued invoice % cannot be edited; use a credit note and reissue', o->>'number' using errcode = '23514';
@@ -24,8 +24,8 @@ begin
     if n->>'status' is distinct from o->>'status' and n->>'status' <> 'void' then raise exception 'an issued invoice can only move to void' using errcode = '23514'; end if;
     if o->>'status' = 'void' and n->>'status' <> 'void' then raise exception 'a void invoice cannot be reopened' using errcode = '23514'; end if;
   end if;
-  if c = 'invoices' and tg_op = 'DELETE' and o->>'status' <> 'draft' then raise exception 'only draft invoices can be deleted' using errcode = '23514'; end if;
-  if c = 'invoices' and tg_op in ('INSERT','UPDATE') and n->>'status' not in ('draft','pending_approval') and coalesce(n->>'number','') = '' then
+  if c = 'invoices' and tg_op = 'DELETE' and coalesce(o->>'status','draft') <> 'draft' then raise exception 'only draft invoices can be deleted' using errcode = '23514'; end if;
+  if c = 'invoices' and tg_op in ('INSERT','UPDATE') and coalesce(n->>'status','draft') not in ('draft','pending_approval') and coalesce(n->>'number','') = '' then
     raise exception 'an issued invoice must have a number' using errcode = '23514'; end if;
   if c = 'quotes' and tg_op = 'UPDATE' and o->>'status' in ('accepted','converted') then
     if n->'lines' is distinct from o->'lines' or n->>'total' is distinct from o->>'total' or n->>'customerId' is distinct from o->>'customerId' then
@@ -34,7 +34,7 @@ begin
 
   -- 3. Locked financial periods refuse backdated documents.
   if tg_op in ('INSERT','UPDATE') then
-    if c = 'invoices' and n->>'status' not in ('draft','pending_approval') and (tg_op = 'INSERT' or o->>'status' in ('draft','pending_approval') or n->>'issueDate' is distinct from o->>'issueDate') and public.period_locked(t, n->>'issueDate') then
+    if c = 'invoices' and coalesce(n->>'status','draft') not in ('draft','pending_approval') and (tg_op = 'INSERT' or o->>'status' in ('draft','pending_approval') or n->>'issueDate' is distinct from o->>'issueDate') and public.period_locked(t, n->>'issueDate') then
       raise exception 'issue date % falls in a locked period', n->>'issueDate' using errcode = '23514'; end if;
     if c = 'receipts' and (tg_op = 'INSERT' or n->>'date' is distinct from o->>'date') and public.period_locked(t, n->>'date') then
       raise exception 'receipt date % falls in a locked period', n->>'date' using errcode = '23514'; end if;

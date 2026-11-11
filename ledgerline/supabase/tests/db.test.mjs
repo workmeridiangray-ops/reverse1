@@ -89,6 +89,14 @@ test('issued invoices are frozen; void is allowed; drafts can be deleted, issued
     assert.equal((await q(`delete from records where collection='invoices' and id='d1'`)).rowCount, 1);
   });
 });
+test('an invoice with no status field cannot dodge the issue rules', async () => {
+  await as('managerA', async (q) => {
+    await q(`insert into records(tenant_id,collection,id,data) values ('tA','invoices','ns','{"number":"","total":1,"lines":[],"totals":{},"customerId":"c1","issueDate":"2026-06-10"}')`);
+    await fails(q(`update records set data = data || '{"status":"issued"}' where id='ns'`), /must have a number/);
+    await q(`update records set data = data || '{"status":"issued","number":"INV-NS"}' where id='ns'`);
+    await fails(q(`update records set data = jsonb_set(data,'{total}','9') where id='ns'`), /cannot be edited/);
+  });
+});
 test('allocations cannot over-apply a receipt or invoice, or cross customers', async () => {
   const ins = (q, id, rc, inv, amt) => q(`insert into records(tenant_id,collection,id,data) values ('tA','allocations',$1,$2)`, [id, JSON.stringify({ receiptId: rc, invoiceId: inv, amount: amt, reversed: false })]);
   await as('managerA', async (q) => {
@@ -152,6 +160,13 @@ test('suspended members and revoked portal users lose access immediately', async
   assert.equal(await count('cust1'), 0);
   await admin._db.query(`update portal_users set active=true where customer_id='c1'`);
 });
+test('customers can read the public profile but not private settings; support access goes through a controlled request', async () => {
+  await admin._db.query(`insert into records(tenant_id,collection,id,data) values ('tA','_public','main','{"business":{"legalName":"Alpha"}}'),('tA','_settings','main','{"service":{"invoiceApprovalValue":1}}')`);
+  await as('cust1', async (q) => { assert.deepEqual((await q(`select id from records where collection in ('_public','_settings') order by 1`)).rows.map((r) => r.id), ['main']); assert.equal((await q(`select 1 from records where collection='_settings'`)).rowCount, 0); });
+  await as('staffA', async (q) => { assert.equal((await q(`select 1 from records where collection='_settings'`)).rowCount, 1); });
+  await as('support', async (q) => { await fails(q(`insert into records(tenant_id,collection,id,data) values ('tA','supportAccess','x','{}')`), /row-level security/); const id = (await q(`select request_support_access('tA','Investigate import','Imports only','2026-12-31') id`)).rows[0].id; assert.ok(id.startsWith('sa_')); await fails(q(`select request_support_access('tA','  ','x','2026-12-31')`), /reason/); await fails(q(`select request_support_access('nope','why','x','2026-12-31')`), /unknown business/); });
+  await as('ownerA', async (q) => { assert.equal((await q(`select request_support_access('tA','x','y','2026-12-31')`).catch((e) => e)).message?.includes('only support staff'), true); });
+});
 test('platform data is invisible to tenants and scoped by platform role', async () => {
   await admin._db.query(`insert into platform_records values ('biz','b1','{"name":"X"}'),('tickets','t1','{"s":"x"}'),('plans','p1','{"n":"Growth"}')`);
   await as('ownerA', async (q) => { assert.deepEqual((await q('select collection from platform_records order by 1')).rows.map((r) => r.collection), ['plans']); await fails(q(`insert into platform_records values ('coupons','c','{}')`), /row-level security/); });
@@ -175,4 +190,29 @@ test('signup creates a business with the caller as owner; invitations are claime
   const c2 = new Client({ connectionString: ADMIN.replace(/\/postgres(\?|$)/, `/${DB}$1`) }); await c2.connect();
   try { await c2.query('begin'); await c2.query('set local role authenticated'); await c2.query(`select set_config('request.jwt.claims', $1, true)`, [JSON.stringify({ sub: nu, email: 'newbie@x.test' })]);
     assert.equal((await c2.query('select claim_access() r')).rows[0].r.members, 1); assert.ok((await c2.query(`select count(*)::int n from records where tenant_id='tA'`)).rows[0].n > 0); await c2.query('rollback'); } finally { await c2.end(); }
+});
+
+test('the generated demo seed loads and respects isolation', async () => {
+  const dbn = DB + '_seed'; await admin.query(`create database ${dbn}`);
+  const url = ADMIN.replace(/\/postgres(\?|$)/, `/${dbn}$1`); const a = new Client({ connectionString: url }); await a.connect();
+  try {
+    await a.query(sql('./supabase_prelude.sql'));
+    for (const f of readdirSync(new URL('../migrations/', import.meta.url)).sort()) await a.query(sql('../migrations/' + f));
+    const seed = sql('./seed.data.sql'); const ids = [...new Set([...seed.matchAll(/'([0-9a-f]{8}-[0-9a-f]{4}-5[0-9a-f]{3}-a[0-9a-f]{3}-[0-9a-f]{12})'/g)].map((m) => m[1]))];
+    for (const id of ids) await a.query('insert into auth.users(id,email) values ($1,$2) on conflict do nothing', [id, id]);
+    await a.query(seed);
+    const n = async (t) => Number((await a.query(`select count(*) from ${t}`)).rows[0].count);
+    assert.ok(await n('records') > 700); assert.equal(await n('tenants'), 2); assert.ok(await n('platform_records') > 50); assert.equal(await n('platform_staff'), 4);
+    const asUser = async (uid, email, sqlText) => { await a.query('begin'); await a.query('set local role authenticated'); await a.query(`select set_config('request.jwt.claims',$1,true)`, [JSON.stringify({ sub: uid, email })]); const r = await a.query(sqlText); await a.query('rollback'); return r.rows; };
+    const owner = (await a.query(`select user_id from members where email='owner@northwind.test' and tenant_id='t1'`)).rows[0].user_id; assert.ok(owner);
+    const o = await asUser(owner, 'owner@northwind.test', `select tenant_id, count(*)::int n from records group by 1 order by 1`);
+    assert.deepEqual(o.map((r) => r.tenant_id), ['t1', 't2']);
+    const ko = (await a.query(`select user_id from members where email='owner@kestrel.test'`)).rows[0].user_id;
+    assert.deepEqual((await asUser(ko, 'owner@kestrel.test', `select distinct tenant_id from records`)).map((r) => r.tenant_id), ['t2']);
+    const cust = (await a.query(`select user_id from portal_users where email='accounts@aarav.example'`)).rows[0].user_id;
+    const c = await asUser(cust, 'accounts@aarav.example', `select distinct data->>'customerId' cid from records where collection='invoices'`);
+    assert.deepEqual(c.map((r) => r.cid), ['cu_t1_0']);
+    const staff = (await a.query(`select user_id from members where email='staff@northwind.test'`)).rows[0].user_id;
+    assert.equal((await asUser(staff, 'staff@northwind.test', `select 1 from records where collection in ('bankTx','bills','apiKeys')`)).length, 0);
+  } finally { await a.end(); await admin.query(`drop database ${dbn} with (force)`); }
 });
