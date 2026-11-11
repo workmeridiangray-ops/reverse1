@@ -8,7 +8,7 @@ import { SubmitButton } from "@/components/ui/SubmitButton";
 
 interface Option { id: string; label: string; disabled?: boolean }
 export interface AppointmentFormProps {
-  initial: { id?: string; patient_id: string; doctor_id: string; room_id: string; date: string; time: string; duration: string; reason: string };
+  initial: { id?: string; requestId?: string; patient_id: string; doctor_id: string; room_id: string; date: string; time: string; duration: string; reason: string };
   patients: Option[];
   doctors: Option[];
   rooms: Option[];
@@ -28,6 +28,7 @@ export function AppointmentForm({ initial, patients, doctors, rooms, timeZone }:
   return (
     <form action={action} className="flex max-w-3xl flex-col gap-6" key={key} noValidate>
       {initial.id ? <input type="hidden" name="id" value={initial.id} /> : null}
+      {initial.requestId ? <input type="hidden" name="request_id" value={initial.requestId} /> : null}
       {state.formError ? <Alert tone="danger" title="Not saved">{state.formError}</Alert> : null}
       {blocking.length ? (
         <Alert tone="danger" title="This time doesn't work">

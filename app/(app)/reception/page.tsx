@@ -34,6 +34,7 @@ export default async function ReceptionPage({ searchParams }: { searchParams: Pr
   const supabase = await createClient();
   const now = new Date();
   const board = await getReceptionBoard(supabase, session, now);
+  const { count: requestCount } = await supabase.from("appointment_requests").select("id", { count: "exact", head: true }).eq("status", "open");
   const tz = session.clinic.timezone;
   const dateLabel = new Intl.DateTimeFormat("en-GB", { timeZone: tz, weekday: "long", day: "numeric", month: "long" }).format(now);
   const groups = (Object.keys(GROUP_TITLE) as BoardGroup[])
@@ -56,6 +57,9 @@ export default async function ReceptionPage({ searchParams }: { searchParams: Pr
       />
 
       {error ? <div className="mb-gutter"><Alert tone="danger" title="That didn't work">{error}</Alert></div> : null}
+      {(requestCount ?? 0) > 0 ? (
+        <div className="mb-gutter"><Alert tone="info" title={`${requestCount} appointment request${requestCount === 1 ? "" : "s"} from patients`}><Link href="/appointments/requests">Reply to them</Link></Alert></div>
+      ) : null}
 
       {/* Answer first: who is next, then the numbers. */}
       <section aria-labelledby="summary-title" className="mb-section grid gap-gutter md:grid-cols-[2fr_1fr_1fr_1fr]">

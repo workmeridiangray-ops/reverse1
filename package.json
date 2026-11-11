@@ -15,7 +15,8 @@
     "db:start": "supabase start -x studio,imgproxy,vector,logflare,edge-runtime,supavisor,mailpit,storage-api,postgres-meta",
     "db:reset": "supabase db reset",
     "db:types": "supabase gen types typescript --local --schema public > lib/supabase/database.types.ts",
-    "test:smoke": "node scripts/smoke.mjs"
+    "test:smoke": "node scripts/smoke.mjs",
+    "db:seed-demo-history": "node scripts/seed-demo-history.mjs"
   },
   "dependencies": {
     "@fontsource/atkinson-hyperlegible": "^5.3.0",

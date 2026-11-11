@@ -20,6 +20,7 @@ export default defineConfig({
           name: "db",
           environment: "node",
           include: ["tests/db/**/*.test.ts"],
+          setupFiles: ["tests/db/setup.ts"],
           // Tests share one seeded database; run files one at a time.
           fileParallelism: false,
           testTimeout: 30_000,

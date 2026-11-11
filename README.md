@@ -4,10 +4,10 @@ Clinic management for small and mid-size clinics. Six roles (admin, doctor,
 receptionist, lab, pharmacist, patient), every table behind row-level security,
 and the business rules in small pure modules with their own tests.
 
-**Status: Phases 1 and 2.**
+**Status: all three phases built.**
 - Phase 1: schema, auth and role routing, front desk, doctor's day, patient and appointment CRUD, basic billing.
 - Phase 2: allergies, prescribing with class-based allergy checking, lab orders, result entry and flagging, critical-result handling, release of results to patients.
-- Not built yet (Phase 3): pharmacy stock and batch dispensing, the full patient portal, analytics.
+- Phase 3: pharmacy stock and first-expiry-first-out batch dispensing with recall tracing, the patient portal (results, medicines, bills, appointment requests, own details), and analytics.
 
 > Clinical rules are placeholders until a clinician reviews them. Look for
 > `CLINICAL PLACEHOLDER` and `CLINICAL_REVIEW_REQUIRED` in the code.
@@ -35,6 +35,7 @@ npm run test:unit    # pure rules, no database
 npm run db:reset     # re-seed, then:
 npm run test:db      # RLS, audit and parity tests against real local Supabase
 npm run test:smoke   # with `npm run dev` running: every role, every screen, axe WCAG AA
+npm run db:seed-demo-history   # OPTIONAL: ~90 past visits for the analytics page. Run `npm run db:reset` before the database tests afterwards
 npm run typecheck
 ```
 
@@ -51,6 +52,10 @@ npm run typecheck
 | `tests/db/allergy-prescribing` | allergies are removed, never edited; the database demands a written reason for a drug-class match; clients cannot claim "clear" |
 | `tests/db/lab` | who orders, enters, acknowledges and releases; the flag is computed by the database; patients see released results only; ranges can't overlap |
 | `tests/db/allergy-parity` | TypeScript allergy check vs the database over every drug × patient × reason below |
+| `tests/db/pharmacy` | the stock ledger (on-hand can't be edited, nothing forged); every refusal in dispensing (expired, quarantined, recalled, over-drawn, wrong product, wrong clinic); notes required for flags; atomic: a failure leaves nothing half-done |
+| `tests/db/dispensing-parity` | TypeScript FEFO plan vs the database across stock situations x quantities x course lengths, with and without notes |
+| `tests/db/portal` | patient requests (limit equals `MAX_OPEN_REQUESTS`), staff booking and declining, own-details updates and their audit trail |
+| `tests/db/analytics` | the lab-duration function is admin-only and returns bare numbers; `quantile()` equals Postgres `percentile_cont` |
 | `tests/db/lab-parity` | flag maths, age maths (birthdays, leap days, time zones), range choice, and the stored flag through the real triggers |
 
 ## Layout
@@ -65,8 +70,10 @@ app/(app)/billing           invoices, items, insurance, partial payments
 app/(app)/admin             staff, rooms, audit log
 app/(app)/doctor/notes/[id] note + allergies + prescriptions + lab orders; /prescribe has the live allergy check
 app/(app)/lab               queue and result entry
-app/(app)/pharmacy          active prescriptions with allergy status and the prescriber's override reason
-app/(app)/me                the patient's own appointments, bills, medicines and RELEASED results
+app/(app)/pharmacy          dispensing queue; /dispense/[id] live FEFO plan; /stock batches; /stock/[batch] recall trace
+app/(app)/me                the patient portal: appointments, released results, medicines, allergies, bills; /request, /details
+app/(app)/appointments/requests  reception's queue of patient appointment requests
+app/(app)/admin/analytics   medians, 90th percentiles, no-shows, collections, lab turnaround
 app/(app)/admin/lab         tests and reference ranges (read-only; review status shown)
 components/ui               token-driven primitives: Badge, Button, Field, Table…
 lib/rules                   pure business rules (no framework, no DB)
@@ -120,6 +127,30 @@ scripts/smoke.mjs           browser + accessibility smoke test
   Correcting a value clears the acknowledgement.
 - **Results reach the patient only after a doctor releases them**, enforced by
   row-level security, not by the interface.
+
+### Phase 3 rules
+
+- **Stock goes out first-expiry-first-out, and the system knows the course
+  length.** A batch that is in date today but expires partway through a
+  30-day course is flagged (`lib/rules/dispensing.ts`). Using it, skipping an
+  earlier-expiry batch, or dispensing a medicine the patient is allergic to
+  each require a written note. Expired, quarantined, recalled, over-drawn and
+  wrong-product stock is refused outright by `public.dispense_prescription`, a
+  single atomic database function, so the rule holds whatever the client does.
+- **Stock is a ledger.** On-hand is the sum of append-only movements
+  (received, dispensed, adjusted, written off). It can't be edited, a
+  dispensing movement must match a real dispense, and a recalled batch can't
+  be released. The recall trace lists every patient who received a batch.
+- **Analytics refuse to mislead** (`lib/rules/analytics.ts`): medians and 90th
+  percentiles, never means; every percentage is shown as "x of n"; under 10
+  observations the answer is "too few to judge"; rows with missing times are
+  counted, not hidden; percentages use integer arithmetic. Lab timings reach
+  administrators through a function that returns bare numbers, because
+  administrators can't read lab records.
+- **The portal only lets a patient ask or tidy.** Patients request (not book)
+  appointments, cancel their own requests, and edit contact details and
+  reminder consent through `update_my_details`. Everything else about their
+  record is read-only to them, and every portal visit is audited.
 
 ### Clinical placeholders (need review before real use)
 

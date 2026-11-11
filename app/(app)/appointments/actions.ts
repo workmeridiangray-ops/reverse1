@@ -69,6 +69,11 @@ export async function saveAppointment(_prev: AppointmentFormState, form: FormDat
   }
   const { data, error } = await supabase.from("appointments").insert({ ...row, clinic_id: session.clinic.id }).select("id").single();
   if (error) return { formError: friendlyDbError(error.message), values };
+  if (values.request_id) {
+    // Close the patient's request with the booking just made (the database checks it is the same patient).
+    await supabase.from("appointment_requests").update({ status: "booked", appointment_id: data.id }).eq("id", values.request_id).eq("status", "open");
+    revalidatePath("/appointments/requests");
+  }
   revalidatePath("/reception");
   redirect(`/appointments/${data.id}?saved=1`);
 }
