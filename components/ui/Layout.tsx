@@ -19,7 +19,7 @@ export function Card({ title, actions, children, className = "", as: As = "secti
 }) {
   const id = titleId ?? (title ? `card-${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}` : undefined);
   return (
-    <As aria-labelledby={title ? id : undefined} className={`rounded-lg border border-line bg-surface shadow-card ${className}`}>
+    <As aria-labelledby={title ? id : undefined} className={`min-w-0 rounded-lg border border-line bg-surface shadow-card ${className}`}>
       {title || actions ? (
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-6 py-4">
           {title ? <h2 id={id} className="text-title font-bold">{title}</h2> : <span />}

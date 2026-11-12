@@ -31,5 +31,6 @@ Legend: **Verified** = exercised in the e2e/DB tests · **Built** = implemented,
 ## Limits / things you must do
 - Replace draft legal pages; connect a payment provider and an email provider; provide hosting access and a domain.
 - Run the restore drill in `docs/DEPLOY.md` and record timings; run load tests against real volumes.
-- Browser coverage is Chromium desktop only; mobile layouts were built responsive but only the 1280px viewport was driven.
+- Browser coverage is Chromium only. Desktop (1280px) is covered by the e2e suite; a 390px touch-viewport pass (`scripts/mobile-check.mjs`, against a seeded demo database) found no horizontal overflow and no WCAG A/AA violations on 9 owner pages and 2 client pages. Tablet and Safari/Firefox were not tested.
+- `scripts/seed-demo.mjs` was run and verified (demo owner/manager/engineer/client).
 - Demo data lives only in a clearly flagged tenant (`scripts/seed-demo.mjs`, `tenants.is_demo`); never run it on a customer database.

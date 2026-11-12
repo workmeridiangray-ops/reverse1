@@ -16,7 +16,7 @@ function describedBy(name: string, error?: string, hint?: string) {
 
 function Shell({ label, id: name, error, hint, optional, children }: Omit<Common, "name"> & { id: string; children: ReactNode }) {
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex min-w-0 flex-col gap-1.5">
       <label htmlFor={name} className="text-sm font-bold text-ink-900">
         {label}
         {optional ? <span className="font-normal text-ink-500"> (optional)</span> : null}
@@ -37,7 +37,7 @@ function Shell({ label, id: name, error, hint, optional, children }: Omit<Common
 }
 
 const INPUT =
-  "min-h-touch w-full rounded border border-ink-500 bg-surface px-3 text-base text-ink-900 placeholder:text-ink-500 aria-[invalid=true]:border-danger-fg aria-[invalid=true]:border-2";
+  "min-h-touch w-full max-w-full rounded border border-ink-500 bg-surface px-3 text-base text-ink-900 placeholder:text-ink-500 aria-[invalid=true]:border-danger-fg aria-[invalid=true]:border-2";
 
 export function TextField({ label, name, id = name, error, hint, optional, ...rest }: Common & InputHTMLAttributes<HTMLInputElement>) {
   return (

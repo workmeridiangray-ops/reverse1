@@ -2,7 +2,7 @@ import type { ReactNode, ThHTMLAttributes, TdHTMLAttributes } from "react";
 
 export function Table({ caption, children, captionVisible = false }: { caption: string; children: ReactNode; captionVisible?: boolean }) {
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto" tabIndex={0} role="region" aria-label={caption}>
       <table className="w-full border-collapse text-left">
         <caption className={captionVisible ? "mb-3 text-left text-sm text-ink-500" : "sr-only"}>{caption}</caption>
         {children}

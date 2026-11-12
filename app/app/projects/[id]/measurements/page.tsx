@@ -32,8 +32,8 @@ export default async function Measurements({ params, searchParams }: { params: P
       <PageHeader eyebrow={p.code} title="Measurements" description="Recorded by site, verified by a different person. Only verified quantities can be billed, and each quantity is billed once through cumulative running bills." />
       <ProjectTabs c={c} id={id} active="measurements" />
       <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-        <div>
-          <form className="mb-4 flex flex-wrap items-end gap-3" role="search">
+        <div className="min-w-0">
+          <form className="mb-4 flex min-w-0 flex-wrap items-end gap-3" role="search">
             <SelectField label="Status" name="status" defaultValue={status} optional><option value="">All</option><option value="recorded">Awaiting verification</option><option value="verified">Verified</option><option value="rejected">Rejected</option></SelectField>
             <SelectField label="Item" name="item" defaultValue={item} optional><option value="">All items</option>{items.map((i) => <option key={i.id} value={i.id}>{i.code}</option>)}</SelectField>
             <button className="min-h-touch rounded border border-ink-500 px-4 font-bold">Filter</button>{status || item ? <Link href="?">Clear</Link> : null}
