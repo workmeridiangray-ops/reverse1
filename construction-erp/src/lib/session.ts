@@ -1,6 +1,7 @@
 import 'server-only';
 import { cache } from 'react';
 import { cookies, headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { pool, type Ctx, withTenant, one, many, type Q, AppError, friendly } from './db';
 import { sha256 } from './crypto';
 import { can as canRole, type Overrides } from './permissions';
@@ -78,6 +79,14 @@ export async function hasPerm(s: SessionInfo, perm: string): Promise<boolean> {
   return canRole(s.ctx.role, perm, await overridesFor(s.ctx.orgId!, s.ctx.role));
 }
 
+export async function permSet(s: SessionInfo): Promise<Set<string>> {
+  if (!s.ctx) return new Set();
+  const { effective, MODULES, ACTIONS } = await import('./permissions');
+  if (s.ctx.role === 'owner') return new Set(MODULES.flatMap(m => ACTIONS.map(a => `${m}:${a}`)));
+  if (s.ctx.role === 'support') return new Set(MODULES.filter(m => !['finance', 'safety'].includes(m)).map(m => `${m}:view`));
+  return new Set(effective(s.ctx.role, await overridesFor(s.ctx.orgId!, s.ctx.role)));
+}
+
 export type Result<T = undefined> = { ok: true; data: T; message?: string } | { ok: false; error: string; code?: string };
 
 /** Subscription states in which writes are refused (data stays readable). */
@@ -99,12 +108,13 @@ export async function run<T>(opts: { perm?: string; write?: boolean; idem?: stri
       return { ok: false, error: 'Your subscription has ended, so this workspace is read-only. Renew your plan to make changes.', code: 'readonly' };
     }
     if (opts.perm && !(await hasPerm(s, opts.perm))) return { ok: false, error: 'You do not have permission to do that.', code: 'denied' };
-    const data = await withTenant(s.ctx, async q => {
+    const sess = s as SessionInfo & { ctx: Ctx };
+    const data = await withTenant(sess.ctx, async q => {
       if (opts.idem) {
-        const r = await q.query('insert into idempotency_keys(key, user_id) values ($1,$2) on conflict do nothing', [opts.idem, s.user.id]);
+        const r = await q.query('insert into idempotency_keys(key, user_id) values ($1,$2) on conflict do nothing', [opts.idem, sess.user.id]);
         if (r.rowCount === 0) throw new AppError('This was already submitted. Check the list before trying again.', 'duplicate');
       }
-      return fn({ ctx: s.ctx!, q, s });
+      return fn({ ctx: sess.ctx, q, s: sess });
     });
     return { ok: true, data, message };
   } catch (e) {
@@ -114,7 +124,6 @@ export async function run<T>(opts: { perm?: string; write?: boolean; idem?: stri
 }
 
 export async function requireSession(): Promise<SessionInfo & { ctx: Ctx; org: NonNullable<SessionInfo['org']> }> {
-  const { redirect } = await import('next/navigation');
   const s = await getSession();
   if (!s) redirect('/login?expired=1');
   if (s.pendingMfa) redirect('/login/verify');

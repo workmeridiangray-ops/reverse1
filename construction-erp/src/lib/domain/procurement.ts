@@ -65,7 +65,7 @@ export async function poFromQuote(q: Q, ctx: Ctx, quoteId: string, deliveryDate:
 /** Committed purchasing against the cost budget, per BOQ item. */
 export async function budgetReconciliation(q: Q, projectId: string, excludePoId?: string) {
   const rows = await many<any>(q, `
-    select b.id, b.code, b.description, b.qty, b.budget_rate_paise,
+    select b.id, b.code, b.description, b.qty, b.budget_rate_paise, b.rate_paise,
       coalesce((select sum(round(pl.qty * pl.rate_paise)) from po_lines pl join purchase_orders po on po.id = pl.po_id
                 where pl.boq_item_id = b.id and po.status in ('approved','issued','part_received','received','closed') and ($2::uuid is null or po.id <> $2)), 0) committed,
       coalesce((select sum(round((pl.received_qty - pl.rejected_qty) * pl.rate_paise)) from po_lines pl join purchase_orders po on po.id = pl.po_id
