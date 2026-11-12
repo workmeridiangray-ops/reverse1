@@ -112,3 +112,7 @@ footer.site a { color: var(--muted); margin-right: 16px; }
 }
 @media print { .side, .topbar, .no-print, .banner { display: none !important; } .shell { display: block; } body { background: #fff; } .card { box-shadow: none; border-color: #999; } }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (max-width: 640px) {
+  .topbar { flex-wrap: wrap; gap: 8px; } .topbar .ws { max-width: 45vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: bottom; }
+  .topbar details summary { max-width: 38vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .topbar details > .card { position: fixed !important; right: 8px !important; left: 8px; top: 56px !important; }
+}

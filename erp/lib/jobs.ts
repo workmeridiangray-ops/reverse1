@@ -22,7 +22,7 @@ export async function processJobs(limit = 20): Promise<{ done: number; failed: n
         `update jobs set status='running', locked_at=now(), attempts=attempts+1 where id = (
            select id from jobs where (status in ('queued','failed') and run_at <= now())
               or (status='running' and locked_at < now() - interval '10 minutes')
-           order by run_at for update skip locked limit 1) returning *`);
+           order by (kind in ('payment_event','webhook_delivery')) desc, run_at for update skip locked limit 1) returning *`);
       return r.rows[0] ?? null;
     });
     if (!job) break;

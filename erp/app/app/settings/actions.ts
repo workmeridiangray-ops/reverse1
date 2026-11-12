@@ -236,3 +236,16 @@ export async function requestClosureAction(_p: ActionResult | null, form: FormDa
     return { ok: true, message: "Closure requested. Platform staff will confirm after your final export; the company stays read-only-safe until then." };
   }, { allowReadOnly: true });
 }
+
+export async function invitePortalAction(customerId: string, _p: ActionResult | null, form: FormData): Promise<ActionResult> {
+  return tenantAction("users.manage", form, async (ctx, db) => {
+    const email = (formObj(form).email ?? "").toLowerCase(); if (!/^\S+@\S+\.\S+$/.test(email)) throw new UserError("Enter a valid email.", { email: "Invalid email" });
+    const role = (await db.query("select id from roles where tenant_id=$1 and key='customer'", [ctx.tenant.id])).rows[0];
+    if (!(await db.query("select 1 from customers where id=$1 and tenant_id=$2", [customerId, ctx.tenant.id])).rowCount) throw new UserError("Customer not found");
+    const tok = newToken();
+    await db.query("insert into invitations(tenant_id,email,role_id,customer_id,token_hash,invited_by,expires_at) values ($1,$2,$3,$4,$5,$6, now() + interval '7 days')", [ctx.tenant.id, email, role.id, customerId, sha256(tok), ctx.user.id]);
+    await queueEmail(db, { to: email, tenantId: ctx.tenant.id, subject: `${ctx.tenant.name} invited you to their customer portal`, text: `View your orders and invoices:\n${env.appUrl}/invite/${tok}` });
+    await audit(db, { tenantId: ctx.tenant.id, actorUserId: ctx.user.id, action: "portal.invited", entityId: customerId, detail: { email } });
+    return { ok: true, message: `Portal invitation sent to ${email}.` };
+  });
+}

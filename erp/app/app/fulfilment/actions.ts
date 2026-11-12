@@ -4,12 +4,8 @@ import { UserError } from "@/lib/errors";
 import { parseQty } from "@/lib/money";
 import { dispatchOrder, markDelivered, requestReturn, inspectReturn } from "@/lib/erp/fulfilment";
 import { saveFile } from "@/lib/files";
+import { qtyFields } from "@/lib/erp/qty-fields";
 
-export function qtyFields(f: Record<string, string>, prefix: string) {
-  const out: { id: string; qty: number }[] = [];
-  for (const [k, v] of Object.entries(f)) { if (k.startsWith(prefix) && v !== "") { try { out.push({ id: k.slice(prefix.length), qty: parseQty(v) }); } catch (e: any) { throw new UserError(e.message, { [k]: e.message }); } } }
-  return out;
-}
 export async function dispatchAction(orderId: string, _p: ActionResult | null, form: FormData): Promise<ActionResult> {
   return tenantAction("inventory.post", form, async (ctx, db) => {
     const f = formObj(form);

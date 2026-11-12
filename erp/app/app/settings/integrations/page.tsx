@@ -1,0 +1,21 @@
+import { requireTenant } from "@/lib/auth/session";
+import { withTenantSystem } from "@/lib/db";
+import { PageHead, Badge, Alert } from "@/components/ui";
+import { ActionForm, Field } from "@/components/ActionForm";
+import { StatusButton } from "@/components/StatusButton";
+import { createApiKeyAction, revokeApiKeyAction, createWebhookAction, toggleWebhookAction, retryDeliveryAction } from "../actions";
+export default async function Integrations() {
+  const ctx = await requireTenant("settings.manage");
+  const d = await withTenantSystem(ctx.tenant.id, async (db) => ({ keys: (await db.query("select * from api_keys where tenant_id=$1 order by created_at desc", [ctx.tenant.id])).rows, eps: (await db.query("select * from webhook_endpoints where tenant_id=$1 order by created_at desc", [ctx.tenant.id])).rows,
+    dels: (await db.query("select d.*, e.url from webhook_deliveries d join webhook_endpoints e on e.id=d.endpoint_id where d.tenant_id=$1 order by d.created_at desc limit 30", [ctx.tenant.id])).rows }));
+  return (<><PageHead title="Integrations & API" crumbs={[["Company"], ["Integrations"]]} sub="Baseline: read-only REST API, signed outbound webhooks and CSV import/export. Custom connectors are separate work." />
+    <div className="card"><h2>Connectors</h2><table><tbody><tr><td>Subscription payments</td><td>Razorpay (platform billing)</td><td><Badge status="active" label="managed by Ledgerline" /></td></tr><tr><td>Transactional email</td><td>SMTP (platform)</td><td><Badge status="active" label="managed by Ledgerline" /></td></tr><tr><td>CSV templates</td><td>customers, suppliers, items, opening stock</td><td><a href="/app/import">Open</a></td></tr></tbody></table></div>
+    <div className="card"><h2>API keys</h2><p className="small muted">Read-only. Send <code>Authorization: Bearer &lt;key&gt;</code> to <code>/api/v1/items</code>, <code>/customers</code>, <code>/orders</code>, <code>/invoices</code> (?page=, 100 per page). Limit: 120 requests/minute per key.</p>
+      {d.keys.map((k: any) => <p key={k.id}>{k.name} · <code>{k.prefix}…</code> {k.revoked_at ? <Badge status="void" label="revoked" /> : <><Badge status="active" /> <StatusButton className="btn sm" action={revokeApiKeyAction.bind(null, k.id)} label="Revoke" confirm="Revoke this key now?" /></>} <span className="muted small">last used {k.last_used_at ? new Date(k.last_used_at).toLocaleString("en-IN") : "never"}</span></p>)}
+      <ActionForm action={createApiKeyAction} submit="Create key" resetOnSuccess><Field name="name" label="Key name" placeholder="BI tool" /></ActionForm></div>
+    <div className="card"><h2>Webhooks</h2><p className="small muted">Events: invoice.posted, order.confirmed, receipt.posted. Each POST is signed: <code>x-ledgerline-signature = HMAC-SHA256(secret, timestamp + "." + body)</code>. Failed deliveries are retried automatically (up to 5 times, backing off) and can be retried manually.</p>
+      {d.eps.map((e: any) => <p key={e.id}><code>{e.url}</code> {e.active ? <Badge status="active" /> : <Badge status="void" label="disabled" />} <StatusButton className="btn sm" action={toggleWebhookAction.bind(null, e.id, !e.active)} label={e.active ? "Disable" : "Enable"} /></p>)}
+      <ActionForm action={createWebhookAction} submit="Add endpoint" resetOnSuccess><Field name="url" label="HTTPS URL" placeholder="https://example.com/hooks/ledgerline" /></ActionForm>
+      <h3>Delivery history</h3>{d.dels.length === 0 ? <p className="muted">No deliveries yet.</p> : <div className="tablewrap"><table className="stack-sm"><thead><tr><th>When</th><th>Event</th><th>Status</th><th>Attempts</th><th>Error</th><th></th></tr></thead><tbody>{d.dels.map((x: any) => <tr key={x.id}><td data-label="When">{new Date(x.created_at).toLocaleString("en-IN")}</td><td data-label="Event">{x.event_type}</td><td data-label="Status"><Badge status={x.status} /></td><td data-label="Attempts">{x.attempts}</td><td data-label="Error">{x.last_error ?? ""}</td><td>{x.status === "failed" && <StatusButton className="btn sm" action={retryDeliveryAction.bind(null, x.id)} label="Retry" />}</td></tr>)}</tbody></table></div>}</div>
+    <Alert tone="info">Rate limits and retries: API 120 requests/minute/key (HTTP 429 with Retry-After). Webhook retries back off 30s, 1m, 2m, 4m, then stop and show as failed here.</Alert></>);
+}

@@ -8,6 +8,7 @@ import { MasterForm } from "@/components/MasterForm";
 import { ActionForm, Field } from "@/components/ActionForm";
 import { saveMasterAction, setMasterStatusAction, addUomAction, setPriceAction, addBinAction } from "../../actions";
 import { loadOpts } from "../page";
+import { invitePortalAction } from "../../../settings/actions";
 import { StatusButton } from "@/components/StatusButton";
 import { formatMoney, formatQty } from "@/lib/money";
 
@@ -55,6 +56,7 @@ export default async function MasterDetail({ params }: { params: Promise<{ resou
       {resource === "price_lists" && <div className="card"><h2>Prices</h2>
         {e.prices.length === 0 ? <p className="muted">No special prices yet — customers on this list fall back to the item sale price.</p> : <div className="tablewrap"><table><thead><tr><th>SKU</th><th>Item</th><th className="num">Price</th></tr></thead><tbody>{e.prices.map((p: any) => <tr key={p.sku}><td>{p.sku}</td><td>{p.name}</td><td className="num">{formatMoney(p.price_paise)}</td></tr>)}</tbody></table></div>}
         {canEdit && <ActionForm action={setPriceAction.bind(null, id)} submit="Save price" resetOnSuccess><div className="grid g2"><Field name="item_id" label="Item" type="select"><option value="">Choose…</option>{e.items.map((i: any) => <option key={i.id} value={i.id}>{i.name}</option>)}</Field><Field name="price" label="Price per base unit (₹)" /></div></ActionForm>}</div>}
+      {resource === "customers" && ctx.perms.has("users.manage") && canEdit && <div className="card"><h2>Customer portal</h2><p className="muted small">Gives this customer a login to see only their own orders and invoices.</p><ActionForm action={invitePortalAction.bind(null, id)} submit="Invite to portal" resetOnSuccess><Field name="email" label="Their email" type="email" required /></ActionForm></div>}
       {resource === "customers" && e.recent.length > 0 && <div className="card"><h2>Recent orders</h2><ul>{e.recent.map((o: any) => <li key={o.id}><Link href={`/app/sales/orders/${o.id}`}>{o.number}</Link> — <Badge status={o.status} /> {formatMoney(o.total_paise)}</li>)}</ul></div>}
     </>
   );

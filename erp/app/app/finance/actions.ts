@@ -2,10 +2,10 @@
 import { tenantAction, formObj, type ActionResult } from "@/lib/actions";
 import { UserError } from "@/lib/errors";
 import { parseMoney } from "@/lib/money";
-import { invoiceOrder, recordReceipt, reverseReceipt, payRefund, draftJournal, postDraftJournal, createExpense, closePeriod, reopenPeriod } from "@/lib/erp/finance";
+import { allocate, invoiceOrder, recordReceipt, reverseReceipt, payRefund, draftJournal, postDraftJournal, createExpense, closePeriod, reopenPeriod } from "@/lib/erp/finance";
 import { issueCreditNote } from "@/lib/erp/fulfilment";
 import { reverseJournal, today } from "@/lib/erp/ledger";
-import { qtyFields } from "../fulfilment/actions";
+import { qtyFields } from "@/lib/erp/qty-fields";
 import { saveFile } from "@/lib/files";
 
 const money = (v: string, key: string, label = "Amount") => { try { return parseMoney(v, label); } catch (e: any) { throw new UserError(e.message, { [key]: e.message }); } };
@@ -73,4 +73,11 @@ export async function closePeriodAction(id: string): Promise<ActionResult> {
 }
 export async function reopenPeriodAction(id: string, _p: ActionResult | null, form: FormData): Promise<ActionResult> {
   return tenantAction("finance.period", form, async (ctx, db) => { await reopenPeriod(db, ctx, id, formObj(form).reason ?? ""); return { ok: true, message: "Period reopened (recorded in the audit trail)." }; });
+}
+
+export async function allocateReceiptAction(receiptId: string, _p: ActionResult | null, form: FormData): Promise<ActionResult> {
+  return tenantAction("finance.receipts", form, async (ctx, db) => {
+    const f = formObj(form); if (!f.invoice_id) throw new UserError("Choose an invoice.", { invoice_id: "Required" });
+    await allocate(db, ctx, receiptId, f.invoice_id, money(f.amount, "amount")); return { ok: true, message: "Allocated." };
+  });
 }

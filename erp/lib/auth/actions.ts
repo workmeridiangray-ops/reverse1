@@ -23,7 +23,7 @@ export async function signupAction(_p: ActionResult | null, f: FormData): Promis
   try {
     const d = z.object({
       name: z.string().min(2, "Enter your name").max(80), email: z.string().email("Enter a valid email"),
-      company: z.string().min(2, "Enter your company name").max(100), password: z.string(), agree: z.literal("on", { errorMap: () => ({ message: "Please accept the terms" }) }),
+      company: z.string().min(2, "Enter your company name").max(100), password: z.string(), agree: z.literal("on", { error: "Please accept the terms" }),
     }).parse({ name: s(f, "name"), email: s(f, "email").toLowerCase(), company: s(f, "company"), password: String(f.get("password") ?? ""), agree: f.get("agree") });
     const pw = passwordProblem(d.password); if (pw) throw new UserError(pw, { password: pw });
     const hash = await hashPassword(d.password);

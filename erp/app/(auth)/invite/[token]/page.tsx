@@ -13,7 +13,7 @@ export default async function Invite({ params }: { params: Promise<{ token: stri
     `select i.*, t.name tname, r.name rname, exists(select 1 from users u where lower(u.email)=lower(i.email)) has_user
        from invitations i join tenants t on t.id=i.tenant_id join roles r on r.id=i.role_id where i.token_hash=$1`, [sha256(token)])).rows[0]);
   if (!inv || inv.status === "revoked") return <div className="card"><h1>Invitation not available</h1><Alert tone="bad">{inv ? "This invitation was withdrawn by the company." : "This invitation link is not valid."}</Alert><p>Ask the company administrator to send a new invitation.</p></div>;
-  if (inv.status === "accepted") return <div className="card"><h1>Already accepted</h1><p>This invitation has already been used.</p><Link className="btn primary" href="/login">Sign in</Link></div>;
+  if (inv.status === "accepted") return <div className="card"><h1>Invitation accepted</h1><p>This invitation has been used. {ctx ? "You can continue to your companies." : "Sign in to continue."}</p><Link className="btn primary" href={ctx ? "/workspaces" : "/login"}>{ctx ? "Continue" : "Sign in"}</Link></div>;
   if (inv.status === "expired" || new Date(inv.expires_at) < new Date()) return <div className="card"><h1>Invitation expired</h1><Alert tone="warn">This invitation expired. Ask the administrator of {inv.tname} to send a new one.</Alert></div>;
   const mismatch = ctx && ctx.user.email.toLowerCase() !== inv.email.toLowerCase();
   return (

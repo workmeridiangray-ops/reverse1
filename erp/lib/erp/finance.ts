@@ -5,6 +5,7 @@ import { audit } from "../audit";
 import { postJournal, reverseJournal, today, addDays, acct } from "./ledger";
 import { lineAmounts, mulDiv } from "../money";
 import { ruleFor, requestApproval, onDecision } from "./approvals";
+import { emitEvent } from "../webhooks";
 
 const num = async (db: Db, t: string, k: string) => (await db.query("select next_number($1,$2) n", [t, k])).rows[0].n as string;
 
@@ -43,6 +44,7 @@ export async function invoiceOrder(db: Db, ctx: TCtx, orderId: string, items: { 
   const open = (await db.query("select count(*) c from sales_order_lines l join items i on i.id=l.item_id and i.tenant_id=l.tenant_id where l.order_id=$1 and (l.invoiced_qty + 0 < l.qty)", [orderId])).rows[0].c;
   if (Number(open) === 0) await db.query("update sales_orders set status='closed' where id=$1", [orderId]);
   await audit(db, { tenantId: ctx.tenant.id, actorUserId: ctx.user.id, action: "invoice.posted", entityType: "invoice", entityId: id, detail: { number, total: net + tax } });
+  await emitEvent(db, ctx.tenant.id, "invoice.posted", { id, number, total_paise: net + tax });
   return { id, number, total: net + tax };
 }
 
@@ -59,6 +61,7 @@ export async function recordReceipt(db: Db, ctx: TCtx, i: { customerId: string; 
     lines: [{ account: "cash", debit: i.amount }, { account: "ar", credit: i.amount }] });
   await db.query("update receipts set journal_id=$2 where id=$1", [id, j]);
   await audit(db, { tenantId: ctx.tenant.id, actorUserId: ctx.user.id, action: "receipt.posted", entityType: "receipt", entityId: id, detail: { number, amount: i.amount } });
+  await emitEvent(db, ctx.tenant.id, "receipt.posted", { id, number, amount_paise: i.amount });
   return { id, number };
 }
 

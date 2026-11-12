@@ -5,7 +5,7 @@ import { parseMoney, parseQty } from "@/lib/money";
 import { readLines, resolveLines } from "@/lib/erp/lines";
 import { createPR, submitPR, convertPR, createPO, submitPO, markSent, acknowledgePO, cancelPO, receiveGoods, returnToSupplier, recordBill, paySupplierBill } from "@/lib/erp/procurement";
 import { today } from "@/lib/erp/ledger";
-import { qtyFields } from "../fulfilment/actions";
+import { qtyFields } from "@/lib/erp/qty-fields";
 
 export async function createPRAction(_p: ActionResult | null, form: FormData): Promise<ActionResult> {
   return tenantAction("procurement.create", form, async (ctx, db) => {

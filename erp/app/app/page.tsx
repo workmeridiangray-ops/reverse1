@@ -9,13 +9,13 @@ export const metadata = { title: "Dashboard" };
 export default async function Dashboard() {
   const ctx = await requireTenant(); const p = ctx.perms; const sc = ctx.membership.branchIds;
   const d = await withTenantSystem(ctx.tenant.id, async (db) => {
-    const one = async (sql: string, a: any[] = []) => (await db.query(sql, [ctx.tenant.id, sc, ...a])).rows[0];
+    const one = async (sql: string, a: any[] = []) => (await db.query(sql, sql.includes("$2") ? [ctx.tenant.id, sc, ...a] : [ctx.tenant.id, ...a])).rows[0];
     const out: any = {};
     if (p.has("sales.view")) { out.openOrders = (await one("select count(*) c, coalesce(sum(total_paise),0) v from sales_orders where tenant_id=$1 and ($2::uuid[] is null or branch_id=any($2)) and status in ('confirmed','partially_fulfilled','credit_hold')")); out.holds = Number((await one("select count(*) c from sales_orders where tenant_id=$1 and ($2::uuid[] is null or branch_id=any($2)) and status='credit_hold'")).c); out.short = Number((await one("select count(*) c from sales_order_lines l join sales_orders o on o.id=l.order_id and o.tenant_id=l.tenant_id where o.tenant_id=$1 and ($2::uuid[] is null or o.branch_id=any($2)) and o.status in ('confirmed','partially_fulfilled') and l.qty > l.reserved_qty + l.dispatched_qty")).c); }
     if (p.has("finance.view")) { out.ar = await one("select coalesce(sum(total_paise-paid_paise-credited_paise),0) v, coalesce(sum(case when due_date<current_date then total_paise-paid_paise-credited_paise else 0 end),0) od from invoices where tenant_id=$1 and ($2::uuid[] is null or branch_id=any($2)) and status in ('posted','partially_paid')");
       out.ap = await one("select coalesce(sum(total_paise-paid_paise),0) v from supplier_bills where tenant_id=$1 and $2::uuid[] is null and status in ('posted','partially_paid')"); }
     if (p.has("procurement.view")) out.openPO = Number((await one("select count(*) c from purchase_orders where tenant_id=$1 and ($2::uuid[] is null or branch_id=any($2)) and status in ('approved','sent','acknowledged','partially_received')")).c);
-    if (p.has("approvals.decide")) out.pending = Number((await one("select count(*) c from approval_requests where tenant_id=$1 and status='pending' and requested_by <> $3 and approver_permission = any($4)", [ctx.user.id, [...p]])).c);
+    if (p.has("approvals.decide")) out.pending = Number((await db.query("select count(*) c from approval_requests where tenant_id=$1 and status='pending' and requested_by <> $2 and approver_permission = any($3)", [ctx.tenant.id, ctx.user.id, [...p]])).rows[0].c);
     if (p.has("inventory.view")) out.reorder = (await reorderSuggestions(db, ctx.tenant.id)).length;
     out.recent = (await db.query("select action, entity_type, created_at from audit_log where tenant_id=$1 and actor_user_id=$2 order by id desc limit 6", [ctx.tenant.id, ctx.user.id])).rows;
     out.setup = ctx.tenant.setup ?? {};

@@ -18,6 +18,6 @@ export async function POST(req: Request) {
     await enqueue(db, "payment_event", { webhookId: r.rows[0].id }, { dedupeKey: `pe:${r.rows[0].id}` });
     return r.rows[0].id as string;
   });
-  if (id) await processJobs(3);
+  if (id) await processJobs(10);
   return NextResponse.json({ ok: true, duplicate: !id });
 }

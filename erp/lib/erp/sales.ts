@@ -6,6 +6,7 @@ import { sumLines, type ResolvedLine } from "./lines";
 import { requestApproval, ruleFor, onDecision } from "./approvals";
 import { reserveStock, releaseReservation } from "./inventory";
 import { lineAmounts } from "../money";
+import { emitEvent } from "../webhooks";
 
 const num = async (db: Db, t: string, k: string) => (await db.query("select next_number($1,$2) n", [t, k])).rows[0].n as string;
 
@@ -144,6 +145,7 @@ export async function confirmOrder(db: Db, ctx: TCtx, id: string, override?: { r
   }
   await db.query("update sales_orders set status='confirmed', credit_override_reason=$2, row_version=row_version+1 where id=$1", [id, override?.reason ?? null]);
   await audit(db, { tenantId: ctx.tenant.id, actorUserId: ctx.user.id, action: "order.confirmed", entityType: "sales_order", entityId: id, detail: { shortages: shortages.length } });
+  await emitEvent(db, ctx.tenant.id, "order.confirmed", { id, number: o.number, shortages: shortages.length });
   return { status: "confirmed", shortages };
 }
 

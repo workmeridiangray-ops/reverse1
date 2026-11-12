@@ -100,13 +100,15 @@ export async function requireTenant(perm?: string): Promise<Ctx & { tenant: NonN
   const c = await requireUser();
   if (!c.tenant || !c.membership) redirect("/workspaces");
   if (c.tenant.status === "closed") redirect("/closed");
-  if (perm && !c.perms.has(perm)) throw new AccessDenied();
+  if (perm && !c.perms.has(perm)) redirect("/denied");
   return c as any;
 }
 export async function requirePlatform(...roles: string[]): Promise<Ctx> {
   const c = await requireUser();
-  if (!c.user.platformRole || !c.mfaOk && c.user.totpEnabled) throw new AccessDenied("Platform staff access required.");
-  if (roles.length && c.user.platformRole !== "owner" && !roles.includes(c.user.platformRole)) throw new AccessDenied();
+  if (!c.user.platformRole) redirect("/denied");
+  if (!c.user.totpEnabled) redirect("/account?need2fa=1");      // two-factor is mandatory for platform staff
+  if (!c.mfaOk) redirect("/login/2fa");
+  if (roles.length && c.user.platformRole !== "owner" && !roles.includes(c.user.platformRole)) redirect("/denied");
   return c;
 }
 export function can(c: Ctx, perm: string) { return c.perms.has(perm); }
