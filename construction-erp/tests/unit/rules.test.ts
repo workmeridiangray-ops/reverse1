@@ -134,8 +134,8 @@ describe('plans & subscriptions', () => {
     const p = prorate({ oldPaise: R(3000), newPaise: R(6000), periodStart: new Date('2026-01-01'), periodEnd: new Date('2026-01-31'), now: new Date('2026-01-16') });
     expect(p.totalDays).toBe(30); expect(p.daysLeft).toBe(15); expect(p.creditPaise).toBe(R(1500)); expect(p.chargePaise).toBe(R(3000)); expect(p.dueNowPaise).toBe(R(1500));
     const inv = priceInvoice(R(4999), 10, 18);
-    expect(inv.discount).toBe(R(4999) / 10n + 0n === inv.discount ? inv.discount : inv.discount);
-    expect(inv.total).toBe(inv.subtotal - inv.discount + inv.tax);
+    // ₹4,999 − 10% = ₹4,499.10 taxable; GST 18% = ₹809.838 → ₹809.84 (half-up)
+    expect(inv.discount).toBe(49990n); expect(inv.tax).toBe(80984n); expect(inv.total).toBe(530894n);
     expect(priceInvoice(R(1000), 0, 18).total).toBe(R(1180));
   });
   it('trial, active, grace, expired', () => {

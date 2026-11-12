@@ -17,7 +17,7 @@ function splitCsv(line: string): string[] {
 
 /** The one agreed BOQ import format: code,description,unit,qty,rate  (rate in rupees). */
 export function parseBoqCsv(text: string): { rows: ImportRow[]; errors: ImportError[] } {
-  const lines = text.replace(/^﻿/, '').split(/\r?\n/).filter(l => l.trim() !== '');
+  const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/).filter(l => l.trim() !== '');
   const errors: ImportError[] = []; const rows: ImportRow[] = [];
   if (lines.length === 0) return { rows, errors: [{ row: 0, message: 'The file is empty' }] };
   const head = splitCsv(lines[0]).map(h => h.toLowerCase());

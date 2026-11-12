@@ -1,0 +1,4 @@
+import Link from 'next/link';
+import { PageHeader, Card } from '@/components/ui';
+export default function Settings() { const L = (h: string, t: string, d: string) => <Link href={h} className="card p-4 block no-underline hover:bg-accent-soft"><strong className="text-ink">{t}</strong><span className="block text-sm text-muted">{d}</span></Link>;
+  return (<><PageHeader title="Settings & billing" /><div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">{L('/settings/business', 'Business & branches', 'Legal details, GSTIN, branding, offices')}{L('/settings/team', 'Team & access', 'People, invitations, roles, sensitive permissions')}{L('/settings/billing', 'Plan & billing', 'Current plan, usage, upgrades, invoices, cancellation')}{L('/settings/audit', 'Audit trail', 'Who did what, and when')}{L('/onboarding', 'Setup checklist', 'Finish onboarding')}</div></>); }

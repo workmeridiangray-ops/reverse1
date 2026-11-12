@@ -1,0 +1,11 @@
+import { redirect } from 'next/navigation';
+import { PageHeader, Card, Field, Table, Td } from '@/components/ui';
+import ActionForm from '@/components/ActionForm';
+import { requireSession, permSet } from '@/lib/session';
+import { withTenant, one, many } from '@/lib/db';
+import { businessAction, addBranchAction } from '@/app/actions/settings';
+export const metadata = { title: 'Business settings · Buildline' };
+export default async function Business() { const s = await requireSession(); const perms = await permSet(s); if (!perms.has('settings:view') && !perms.has('team:view')) redirect('/denied');
+  const d = await withTenant(s.ctx, async q => ({ o: await one<any>(q, 'select * from orgs where id=$1', [s.org.id]), br: await many<any>(q, 'select * from branches order by name') })); const o = d.o; const can = perms.has('settings:configure'); const I = (n: string, l: string, v: any, extra: any = {}) => <Field label={l} name={n}><input id={n} name={n} className="input" defaultValue={v ?? ''} readOnly={!can} {...extra} /></Field>;
+  return (<><PageHeader title="Business & branches" /><div className="grid lg:grid-cols-2 gap-6"><Card title="Business details"><ActionForm action={businessAction} submit="Save">{I('name', 'Display name', o.name, { required: true })}{I('legal_name', 'Legal name', o.legal_name)}{I('gstin', 'GSTIN', o.gstin)}{I('state_code', 'State code', o.state_code)}{I('address', 'Registered address', o.address)}{I('billing_email', 'Billing email', o.billing_email, { type: 'email' })}{I('billing_address', 'Billing address', o.billing_address)}{I('brand_color', 'Brand colour', o.brand_color)}</ActionForm></Card>
+    <Card title="Branches"><Table head={[{ label: 'Code' }, { label: 'Name' }]}>{d.br.map((b: any) => <tr key={b.id}><Td>{b.code}</Td><Td>{b.name}</Td></tr>)}</Table>{can && <div className="mt-4"><ActionForm action={addBranchAction} submit="Add branch" resetOnSuccess><div className="grid grid-cols-2 gap-3"><Field label="Name" name="name"><input id="name" name="name" className="input" required /></Field><Field label="Code" name="code"><input id="code" name="code" className="input" required maxLength={8} /></Field></div></ActionForm></div>}</Card></div></>); }

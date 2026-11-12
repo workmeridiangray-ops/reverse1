@@ -36,18 +36,18 @@ export default async function Shell({ s, perms, children }: { s: SessionInfo & {
         {NavLinks}
       </aside>
       <div className="flex-1 min-w-0 flex flex-col">
-        <header className="sticky top-0 z-30 bg-surface border-b border-line px-4 py-2 flex items-center gap-3">
+        <header className="sticky top-0 z-30 bg-surface border-b border-line px-4 py-2 flex flex-wrap items-center gap-2 md:gap-3">
           <details className="md:hidden relative">
             <summary className="btn btn-sm list-none cursor-pointer" aria-label="Open menu"><Menu size={18} aria-hidden /></summary>
-            <div className="absolute left-0 mt-2 w-72 card p-3 shadow-lg">{NavLinks}</div>
+            <div className="fixed left-2 right-2 mt-2 card p-3 shadow-lg z-40">{NavLinks}</div>
           </details>
-          <form action="/search" className="flex-1 max-w-md relative" role="search">
+          <form action="/search" className="order-last w-full md:order-none md:w-auto md:flex-1 md:max-w-md relative" role="search">
             <Search size={16} className="absolute left-3 top-3.5 text-muted" aria-hidden />
             <input name="q" type="search" aria-label="Search projects, records and companies" placeholder="Search projects, drawings, POs…" className="input pl-9" />
           </form>
-          <details className="relative ml-auto">
+          <details className="sm:relative ml-auto">
             <summary className="btn btn-sm list-none cursor-pointer gap-1" aria-label="Switch workspace"><span className="max-w-[10rem] truncate">{s.org.name}</span><ChevronDown size={14} aria-hidden /></summary>
-            <div className="absolute right-0 mt-2 w-72 card p-2 z-40">
+            <div className="fixed left-2 right-2 sm:absolute sm:left-auto sm:right-0 sm:w-72 mt-2 card p-2 z-40">
               <p className="px-2 py-1 text-xs uppercase tracking-wide text-muted">Your workspaces</p>
               {s.memberships.map(m => (
                 <form key={m.orgId} action={switchWorkspaceAction}><input type="hidden" name="org" value={m.orgId} />
@@ -58,9 +58,9 @@ export default async function Shell({ s, perms, children }: { s: SessionInfo & {
           </details>
           <Link href="/notifications" className="btn btn-sm relative" aria-label={`Notifications${unread ? `, ${unread} unread` : ''}`}><Bell size={18} aria-hidden />{unread > 0 && <span className="absolute -top-1 -right-1 bg-bad text-white text-[10px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center">{unread}</span>}</Link>
           <Link href="/help" className="btn btn-sm hidden sm:inline-flex" aria-label="Help"><CircleHelp size={18} aria-hidden /></Link>
-          <details className="relative">
+          <details className="sm:relative">
             <summary className="btn btn-sm list-none cursor-pointer">{s.user.name.split(' ')[0]}</summary>
-            <div className="absolute right-0 mt-2 w-56 card p-2 z-40">
+            <div className="fixed left-2 right-2 sm:absolute sm:left-auto sm:right-0 sm:w-56 mt-2 card p-2 z-40">
               <p className="px-2 py-1 text-xs text-muted truncate">{s.user.email}</p>
               <Link href="/account" className="block px-2 py-2">Profile</Link>
               <Link href="/account/security" className="block px-2 py-2">Security & 2FA</Link>

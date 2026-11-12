@@ -135,7 +135,7 @@ describe('database-enforced invariants', () => {
     await expect(withTenant(A.ctx, q => q.query('update audit_log set action = $1', ['x']))).rejects.toThrow(/permission denied|append-only/);
     await expect(owner.query('delete from audit_log')).rejects.toThrow(/append-only/);
     await withTenant(A.ctx, q => q.query(`insert into stock_movements(org_id, project_id, site_id, item_code, unit, qty, kind) values ($1,$2,$3,'CEM','bag',10,'receipt')`, [A.orgId, pa.projectId, pa.siteId]));
-    await expect(owner.query('update stock_movements set qty = 99')).rejects.toThrow(/append-only/);
+    await expect(owner.query('update stock_movements set qty = 99 where project_id = $1', [pa.projectId])).rejects.toThrow(/append-only/);
   });
   it('financial changes write audit rows from triggers (field names only)', async () => {
     await withTenant(A.ctx, async q => {

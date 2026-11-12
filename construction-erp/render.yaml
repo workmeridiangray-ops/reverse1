@@ -1,0 +1,28 @@
+# Render blueprint. Secrets (sync: false) are entered in the dashboard, never committed.
+services:
+  - type: web
+    name: buildline-web
+    runtime: docker
+    healthCheckPath: /api/health
+    disk: { name: storage, mountPath: /var/lib/buildline/storage, sizeGB: 20 }
+    preDeployCommand: node scripts/migrate.mjs
+    envVars:
+      - { key: DATABASE_URL, sync: false }          # erp_app (no BYPASSRLS)
+      - { key: DATABASE_URL_OWNER, sync: false }    # erp_owner (migrations only)
+      - { key: APP_URL, sync: false }
+      - { key: CRON_SECRET, generateValue: true }
+      - { key: STORAGE_DIR, value: /var/lib/buildline/storage }
+      - { key: PAYMENT_MODE, value: razorpay }
+      - { key: RAZORPAY_KEY_ID, sync: false }
+      - { key: RAZORPAY_KEY_SECRET, sync: false }
+      - { key: RAZORPAY_WEBHOOK_SECRET, sync: false }
+      - { key: RESEND_API_KEY, sync: false }
+      - { key: MAIL_FROM, sync: false }
+      - { key: ALLOW_DEMO_DATA, value: "false" }
+  - type: worker
+    name: buildline-worker
+    runtime: docker
+    dockerCommand: node scripts/worker.mjs
+    envVars:
+      - { key: APP_URL, sync: false }
+      - { key: CRON_SECRET, sync: false }

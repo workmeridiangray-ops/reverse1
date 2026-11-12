@@ -1,0 +1,3 @@
+import Link from 'next/link';
+export const metadata = { title: 'Solutions · Buildline' };
+export default function Solutions() { return (<><h1>Solutions by business type</h1><div className="grid md:grid-cols-3 gap-5 mt-6">{[['General contractors', 'Control cost against BOQ, bill clients accurately and keep subcontractors honest.'], ['Builders & developers', 'See physical and financial progress side by side across projects and branches.'], ['Project-management firms', 'Give clients and consultants a clear decision queue with evidence, without exposing your internals.']].map(([t, d]) => <div key={t} className="card p-5"><h3>{t}</h3><p className="text-muted mt-1">{d}</p></div>)}</div><p className="mt-8"><Link className="btn" href="/demo">Book a demo</Link></p></>); }

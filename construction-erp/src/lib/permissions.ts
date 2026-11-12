@@ -5,14 +5,14 @@ export type Perm = `${typeof MODULES[number]}:${typeof ACTIONS[number]}`;
 
 const all = (mods: readonly string[], acts: readonly string[]) => mods.flatMap(m => acts.map(a => `${m}:${a}`));
 const ALL_ACTIONS = ACTIONS as readonly string[];
-const VIEW_ALL = all(MODULES.filter(m => !['safety', 'audit', 'finance', 'settings'].includes(m)), ['view']);
+const VIEW_ALL = all(MODULES.filter(m => !['safety', 'audit', 'finance', 'settings', 'billing', 'contract'].includes(m)), ['view']);
 
 export const ROLE_DEFAULTS: Record<string, string[]> = {
   owner: all(MODULES, ALL_ACTIONS),
   manager: all(MODULES, ALL_ACTIONS).filter(p => !['finance:refund', 'settings:configure'].includes(p)),
-  engineer: [...VIEW_ALL, ...all(['planning','drawings','rfi','site','quality','handover','stores'], ['create','edit']), 'procurement:create', 'procurement:edit', 'drawings:assign', 'rfi:assign', 'reports:export', 'quality:approve'],
-  qs: [...VIEW_ALL, ...all(['tender','boq','billing','subcontract','variations','contract'], ['create','edit','export']), 'subcontract:approve', 'reports:export', 'reports:view', 'billing:view'],
-  store: [...VIEW_ALL, ...all(['stores','procurement'], ['create','edit']), 'stores:approve'],
+  engineer: [...VIEW_ALL, ...all(['planning','drawings','rfi','site','quality','handover','stores'], ['create','edit']), 'procurement:create', 'procurement:edit', 'drawings:assign', 'rfi:assign', 'reports:export', 'quality:approve', 'site:approve', 'contract:view'],
+  qs: [...VIEW_ALL, 'contract:view', 'contract:create', 'contract:edit', ...all(['tender','boq','billing','subcontract','variations','contract'], ['create','edit','export']), 'subcontract:approve', 'reports:export', 'reports:view', 'billing:view'],
+  store: [...all(['project','planning','drawings','rfi','site','boq'].filter(m => m !== 'boq'), ['view']), 'procurement:view', ...all(['stores','procurement'], ['create','edit']), 'stores:approve'],
   accounts: [...VIEW_ALL, 'billing:view', 'billing:create', 'billing:edit', 'billing:export', 'finance:view', 'reports:export', 'audit:view'],
   supervisor: [...all(['project','site','stores','quality','handover','planning','rfi','drawings'], ['view']), ...all(['site','quality','handover'], ['create','edit']), 'stores:create'],
   viewer: VIEW_ALL,

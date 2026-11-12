@@ -1,3 +1,5 @@
+import path from 'node:path';
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
 import type { NextConfig } from 'next';
 
 const securityHeaders = [
@@ -10,7 +12,7 @@ const securityHeaders = [
 ];
 
 const config: NextConfig = {
-  output: 'standalone',
+  outputFileTracingRoot: __dirname,
   poweredByHeader: false,
   serverExternalPackages: ['pg'],
   experimental: { serverActions: { bodySizeLimit: '30mb' } },

@@ -1,0 +1,8 @@
+import Link from 'next/link';
+export const metadata = { title: 'Buildline — Construction project & contractor ERP' };
+const FLOW = ['Tender & BOQ', 'Budget', 'Contract', 'Schedule', 'Procurement', 'Site reports', 'Measurement', 'Certified bills', 'Collection', 'Handover'];
+export default function Home() { return (<>
+  <section className="py-8 max-w-3xl"><h1 className="!text-4xl">One system from tender to handover.</h1><p className="text-lg text-muted mt-4">Buildline connects quantities, schedule, cost and approvals for contractors, builders and project-management firms — with separate portals for clients, consultants and subcontractors.</p>
+    <div className="mt-6 flex flex-wrap gap-3"><Link href="/signup" className="btn btn-primary">Start 14-day free trial</Link><Link href="/demo" className="btn">Book a demo</Link></div></section>
+  <section className="mt-10"><h2 className="mb-4">The whole chain, connected</h2><ol className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">{FLOW.map((f, i) => <li key={f} className="card p-4"><span className="text-xs text-muted">Step {i + 1}</span><p className="font-semibold">{f}</p></li>)}</ol></section>
+  <section className="mt-12 grid md:grid-cols-3 gap-6">{[['Money you can trust', 'Submitted, certified, invoiced and collected amounts are always separate. Retention, advances and recoveries are shown line by line.'], ['Approvals with evidence', 'Every approval has an owner, a reason and an audit trail. Preparer, verifier and approver are different people.'], ['Made for the site', 'Phone-first daily reports with photo upload retry and draft saving, so a poor signal never loses a day’s work.']].map(([t, d]) => <div key={t} className="card p-5"><h3>{t}</h3><p className="text-muted mt-2">{d}</p></div>)}</section></>); }

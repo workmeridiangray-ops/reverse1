@@ -280,16 +280,17 @@ end $$;
 -- Aggregate progress for externals: physical (verified quantities) and financial (certified), never internal cost.
 create function portal_progress(pid uuid) returns table(physical_bp int, contract_value_paise bigint, certified_paise bigint, invoiced_paise bigint, collected_paise bigint)
 language plpgsql stable security definer set search_path = public as $$
+#variable_conflict use_column
 begin
   if not app_can_project(pid) or not app_is_external() or app_role() = 'contractor' then raise exception 'not permitted' using errcode = '42501'; end if;
+  -- physical = verified site quantities weighted by contract value; financial = certified bills. Two separate measures.
   return query
-   select coalesce((select (sum(least(b.qty, coalesce(c.cum,0)) * b.rate_paise) * 10000 / nullif(sum(b.qty * b.rate_paise),0))::int
-            from boq_items b left join (select boq_item_id, sum(this_qty) cum from ra_bill_lines l join ra_bills rb on rb.id = l.bill_id where rb.status in ('certified','invoiced') group by 1) c on c.boq_item_id = b.id
-            where b.project_id = pid), 0),
-          coalesce((select sum(qty * rate_paise)::bigint from boq_items where project_id = pid),0),
-          coalesce((select max(certified_gross_paise) from ra_bills where project_id = pid and status in ('certified','invoiced')),0),
-          coalesce((select sum(amount_paise) from invoices where project_id = pid),0)::bigint,
-          coalesce((select sum(collected_paise) from invoices where project_id = pid),0)::bigint;
+   select coalesce((select (sum(least(a.done_qty, a.planned_qty) * b.rate_paise) * 10000 / nullif(sum(a.planned_qty * b.rate_paise), 0))::int
+                    from activities a join boq_items b on b.id = a.boq_item_id where a.project_id = pid and a.planned_qty > 0), 0),
+          coalesce((select sum(round(b2.qty * b2.rate_paise))::bigint from boq_items b2 where b2.project_id = pid), 0),
+          coalesce((select max(r.certified_gross_paise) from ra_bills r where r.project_id = pid and r.status in ('certified','invoiced')), 0),
+          coalesce((select sum(i.amount_paise) from invoices i where i.project_id = pid), 0)::bigint,
+          coalesce((select sum(i2.collected_paise) from invoices i2 where i2.project_id = pid), 0)::bigint;
 end $$;
 
 -- Grants -----------------------------------------------------------------------------------

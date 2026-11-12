@@ -1,0 +1,8 @@
+import { notFound } from 'next/navigation';
+const DOCS: Record<string, { t: string; p: string[] }> = {
+  terms: { t: 'Terms of Service', p: ['These terms govern use of Buildline. You are responsible for the accuracy of data you enter and for keeping your credentials secure.', 'Subscriptions renew until cancelled. Fees are in INR and exclude GST. If payment fails, a grace period applies before the workspace becomes read-only.', 'You own your data. You can export it at any time, including after cancellation during the retention period set out in your agreement.'] },
+  privacy: { t: 'Privacy Policy', p: ['We process account, usage and project data to provide the service. Customer project data is isolated per business and is not visible to other customers.', 'Platform staff cannot view your project data unless you approve time-limited, read-only support access, which is logged.', 'Uploaded files are stored privately and served only to authorised users.'] },
+  refunds: { t: 'Refund & Cancellation Policy', p: ['You can cancel at any time; access continues to the end of the paid period. Refunds are considered case by case by our billing team and are recorded with a reason.'] },
+};
+export default async function Legal({ params }: { params: Promise<{ slug: string }> }) { const d = DOCS[(await params).slug]; if (!d) notFound();
+  return (<article className="max-w-3xl"><h1>{d.t}</h1><p className="mt-3 rounded border border-[#ecd48f] bg-warn-soft px-4 py-3 text-sm">Draft text — this policy must be reviewed and approved by the business’s legal adviser before launch.</p>{d.p.map((x, i) => <p key={i} className="mt-4">{x}</p>)}</article>); }

@@ -13,7 +13,8 @@ export const env = {
   get razorpayKeyId() { return get('RAZORPAY_KEY_ID'); },
   get razorpayKeySecret() { return get('RAZORPAY_KEY_SECRET'); },
   get razorpayWebhookSecret() { return get('RAZORPAY_WEBHOOK_SECRET'); },
-  get paymentMode() { return (get('PAYMENT_MODE', 'test') as 'test' | 'razorpay'); },
+  /** Defaults to the live provider in production; "test" (simulated payments) must be chosen explicitly, e.g. on staging. */
+  get paymentMode() { return (get('PAYMENT_MODE', process.env.NODE_ENV === 'production' ? 'razorpay' : 'test') as 'test' | 'razorpay'); },
   get cronSecret() { return get('CRON_SECRET'); },
   get demoEnabled() { return get('ALLOW_DEMO_DATA', 'true') === 'true'; },
 };
