@@ -96,3 +96,55 @@ describe("parseResultValue", () => {
     expect(parseResultValue(input).ok).toBe(false);
   });
 });
+
+import { coverageGaps, describeGap, limitsChanged, parseLimit } from "./lab-flags";
+
+describe("coverageGaps: who would get no flag", () => {
+  const hb = [
+    r({ id: "f", sex: "female", ageMinYears: 18, low: 12, high: 15.5 }),
+    r({ id: "m", sex: "male", ageMinYears: 18, low: 13.5, high: 17.5 }),
+  ];
+  it("reports children and the unknown-sex group when only adult sex-specific ranges exist", () => {
+    expect(coverageGaps(hb)).toEqual([
+      { who: "female", fromAge: 0, toAge: 17 },
+      { who: "male", fromAge: 0, toAge: 17 },
+      { who: "other", fromAge: 0, toAge: 120 },
+    ]);
+  });
+  it("an any-sex range closes the gaps it covers", () => {
+    const withAny = [...hb, r({ id: "any", ageMinYears: 0, ageMaxYears: 18, low: 11, high: 14 })];
+    expect(coverageGaps(withAny)).toEqual([{ who: "other", fromAge: 18, toAge: 120 }]);
+  });
+  it("a full any-sex range leaves no gap, and no ranges leaves everything uncovered", () => {
+    expect(coverageGaps([r({ low: 1, high: 2 })])).toEqual([]);
+    expect(coverageGaps([])).toHaveLength(3);
+  });
+  it("finds a hole in the middle", () => {
+    const holey = [r({ id: "a", ageMaxYears: 18, low: 1, high: 2 }), r({ id: "b", ageMinYears: 65, low: 1, high: 3 })];
+    expect(coverageGaps(holey).filter((g) => g.who === "male")).toEqual([{ who: "male", fromAge: 18, toAge: 64 }]);
+  });
+  it("describes a gap in plain words", () => {
+    expect(describeGap({ who: "female", fromAge: 0, toAge: 17 })).toBe("Women aged 0 to 17 get no flag");
+    expect(describeGap({ who: "other", fromAge: 18, toAge: 120 })).toBe("Patients with sex unknown or intersex aged 18 and over get no flag");
+    expect(describeGap({ who: "male", fromAge: 0, toAge: 120 })).toBe("Men of any age get no flag");
+  });
+});
+
+describe("limitsChanged (when a sign-off must be cleared)", () => {
+  const base = { sex: "any" as const, ageMinYears: 0, ageMaxYears: 200, low: 3.5, high: 5.1, criticalLow: 2.8, criticalHigh: 6.2 };
+  it("is false for an identical range, true for any limit, age or sex change", () => {
+    expect(limitsChanged(base, { ...base })).toBe(false);
+    for (const change of [{ low: 3.6 }, { high: 5.2 }, { criticalLow: null }, { criticalHigh: 6.3 }, { ageMinYears: 1 }, { ageMaxYears: 100 }, { sex: "male" as const }]) {
+      expect(limitsChanged(base, { ...base, ...change }), JSON.stringify(change)).toBe(true);
+    }
+  });
+});
+
+describe("parseLimit", () => {
+  it("blank is no limit; numbers parse; junk is refused", () => {
+    expect(parseLimit("")).toEqual({ ok: true, value: null });
+    expect(parseLimit(" 5.1 ")).toEqual({ ok: true, value: 5.1 });
+    expect(parseLimit("abc").ok).toBe(false);
+    expect(parseLimit("-1").ok).toBe(false);
+  });
+});

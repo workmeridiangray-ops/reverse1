@@ -71,14 +71,14 @@ export function TextAreaField({ label, name, id = name, error, hint, optional, .
   );
 }
 
-export function CheckboxField({ label, name, hint, ...rest }: Omit<Common, "error" | "optional"> & InputHTMLAttributes<HTMLInputElement>) {
+export function CheckboxField({ label, name, id = name, hint, ...rest }: Omit<Common, "error" | "optional"> & InputHTMLAttributes<HTMLInputElement>) {
   return (
     <div className="flex items-start gap-3">
-      <input id={name} name={name} type="checkbox" aria-describedby={hint ? `${name}-hint` : undefined}
+      <input id={id} name={name} type="checkbox" aria-describedby={hint ? `${id}-hint` : undefined}
         className="mt-1 h-5 w-5 shrink-0 rounded-sm border-ink-500 accent-brand-700" {...rest} />
       <div>
-        <label htmlFor={name} className="font-bold">{label}</label>
-        {hint ? <p id={`${name}-hint`} className="text-caption text-ink-500">{hint}</p> : null}
+        <label htmlFor={id} className="font-bold">{label}</label>
+        {hint ? <p id={`${id}-hint`} className="text-caption text-ink-500">{hint}</p> : null}
       </div>
     </div>
   );

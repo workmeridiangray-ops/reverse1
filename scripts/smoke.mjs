@@ -18,7 +18,7 @@ const PLAN = [
   ["desk@cedarlane.test", ["/reception", "/patients", `/patients/${A}`, `/patients/${A}/edit`, "/patients/new", "/appointments", "/appointments/new",
     "/appointments/a3000000-0000-4000-8000-000000000008", "/appointments/requests", "/billing", "/billing/new", "/billing/a6000000-0000-4000-8000-000000000001"]],
   ["dr.okafor@cedarlane.test", ["/doctor", "/doctor/notes/a4000000-0000-4000-8000-000000000001", "/doctor/notes/a4000000-0000-4000-8000-000000000002",
-    "/doctor/notes/a4000000-0000-4000-8000-000000000003", "/doctor/notes/a4000000-0000-4000-8000-000000000002/prescribe", "/appointments"]],
+    "/doctor/notes/a4000000-0000-4000-8000-000000000003", "/doctor/notes/a4000000-0000-4000-8000-000000000002/prescribe", "/doctor/ranges", "/appointments"]],
   ["admin@cedarlane.test", ["/admin", "/admin/audit", "/admin/lab", "/admin/analytics", "/admin/analytics?days=7"]],
   ["lab@cedarlane.test", ["/lab", "/lab/orders/a9000000-0000-4000-8000-000000000002", "/lab/orders/a9000000-0000-4000-8000-000000000003"]],
   ["pharmacy@cedarlane.test", ["/pharmacy", "/pharmacy/stock", "/pharmacy/stock/d2000000-0000-4000-8000-000000000001",
@@ -46,6 +46,9 @@ const FORBIDDEN = [
   ["amal.haddad@patient.test", "/pharmacy/stock", "/me"],
   ["lab@cedarlane.test", "/me", "/lab"],
   ["pharmacy@cedarlane.test", "/me/request", "/pharmacy"],
+  ["desk@cedarlane.test", "/doctor/ranges", "/reception"],
+  ["admin@cedarlane.test", "/doctor/ranges", "/admin"],
+  ["lab@cedarlane.test", "/admin/lab", "/lab"],
 ];
 
 let failures = 0;

@@ -132,3 +132,68 @@ export function parseResultValue(input: string | null | undefined): ParsedValue 
 export function describeResult(testName: string, value: number, unit: string, flag: ResultFlag): string {
   return `${testName} ${value} ${unit} (${FLAG_LABEL[flag].toLowerCase()})`;
 }
+
+/* ------------------- editing ranges: coverage and sign-off ------------------- */
+
+export interface CoverageGap {
+  /** "other" means unknown or intersex: only any-sex ranges can apply to them */
+  who: "female" | "male" | "other";
+  fromAge: number;
+  toAge: number;
+}
+
+export const MAX_COVERAGE_AGE = 120;
+
+/**
+ * Where patients would get NO flag under these ranges (no match, or ambiguity),
+ * by who they are. Shown to the person editing ranges so a gap is a choice,
+ * not a surprise. Uses pickRange(), so it can never disagree with real flagging.
+ */
+export function coverageGaps(ranges: readonly ReferenceRange[], maxAge = MAX_COVERAGE_AGE): CoverageGap[] {
+  const gaps: CoverageGap[] = [];
+  const groups: Array<[CoverageGap["who"], LabSex]> = [["female", "female"], ["male", "male"], ["other", "unknown"]];
+  for (const [who, sex] of groups) {
+    let start: number | null = null;
+    for (let age = 0; age <= maxAge + 1; age++) {
+      const uncovered = age <= maxAge && pickRange(ranges, sex, age) === null;
+      if (uncovered && start === null) start = age;
+      if (!uncovered && start !== null) {
+        gaps.push({ who, fromAge: start, toAge: age - 1 });
+        start = null;
+      }
+    }
+  }
+  return gaps;
+}
+
+export function describeGap(g: CoverageGap): string {
+  const who = { female: "Women", male: "Men", other: "Patients with sex unknown or intersex" }[g.who];
+  const ages = g.fromAge === 0 && g.toAge === MAX_COVERAGE_AGE ? "of any age" : g.toAge >= MAX_COVERAGE_AGE ? `aged ${g.fromAge} and over` : g.fromAge === g.toAge ? `aged ${g.fromAge}` : `aged ${g.fromAge} to ${g.toAge}`;
+  return `${who} ${ages} get no flag`;
+}
+
+type Editable = Pick<ReferenceRange, "sex" | "ageMinYears" | "ageMaxYears" | "low" | "high" | "criticalLow" | "criticalHigh">;
+
+/**
+ * True when an edit changes anything a clinician signed off on. Mirrors the
+ * database trigger that clears the sign-off. Notes do not count.
+ */
+export function limitsChanged(before: Editable, after: Editable): boolean {
+  return (
+    before.sex !== after.sex ||
+    before.ageMinYears !== after.ageMinYears ||
+    before.ageMaxYears !== after.ageMaxYears ||
+    before.low !== after.low ||
+    before.high !== after.high ||
+    before.criticalLow !== after.criticalLow ||
+    before.criticalHigh !== after.criticalHigh
+  );
+}
+
+/** Parse an optional limit typed into a form: blank means "no limit". */
+export function parseLimit(input: string | null | undefined): { ok: true; value: number | null } | { ok: false; error: string } {
+  const t = (input ?? "").trim();
+  if (t === "") return { ok: true, value: null };
+  const p = parseResultValue(t);
+  return p.ok ? { ok: true, value: p.value } : { ok: false, error: "Enter a number, or leave blank for no limit." };
+}

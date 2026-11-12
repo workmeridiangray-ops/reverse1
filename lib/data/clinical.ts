@@ -149,13 +149,13 @@ export async function getRangesByTest(supabase: ServerClient) {
     .select("id, test_type_id, sex, age_min_years, age_max_years, low, high, critical_low, critical_high, reviewed_at, reviewed_by_name, note")
     .order("age_min_years");
   if (error) throw new Error(error.message);
-  const map = new Map<string, Array<ReferenceRange & { note: string | null; reviewedBy: string | null }>>();
+  const map = new Map<string, Array<ReferenceRange & { note: string | null; reviewedBy: string | null; reviewedAt: string | null }>>();
   for (const r of data) {
     const list = map.get(r.test_type_id) ?? [];
     list.push({
       id: r.id, sex: r.sex as ReferenceRange["sex"], ageMinYears: r.age_min_years, ageMaxYears: r.age_max_years,
       low: num(r.low), high: num(r.high), criticalLow: num(r.critical_low), criticalHigh: num(r.critical_high),
-      reviewed: r.reviewed_at !== null, note: r.note, reviewedBy: r.reviewed_by_name,
+      reviewed: r.reviewed_at !== null, note: r.note, reviewedBy: r.reviewed_by_name, reviewedAt: r.reviewed_at,
     });
     map.set(r.test_type_id, list);
   }

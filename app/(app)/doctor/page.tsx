@@ -30,6 +30,7 @@ export default async function DoctorHome({ searchParams }: { searchParams: Promi
   const supabase = await createClient();
   const now = new Date();
   const { rows, counts } = await getDoctorWorklist(supabase, session, now);
+  const { count: rangesWaiting } = await supabase.from("lab_reference_ranges").select("id", { count: "exact", head: true }).is("reviewed_at", null);
   const tz = session.clinic.timezone;
   const today = localDateKey(now, tz);
   const buckets = (Object.keys(BUCKET_TITLE) as WorklistBucket[])
@@ -51,6 +52,9 @@ export default async function DoctorHome({ searchParams }: { searchParams: Promi
       />
       {error ? <div className="mb-gutter"><Alert tone="danger" title="That didn't work">{error}</Alert></div> : null}
       {ok ? <div className="mb-gutter"><Alert tone="ok" title={ok} /></div> : null}
+      {(rangesWaiting ?? 0) > 0 ? (
+        <div className="mb-gutter"><Alert tone="warn" title={`${rangesWaiting} lab reference range${rangesWaiting === 1 ? "" : "s"} waiting for your sign-off`}><Link href="/doctor/ranges">Review them</Link></Alert></div>
+      ) : null}
       {signed ? <div className="mb-gutter"><Alert tone="ok" title="Note signed">It is now locked. Corrections will be added as addenda.</Alert></div> : null}
       {CLINICAL_REVIEW_REQUIRED ? (
         <p className="mb-gutter text-sm text-ink-500">

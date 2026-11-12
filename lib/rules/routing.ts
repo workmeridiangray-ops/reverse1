@@ -107,6 +107,7 @@ export function navFor(role: Role): NavItem[] {
     ],
     doctor: [
       { href: "/doctor", label: "My day" },
+      { href: "/doctor/ranges", label: "Lab ranges" },
       { href: "/patients", label: "Patients" },
       { href: "/appointments", label: "Schedule" },
     ],

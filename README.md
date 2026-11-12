@@ -56,6 +56,7 @@ npm run typecheck
 | `tests/db/dispensing-parity` | TypeScript FEFO plan vs the database across stock situations x quantities x course lengths, with and without notes |
 | `tests/db/portal` | patient requests (limit equals `MAX_OPEN_REQUESTS`), staff booking and declining, own-details updates and their audit trail |
 | `tests/db/analytics` | the lab-duration function is admin-only and returns bare numbers; `quantile()` equals Postgres `percentile_cont` |
+| `tests/db/range-review` | admins edit lab ranges but cannot sign them off; doctors sign off but cannot edit; any change to the numbers clears the sign-off; stamps can't be forged; old results keep the status they were flagged with |
 | `tests/db/lab-parity` | flag maths, age maths (birthdays, leap days, time zones), range choice, and the stored flag through the real triggers |
 
 ## Layout
@@ -125,6 +126,12 @@ scripts/smoke.mjs           browser + accessibility smoke test
 - **Critical results** stay on the ordering doctor's home screen, and on the
   lab's order screen as "phone the doctor", until the doctor acknowledges them.
   Correcting a value clears the acknowledgement.
+- **Reference ranges are edited by an administrator and signed off by a doctor.**
+  The two can't swap roles: the database refuses an admin's sign-off and a
+  doctor's edit. Changing a range's numbers, ages or sex clears its sign-off, so
+  "signed off" always means a clinician reviewed exactly those numbers. A result
+  keeps the review status the range had when it was flagged. The editor lists
+  who would get no flag under the current ranges.
 - **Results reach the patient only after a doctor releases them**, enforced by
   row-level security, not by the interface.
 
