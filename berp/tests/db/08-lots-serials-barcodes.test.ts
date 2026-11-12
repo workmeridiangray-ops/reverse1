@@ -59,13 +59,27 @@ describe("batch tracking, expiry and FEFO", () => {
     });
   });
 
-  test("tracked items are refused by transfers and spares until those are specified; untracked behaviour is unchanged", async () => {
+  test("tracked stock transfers between warehouses keeping its lots and expiry; reserved or missing lots are refused", async () => {
     await as("ownerA", async (c) => {
       const b = (await c.q<Row>("select branch_id from public.warehouses where id=$1", [WH.A]))[0]!.branch_id;
       const w2 = (await c.q<Row>("insert into public.warehouses (tenant_id, branch_id, code, name) select app.tenant_id(), $1, 'W9', 'Nine' returning id", [b]))[0]!.id;
-      const item = (await c.q<Row>("insert into public.items (tenant_id, sku, name, tracking) select app.tenant_id(), 'BATCH-3', 'b3', 'batch' returning id"))[0]!.id;
-      await c.q("select public.adjust_stock($1,$2,5,'opening','OPEN-1',$3)", [item, WH.A, day(100)]);
-      expect(await c.err("select public.create_transfer($1,$2,$3)", [WH.A, w2, JSON.stringify([{ item_id: item, qty: 1 }])])).toMatch(/does not support lots yet/);
+      const item = (await c.q<Row>("insert into public.items (tenant_id, sku, name, tracking, sale_price_paise) select app.tenant_id(), 'BATCH-3', 'b3', 'batch', 5000 returning id"))[0]!.id;
+      await c.q("select public.adjust_stock($1,$2,3,'opening','EARLY',$3)", [item, WH.A, day(40)]);
+      await c.q("select public.adjust_stock($1,$2,5,'opening','LATER',$3)", [item, WH.A, day(300)]);
+      await c.q("select public.adjust_stock($1,$2,2,'opening','DEAD',$3)", [item, WH.A, day(-1)]);
+      expect(await c.err("select public.create_transfer($1,$2,$3)", [WH.A, w2, JSON.stringify([{ item_id: item, qty: 9 }])])).toMatch(/not enough unexpired/);
+      expect(await c.err("select public.create_transfer($1,$2,$3)", [WH.A, w2, JSON.stringify([{ item_id: item, qty: 2, lots: [{ code: "NOPE", qty: 2 }] }])])).toMatch(/does not exist/);
+      const tr = (await c.q<Row>("select public.create_transfer($1,$2,$3) id", [WH.A, w2, JSON.stringify([{ item_id: item, qty: 5 }])]))[0]!.id; // FEFO: EARLY 3 + LATER 2
+      const out = await c.q<Row>("select s.lot_code, l.qty from public.stock_transfer_lots l join public.stock_lots s on s.id=l.lot_id order by s.expiry_date", []);
+      expect(out.map((r) => `${r.lot_code}:${Number(r.qty)}`)).toEqual(["EARLY:3", "LATER:2"]);
+      expect((await c.q("select 1 from public.lot_stock where item_id=$1 and warehouse_id=$2", [item, w2])).length).toBe(0); // in transit, not at destination yet
+      await c.q("select public.receive_transfer($1)", [tr]);
+      const dest = await c.q<Row>("select lot_code, on_hand, expiry_date from public.lot_stock where item_id=$1 and warehouse_id=$2 order by lot_code", [item, w2]);
+      expect(dest.map((r) => `${r.lot_code}:${Number(r.on_hand)}`)).toEqual(["EARLY:3", "LATER:2"]);
+      const src = await c.q<Row>("select lot_code, on_hand from public.lot_stock where item_id=$1 and warehouse_id=$2 order by lot_code", [item, WH.A]);
+      expect(src.map((r) => `${r.lot_code}:${Number(r.on_hand)}`)).toEqual(["DEAD:2", "LATER:3"]);
+      const hist = (await c.q<Row>("select event, warehouse from public.trace_lot($1,'EARLY')", [item])).map((r) => `${r.event}@${r.warehouse}`);
+      expect(hist).toEqual(["adjustment@Main warehouse", "transfer_out@Main warehouse", "transfer_in@Nine"]);
     });
   });
 });
@@ -100,5 +114,24 @@ describe("barcodes", () => {
       await c.q("insert into public.items (tenant_id, sku, name) select app.tenant_id(), 'BC-E', 'e'"); // two items without barcodes are fine
     });
     await as("ownerB", async (c) => { await c.q("insert into public.items (tenant_id, sku, name, barcode) select app.tenant_id(), 'BC-A', 'a', '8901234567890'"); }); // another company may reuse it
+  });
+});
+
+describe("work-order spares that are lot tracked", () => {
+  test("closing consumes the earliest-expiry lot, posts cost, and refuses when only expired stock remains", async () => {
+    await as("ownerA", async (c) => {
+      const item = (await c.q<Row>("insert into public.items (tenant_id, sku, name, tracking, cost_paise) select app.tenant_id(), 'SPARE-B', 'Filter', 'batch', 20000 returning id"))[0]!.id;
+      await c.q("select public.adjust_stock($1,$2,3,'stock','F-OLD',$3)", [item, WH.A, day(10)]);
+      await c.q("select public.adjust_stock($1,$2,3,'stock','F-NEW',$3)", [item, WH.A, day(200)]);
+      const a = (await c.q<Row>("select public.register_asset('PMP-9','Pump','Plant',$1,0,null,null) id", [WH.A]))[0]!.id;
+      const wo = (await c.q<Row>("select public.open_work_order($1,'breakdown','seal gone') id", [a]))[0]!.id;
+      const before = Number((await c.q<Row>("select coalesce(sum(balance_paise),0) b from public.trial_balance where code='5100'"))[0]!.b);
+      await c.q("select public.close_work_order($1,'filter swapped',$2,4,$3,0)", [wo, item, WH.A]);
+      const left = await c.q<Row>("select lot_code, on_hand from public.lot_stock where item_id=$1 order by lot_code", [item]);
+      expect(left.map((r) => `${r.lot_code}:${Number(r.on_hand)}`)).toEqual(["F-NEW:2"]); // F-OLD fully used, 1 from F-NEW
+      expect(Number((await c.q<Row>("select balance_paise b from public.trial_balance where code='5100'"))[0]!.b) - before).toBe(80000);
+      const wo2 = (await c.q<Row>("select public.open_work_order($1,'scheduled','service') id", [a]))[0]!.id;
+      expect(await c.err("select public.close_work_order($1,'again',$2,5,$3,0)", [wo2, item, WH.A])).toMatch(/not enough free stock/);
+    });
   });
 });

@@ -183,7 +183,7 @@ export async function approveApproval(f: FormData) { await decideApprovalAs(f, t
 export async function rejectApproval(f: FormData) { await decideApprovalAs(f, false); }
 export async function saveApprovalRule(f: FormData) {
   await act("/app/settings", "/app/settings", "Rule saved", async (sb) => {
-    must(await sb.rpc("save_approval_rule", { p_subject: str(f, "subject"), p_min: parseInr(str(f, "min")), p_role: str(f, "role"), p_from: str(f, "from") || new Date().toISOString().slice(0, 10) }));
+    must(await sb.rpc("save_approval_rule", { p_subject: str(f, "subject"), p_min: parseInr(str(f, "min")), p_role: str(f, "role"), p_from: str(f, "from") || new Date().toISOString().slice(0, 10), p_second: f.get("then_owner") === "on" ? "owner" : null }));
   });
 }
 export async function deactivateRule(f: FormData) {
@@ -206,4 +206,16 @@ export async function toggleWebhook(f: FormData) {
 }
 export async function retryDelivery(f: FormData) {
   await act("/app/settings", "/app/settings", "Delivery queued again", async (sb) => { must(await sb.rpc("retry_webhook_delivery", { p_id: str(f, "id") })); });
+}
+
+export async function createDelegation(f: FormData) {
+  await act("/app/settings", "/app/settings", "Delegation created", async (sb) => {
+    const members = must(await sb.rpc("team")) as any[];
+    const m = members.find((x) => String(x.email).toLowerCase() === str(f, "email").toLowerCase() && x.active);
+    if (!m) throw new Error("No active team member has that email.");
+    must(await sb.rpc("create_delegation", { p_to: m.user_id, p_from: str(f, "from"), p_until: str(f, "until") }));
+  });
+}
+export async function revokeDelegation(f: FormData) {
+  await act("/app/settings", "/app/settings", "Delegation ended", async (sb) => { must(await sb.rpc("revoke_delegation", { p_id: str(f, "id") })); });
 }

@@ -132,6 +132,19 @@ const cron = await (await fetch(`${BASE}/api/cron/webhooks`, { headers: { author
 if (!(cron.claimed >= 1) || cron.delivered !== 0) await fail("cron result: " + JSON.stringify(cron));
 await go("/app/settings"); await see("attempts", "").catch(() => {}); ok(`worker claimed ${cron.claimed}, delivered ${cron.delivered} (no outside network here), failure recorded for retry`);
 
+// 10d — two-step chain and delegation
+await go("/app/settings"); await page.locator("select[name=subject]").selectOption("sales_order"); await page.locator("input[name=min]").fill("50000"); await page.locator("select[name=role]").last().selectOption("manager"); await page.locator("input[name=then_owner]").check(); await submit("Add rule"); await see("Rule saved"); await see("manager then owner"); ok("two-step rule saved: ≥ ₹50,000 needs manager then owner");
+await sam.goto(BASE + "/app/sales/new"); await sam.getByLabel("Customer").selectOption({ label: "Kiran Stores" }); await sam.getByLabel("Line 1 item").selectOption({ label: "WID-1 · Widget (nos)" }); await sam.getByLabel("Line 1 quantity").fill("50");
+await sam.getByRole("button", { name: "Create draft order" }).click(); await sam.waitForURL(/\/app\/sales\/[0-9a-f-]{36}/); const bigUrl = sam.url(); await sam.getByRole("button", { name: "Request approval" }).click(); await seeOn(sam, "Approval requested");
+await mia.goto(BASE + "/app/approvals"); await mia.getByRole("button", { name: "Approve" }).first().click(); await seeOn(mia, "Decision recorded"); await seeOn(mia, "step 2 of 2");
+await sam.goto(bigUrl); await sam.getByRole("button", { name: "Confirm order" }).click(); await seeOn(sam, "approval required"); ok("after the manager's approval the order is still blocked (step 2 pending)");
+await mia.goto(BASE + "/app/approvals"); if (await mia.getByRole("button", { name: "Approve" }).count()) await fail("manager must not be offered step 2"); ok("manager cannot approve step 2");
+await go("/app/approvals"); await page.getByRole("button", { name: "Approve" }).first().click(); await see("Decision recorded");
+await sam.goto(bigUrl); await sam.getByRole("button", { name: "Confirm order" }).click(); await seeOn(sam, "Order confirmed"); ok("owner approved step 2 → order confirmed");
+await mia.goto(BASE + "/app/settings"); await mia.getByLabel("Delegate (email)").fill(samMail); const until = new Date(Date.now() + 5 * 86400000).toISOString().slice(0, 10); await mia.getByLabel("Until").fill(until); await mia.getByRole("button", { name: "Delegate my approvals" }).click(); await seeOn(mia, "Delegation created"); ok("manager delegated approvals to the salesperson");
+await go("/app/sales/new"); await page.getByLabel("Customer").selectOption({ label: "Kiran Stores" }); await page.getByLabel("Line 1 item").selectOption({ label: "WID-1 · Widget (nos)" }); await page.getByLabel("Line 1 quantity").fill("3");
+await submit("Create draft order"); await submit("Request approval"); await see("Approval requested");
+await sam.goto(BASE + "/app/approvals"); await sam.getByRole("button", { name: "Approve" }).first().click(); await seeOn(sam, "Decision recorded"); await seeOn(sam, "decided as delegate"); ok("delegate approved the owner's request, recorded as a delegated decision");
 await mia.goto(BASE + "/app/projects"); await mia.getByRole("link", { name: "PRJ-00001" }).click(); await mia.waitForLoadState("networkidle");
 await mia.getByLabel("Cost rate per hour").fill("500"); await mia.getByRole("button", { name: "Approve" }).first().click(); await seeOn(mia, "Decision recorded"); await seeOn(mia, "₹2,000.00");
 ok("manager approved the owner's time at ₹500/h → labour ₹2,000.00 in the cost summary");

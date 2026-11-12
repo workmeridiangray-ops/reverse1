@@ -4,7 +4,7 @@ Everything the application can do without your accounts or decisions is built an
 The items below need accounts, keys or sign-off. Nothing here has been done for you.
 
 ## 1. Infrastructure (once)
-1. Create a Supabase project (Mumbai for INR customers). `supabase link`, then `supabase db push` (migrations 0100–1100 in order).
+1. Create a Supabase project (Mumbai for INR customers). `supabase link`, then `supabase db push` (migrations 0100–1300 in order).
 2. Auth → enable email confirmations, set Site URL / redirect URLs to the production domain, configure SMTP so verification mail leaves from your domain.
 3. Sign up yourself, then promote: `insert into public.platform_admins select id from auth.users where email='you@…';`
 4. Deploy `berp/` (Vercel / Render / Hostinger Node). Environment:
@@ -31,7 +31,7 @@ Verify once on staging: create a webhook to a request-catcher URL, confirm an or
 - Customer receipts must be allocated to invoices; advances / refunds are not modelled.
 
 ## 4. Known limitations
-- Batch/serial items cannot be transferred between warehouses or used as work-order spares yet (refused with a clear message). Tracking mode is fixed once an item has moved.
+- Tracking mode (none/batch/serial) is fixed once an item has moved. Transfers and spares of tracked items pick earliest-expiry unexpired lots unless lots are named in the API.
 - Lot allocation at dispatch is earliest-expiry-first; reservations are per item and warehouse, not per lot.
 - Labels are browser-printed sheets (Code 128); direct thermal-printer drivers (ZPL/TSPL) are not included.
 - COGS uses the item master cost at dispatch, not a moving average from receipts.

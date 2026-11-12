@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Flash, Money, PageHeader, Status, Table } from "@/components/ui/kit";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { addBranch, addMember, addWarehouse, choosePlan, saveWorkspaceSettings, toggleMember } from "../actions";
-import { createApiKey, createWebhook, deactivateRule, retryDelivery, revokeApiKey, saveApprovalRule, startCheckout, toggleWebhook } from "../actions2";
+import { createApiKey, createDelegation, createWebhook, deactivateRule, revokeDelegation, retryDelivery, revokeApiKey, saveApprovalRule, startCheckout, toggleWebhook } from "../actions2";
 
 export const metadata: Metadata = { title: "Settings" };
 const ROLES = ["owner", "manager", "sales", "purchasing", "warehouse", "accountant", "viewer"];
@@ -14,7 +14,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
   const q = await searchParams; const ctx = await requireCtx();
   if (!can(ctx.role, "owner", "manager")) redirect("/app");
   const sb = await createClient(); const owner = ctx.role === "owner";
-  const [{ data: team }, { data: plans }, { data: br }, { data: wh }, { data: audit }, { data: t }, { data: keys }, { data: rules }, { data: hooks }, { data: deliveries }] = await Promise.all([
+  const [{ data: team }, { data: plans }, { data: br }, { data: wh }, { data: audit }, { data: t }, { data: keys }, { data: rules }, { data: hooks }, { data: deliveries }, { data: delegs }] = await Promise.all([
     sb.rpc("team"), sb.from("plans").select("*").eq("active", true).neq("code", "trial").order("price_monthly_paise"),
     sb.from("branches").select("*").order("code"), sb.from("warehouses").select("*, branches(code)").order("code"),
     sb.from("audit_log").select("at,action,table_name,changed_fields").order("at", { ascending: false }).limit(15),
@@ -23,7 +23,9 @@ export default async function Settings({ searchParams }: { searchParams: Promise
     sb.from("approval_rules").select("*").eq("active", true).order("subject").order("min_amount_paise"),
     owner ? sb.from("webhook_endpoints").select("id,url,events,active,created_at").order("created_at", { ascending: false }) : Promise.resolve({ data: [] as any[] }),
     sb.from("webhook_deliveries").select("id,event_type,status,attempts,last_status,last_error,created_at,webhook_endpoints!inner(url)").order("created_at", { ascending: false }).limit(15),
+    sb.from("approval_delegations").select("id,from_user,to_user,starts_on,ends_on,active").eq("active", true).order("ends_on"),
   ]);
+  const nameOf = (id: string) => ((team as any[]) ?? []).find((m) => m.user_id === id)?.email ?? id.slice(0, 8);
   return (
     <>
       <PageHeader title="Settings" sub={`${ctx.tenant.name} · plan ${ctx.tenant.plan_code} · ${ctx.tenant.status}`} />
@@ -74,13 +76,21 @@ export default async function Settings({ searchParams }: { searchParams: Promise
       )}
       <section className="mt-8" aria-labelledby="rules"><h2 id="rules" className="mb-2 font-semibold">Approval rules</h2>
         <p className="mb-2 max-w-prose text-sm text-muted">Orders or purchase requests at or above a threshold must be approved by the role you choose before they can proceed. Changing a rule never re-routes requests that are already open. Owners and managers can act on their own requests only if they hold the required role; nobody approves their own request.</p>
-        <Table head={["Applies to", "From amount", "Approver", "Effective from", ""]} numeric={[1]}>{(rules ?? []).map((r: any) => <tr key={r.id}><td className="td">{r.subject.replace("_", " ")}</td><td className="td num"><Money paise={Number(r.min_amount_paise)} /></td><td className="td">{r.approver_role}</td><td className="td">{r.effective_from}</td>
+        <Table head={["Applies to", "From amount", "Approval steps", "Effective from", ""]} numeric={[1]}>{(rules ?? []).map((r: any) => <tr key={r.id}><td className="td">{r.subject.replace("_", " ")}</td><td className="td num"><Money paise={Number(r.min_amount_paise)} /></td><td className="td">{r.approver_role}{r.second_approver_role ? ` then ${r.second_approver_role}` : ""}</td><td className="td">{r.effective_from}</td>
           <td className="td">{owner && <form action={deactivateRule}><input type="hidden" name="id" value={r.id} /><button className="btn">Turn off</button></form>}</td></tr>)}{!rules?.length && <tr><td className="td text-muted" colSpan={5}>No rules: nothing needs approval.</td></tr>}</Table>
         {owner && <form action={saveApprovalRule} className="card mt-3 flex flex-wrap items-end gap-2 p-4">
           <label className="text-sm">Applies to<select name="subject" className="input mt-1"><option value="sales_order">Sales order</option><option value="purchase_request">Purchase request</option></select></label>
           <label className="text-sm">From amount (₹, incl. tax for orders)<input name="min" required inputMode="decimal" className="input mt-1" placeholder="100000" /></label>
           <label className="text-sm">Approver<select name="role" className="input mt-1"><option value="manager">Manager</option><option value="owner">Owner</option></select></label>
-          <label className="text-sm">Effective from<input name="from" type="date" className="input mt-1" /></label><SubmitButton>Add rule</SubmitButton></form>}
+          <label className="text-sm">Effective from<input name="from" type="date" className="input mt-1" /></label>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="then_owner" className="h-5 w-5" /> Then also the owner (two steps; manager approver only)</label><SubmitButton>Add rule</SubmitButton></form>}
+      </section>
+      <section className="mt-8" aria-labelledby="deleg"><h2 id="deleg" className="mb-2 font-semibold">Approval delegation</h2>
+        <p className="mb-2 max-w-prose text-sm text-muted">While you are away, a manager or the owner can lend their approval authority to a team member for up to 90 days. A delegate can never approve a request they raised, one the delegator raised, or both steps of a chain.</p>
+        <Table head={["From", "To", "Window", ""]}>{(delegs ?? []).map((d: any) => <tr key={d.id}><td className="td">{nameOf(d.from_user)}</td><td className="td">{nameOf(d.to_user)}</td><td className="td">{d.starts_on} → {d.ends_on}</td>
+          <td className="td">{(owner || d.from_user === ctx.userId) && <form action={revokeDelegation}><input type="hidden" name="id" value={d.id} /><button className="btn">End</button></form>}</td></tr>)}{!delegs?.length && <tr><td className="td text-muted" colSpan={4}>No active delegations.</td></tr>}</Table>
+        <form action={createDelegation} className="card mt-3 flex flex-wrap items-end gap-2 p-4"><label className="text-sm">Delegate (email)<input name="email" type="email" required className="input mt-1" /></label>
+          <label className="text-sm">From<input name="from" type="date" required defaultValue={new Date().toISOString().slice(0, 10)} className="input mt-1" /></label><label className="text-sm">Until<input name="until" type="date" required className="input mt-1" /></label><SubmitButton>Delegate my approvals</SubmitButton></form>
       </section>
       {owner && (
         <section className="mt-8" aria-labelledby="hooks"><h2 id="hooks" className="mb-2 font-semibold">Webhooks</h2>
