@@ -302,9 +302,9 @@ try {
   // ============ 12b. schedule and subcontracts ============
   console.log("\n12b. Schedule and subcontracts");
   await go(mp, `${P}/schedule`);
-  await mp.getByLabel("WBS code").fill("1"); await mp.getByLabel("Activity").fill("Excavation"); await mp.locator("#new-start").fill("2026-12-01"); await mp.locator("#new-end").fill("2026-12-10");
+  await mp.locator("#new-wbs").fill("1"); await mp.locator("#new-name").fill("Excavation"); await mp.locator("#new-start").fill("2026-12-01"); await mp.locator("#new-end").fill("2026-12-10");
   await mp.getByLabel("Measure progress from BOQ item").selectOption({ label: "1.01" }); await submit(mp, "Add activity"); ok(await has(mp, "Activity 1 added"), "activity added");
-  await mp.getByLabel("WBS code").fill("2"); await mp.getByLabel("Activity").fill("Footings"); await mp.locator("#new-start").fill("2026-12-05"); await mp.locator("#new-end").fill("2026-12-15"); await mp.getByLabel(/1 Excavation/).check(); await submit(mp, "Add activity");
+  await mp.locator("#new-wbs").fill("2"); await mp.locator("#new-name").fill("Footings"); await mp.locator("#new-start").fill("2026-12-05"); await mp.locator("#new-end").fill("2026-12-15"); await mp.getByLabel(/1 Excavation/).check(); await submit(mp, "Add activity");
   ok(await has(mp, "Starts before its predecessor finishes"), "dependency violation is explained");
   await mp.locator("#new-start").fill("2026-12-11"); await submit(mp, "Add activity"); ok(await has(mp, "Activity 2 added"), "dependent activity accepted once dates are consistent");
   await mp.getByLabel("Note").fill("Initial"); await submit(mp, "Freeze baseline"); ok(await has(mp, "Baseline v1 frozen"), "baseline frozen");

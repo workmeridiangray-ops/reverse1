@@ -45,7 +45,7 @@ export default async function Schedule({ params }: { params: Promise<{ id: strin
       {edit ? (
         <div className="mt-6 grid gap-6 lg:grid-cols-2">
           <Card title="Add an activity"><ActionForm action={addActivity} submitLabel="Add activity" reset>{hid}
-            <div className="grid gap-4 sm:grid-cols-2"><TextField label="WBS code" name="wbs" placeholder="1.2" /><TextField label="Activity" name="name" /></div>
+            <div className="grid gap-4 sm:grid-cols-2"><TextField label="WBS code" name="wbs" id="new-wbs" placeholder="1.2" /><TextField label="Activity name" name="name" id="new-name" /></div>
             <div className="grid gap-4 sm:grid-cols-2"><TextField label="Start" name="start_date" id="new-start" type="date" /><TextField label="Finish" name="end_date" id="new-end" type="date" /></div>
             <SelectField label="Measure progress from BOQ item" name="boq_item_id" optional><option value="">Not linked</option>{items.map((i) => <option key={i.id} value={i.id}>{i.code}</option>)}</SelectField>
             <fieldset><legend className="text-sm font-bold">Predecessors (finish-to-start)</legend><div className="max-h-32 overflow-auto">{acts.map((a) => <label key={a.id} className="flex min-h-touch items-center gap-2"><input type="checkbox" name="depends_on" value={a.id} className="h-5 w-5" /> {a.wbs} {a.name}</label>)}</div></fieldset>
