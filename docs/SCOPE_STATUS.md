@@ -1,6 +1,6 @@
 # Scope status (against "Construction Project & Contractor ERP SaaS — Full Scope")
 
-Evidence: `npm test` (90 unit + database-isolation tests), `npm run build`, `npm run test:e2e` (152 browser checks, 0 failures,
+Evidence: `npm test` (100 unit + database-isolation tests), `npm run build`, `npm run test:e2e` (177 browser checks, 0 failures,
 0 console errors; production build; real PostgreSQL 16; roles: owner, manager, engineer, client, second company, platform operator;
 axe WCAG 2.1 A/AA scans on 11 pages with no violations).
 
@@ -15,11 +15,11 @@ Legend: **Verified** = exercised in the e2e/DB tests · **Built** = implemented,
 | 5 | Projects, client, project team/access, lifecycle | Verified. Zones/WBS, authority matrix: Not built. |
 | 6 | BOQ (CSV import with row errors), budget vs tender vs committed, contract basis | Verified. Opportunity/tender documents, rate analysis, estimate revisions, bid review: Not built. |
 | 7 | Contract terms, retention/cap/advance/recovery, approval snapshot | Verified. Milestones, guarantees, obligations, amendment, renewal: Not built. |
-| 8 | Planning / schedule / lookahead / resources | **Not built.** |
+| 8 | Schedule: activities, finish-to-start dependencies with loop detection, frozen baseline (never rewritten), variance + delay reasons, 3-week lookahead, progress measured from verified quantity | Verified. Resource plan, equipment allocation, recovery plans, critical-chain: Not built. |
 | 9 | Drawing register, revisions, approve/supersede, distribution log, RFIs | Verified. Transmittals, annotations: Not built. |
 | 10 | Material request → approval → PO → goods receipt, rejected quantities, budget commitment | Verified. RFQ/comparison, store issue, site transfers, returns, stock count: **Not built.** |
 | 11 | Daily reports, review/return, photo upload (content-sniffed) | Verified. Upload auto-retry/offline: Not built. |
-| 12 | Subcontract packages, work orders, measurement, bills | **Not built.** |
+| 12 | Subcontract packages, work orders capped at permitted BOQ quantity, three-person measurement (prepare/verify/approve), cumulative bills with retention and material recovery, no double billing | Verified. Subcontract bids/rate versions, mobilisation advances, bill-level deduction library: Not built. |
 | 13 | Inspections with hold points, snags, verification | Verified. Incident/safety records, nonconformance workflow: Not built. |
 | 14 | Measurement book, cumulative running bills, partial certification, retention, advance recovery, variations, invoices, receipts, disputes, reversals | Verified with worked examples (₹1,91,250 and ₹1,78,500 nets). |
 | 15 | Client/consultant portal (scoped, approved-only), decisions inbox | Verified. Cash forecast, cost-to-complete, portfolio reports: Not built. |
