@@ -97,6 +97,22 @@ describe("project and external-party scope", () => {
   });
 });
 
+describe("planning and subcontract tables", () => {
+  it("external roles cannot read subcontract data; tenants cannot read each other's", async () => {
+    const sup = randomUUID(), pk = randomUUID();
+    await asScope(pool, ownerA, async (q) => {
+      await q("INSERT INTO suppliers(id,tenant_id,name) VALUES ($1,$2,'SubCo')", [sup, A]);
+      await q("INSERT INTO sub_packages(id,tenant_id,project_id,number,name,supplier_id) VALUES ($1,$2,$3,1,'x',$4)", [pk, A, PA1, sup]);
+      await q("INSERT INTO schedule_activities(tenant_id,project_id,wbs,name,start_date,end_date) VALUES ($1,$2,'1','a',current_date,current_date)", [A, PA1]);
+    });
+    expect((await asScope(pool, clientA, (q) => q("SELECT 1 FROM sub_packages"))).rowCount).toBe(0);
+    expect((await asScope(pool, { tenantId: B, userId: uOwnerB, role: "owner" }, (q) => q("SELECT 1 FROM sub_packages"))).rowCount).toBe(0);
+    expect((await asScope(pool, clientA, (q) => q("SELECT 1 FROM schedule_activities"))).rowCount).toBe(1);
+    await expect(asScope(pool, clientA, (q) => q("INSERT INTO schedule_activities(tenant_id,project_id,wbs,name,start_date,end_date) VALUES ($1,$2,'9','a',current_date,current_date)", [A, PA1]))).rejects.toThrow();
+    await expect(asScope(pool, ownerA, (q) => q("INSERT INTO schedule_activities(tenant_id,project_id,wbs,name,start_date,end_date) VALUES ($1,$2,'8','a',current_date + 1,current_date)", [A, PA1]))).rejects.toThrow();
+  });
+});
+
 describe("platform operator", () => {
   it("can see tenant metadata but no customer project data", async () => {
     const t = await asScope(pool, { userId: uOwnerA, platform: true }, (q) => q("SELECT id FROM tenants"));

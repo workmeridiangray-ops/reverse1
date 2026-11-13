@@ -299,6 +299,42 @@ try {
   const exp = await mp.request.get(`${BASE}/api/export/${pid}/bills`); ok(exp.status() === 200 && (await exp.text()).includes("net_payable"), "bills CSV export works for manager");
   const expE = await ep.request.get(`${BASE}/api/export/${pid}/bills`); ok(expE.status() === 403, "engineer cannot export bills");
 
+  // ============ 12b. schedule and subcontracts ============
+  console.log("\n12b. Schedule and subcontracts");
+  await go(mp, `${P}/schedule`);
+  await mp.getByLabel("WBS code").fill("1"); await mp.getByLabel("Activity").fill("Excavation"); await mp.locator("#new-start").fill("2026-12-01"); await mp.locator("#new-end").fill("2026-12-10");
+  await mp.getByLabel("Measure progress from BOQ item").selectOption({ label: "1.01" }); await submit(mp, "Add activity"); ok(await has(mp, "Activity 1 added"), "activity added");
+  await mp.getByLabel("WBS code").fill("2"); await mp.getByLabel("Activity").fill("Footings"); await mp.locator("#new-start").fill("2026-12-05"); await mp.locator("#new-end").fill("2026-12-15"); await mp.getByLabel(/1 Excavation/).check(); await submit(mp, "Add activity");
+  ok(await has(mp, "Starts before its predecessor finishes"), "dependency violation is explained");
+  await mp.locator("#new-start").fill("2026-12-11"); await submit(mp, "Add activity"); ok(await has(mp, "Activity 2 added"), "dependent activity accepted once dates are consistent");
+  await mp.getByLabel("Note").fill("Initial"); await submit(mp, "Freeze baseline"); ok(await has(mp, "Baseline v1 frozen"), "baseline frozen");
+  await mp.reload(); ok(await has(mp, "96%"), "progress is measured from verified quantity (1100 of 1150 = 96%)");
+  await mp.locator("tr", { hasText: "Footings" }).getByText("Change…").click();
+  const row = mp.locator("tr", { hasText: "Footings" }); await row.locator('input[type=date]').nth(1).fill("2026-12-20"); await submit(mp, "Save dates", row); ok(await has(mp, "needs a delay reason"), "slipping past the baseline needs a reason");
+  await row.locator('input[id^="d-"]').fill("Monsoon delay to excavation"); await submit(mp, "Save dates", row); ok(await has(mp, "5 day(s) behind baseline"), "reschedule recorded as 5 days behind baseline");
+  ok((await q("SELECT base_end::text b, end_date::text e FROM schedule_activities WHERE wbs='2'"))[0].b === "2026-12-15", "baseline end date is never rewritten");
+
+  await go(op, `${P}/subcontracts`);
+  await op.locator("#pk-name").fill("Earthwork gang"); await op.locator("#pk-sup").selectOption({ index: 1 }); await submit(op, "Create package"); ok(await has(op, "Package SP-1 created"), "subcontract package created");
+  await op.locator('select[id^="wi-"]').selectOption({ label: "1.01" }); await op.locator('input[id^="wq-"]').fill("2000"); await op.locator('input[id^="wr-"]').fill("80"); await submit(op, "Add line");
+  ok(await has(op, "left to subcontract"), "work order cannot exceed the permitted BOQ quantity");
+  await op.locator('input[id^="wq-"]').fill("500"); await submit(op, "Add line"); ok(await has(op, "Work-order line added"), "work-order line added");
+  await submit(op, "Award package"); ok(await has(op, "Package awarded"), "package awarded");
+  await go(ep, `${P}/subcontracts`); await ep.locator('select[id^="ml-"]').selectOption({ index: 1 }); await ep.locator('input[id^="mq-"]').fill("400"); await submit(ep, "Prepare measurement"); ok(await has(ep, "exceed the work-order quantity"), "measurement above ordered quantity is refused");
+  await ep.locator('input[id^="mq-"]').fill("200"); await submit(ep, "Prepare measurement"); ok(await has(ep, "prepared for joint verification"), "engineer prepares a subcontract measurement");
+  await ep.reload(); ok(!(await text(ep)).includes("Verify jointly"), "preparer cannot verify");
+  await go(mp, `${P}/subcontracts`); await submit(mp, "Verify jointly"); ok(await has(mp, "Jointly verified"), "manager verifies jointly");
+  await mp.reload(); ok(!(await text(mp)).includes("Approve") || !(await mp.getByRole("button", { name: "Approve", exact: true }).count()), "verifier cannot also approve");
+  await go(op, `${P}/subcontracts`); await op.getByRole("button", { name: "Approve", exact: true }).click(); ok(await has(op, "approved for billing"), "third person approves the measurement");
+  await op.locator('input[id^="rec-"]').fill("1000"); await submit(op, "Prepare bill from approved work"); ok(await has(op, "requires") || await has(op, "reason for the material recovery"), "material recovery needs a reason");
+  await op.locator('input[id^="recr-"]').fill("Cement issued free of charge"); await submit(op, "Prepare bill from approved work"); ok(await has(op, "Subcontract bill 1 prepared"), "subcontract bill prepared");
+  const sb = (await q("SELECT gross_minor g, retention_minor r, net_minor n FROM sub_bills"))[0];
+  ok(sb.g == 1600000 && sb.r == 80000 && sb.n == 1420000, "sub bill: 200 m³ × ₹80 = ₹16,000 − retention ₹800 − recovery ₹1,000 = ₹14,200");
+  await op.reload(); ok(await has(op, "You prepared this bill"), "bill preparer cannot approve");
+  await submit(op, "Prepare bill from approved work"); ok(await has(op, "no approved, unbilled work"), "the same approved work cannot be billed twice");
+  await go(mp, `${P}/subcontracts`); await submit(mp, "Approve bill"); ok(await has(mp, "Subcontract bill approved"), "different person approves the subcontract bill");
+  await go(cp, `${P}/subcontracts`); ok(cp.url().includes("/denied"), "client cannot open subcontracts");
+
   // ============ 13. second company isolation ============
   console.log("\n13. Cross-company isolation");
   const o2 = await ctx("owner-beta"); await signup(o2.page, "Ben Beta", "Beta Constructions", "ben@beta.test");

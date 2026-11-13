@@ -10,19 +10,20 @@ export const ROLE_LABEL: Record<Role, string> = {
   accounts: "Accounts", viewer: "Read-only", client: "Client (portal)", consultant: "Consultant (portal)",
 };
 
-const READ = ["project.view", "boq.view", "drawing.view", "report.view"] as const;
+const READ = ["project.view", "boq.view", "drawing.view", "report.view", "plan.view"] as const;
 const P = {
   owner: ["*"],
   manager: [...READ, "project.create", "project.edit", "boq.edit", "budget.view", "contract.edit", "contract.approve",
     "measure.record", "measure.verify", "bill.view", "bill.prepare", "bill.certify", "invoice.view", "variation.request", "variation.approve",
     "material.request", "material.approve", "po.view", "report.write", "report.verify", "drawing.manage", "drawing.approve",
-    "rfi.raise", "rfi.respond", "inspection.manage", "snag.manage", "supplier.view", "audit.view", "export", "team.view", "project.access"],
-  engineer: [...READ, "measure.record", "material.request", "report.write", "rfi.raise", "inspection.manage", "snag.manage", "variation.request"],
+    "rfi.raise", "rfi.respond", "inspection.manage", "snag.manage", "supplier.view", "audit.view", "export", "team.view", "project.access",
+    "plan.edit", "sub.view", "sub.manage", "sub.measure", "sub.verify", "sub.approve"],
+  engineer: [...READ, "plan.edit", "sub.view", "sub.measure", "measure.record", "material.request", "report.write", "rfi.raise", "inspection.manage", "snag.manage", "variation.request"],
   procurement: [...READ, "material.request", "po.view", "po.manage", "grn.manage", "supplier.view", "supplier.manage"],
-  accounts: [...READ, "bill.view", "bill.prepare", "invoice.view", "invoice.create", "receipt.record", "dispute.manage", "export", "po.view", "supplier.view", "budget.view"],
+  accounts: [...READ, "sub.view", "sub.approve", "bill.view", "bill.prepare", "invoice.view", "invoice.create", "receipt.record", "dispute.manage", "export", "po.view", "supplier.view", "budget.view"],
   viewer: [...READ],
-  client: ["project.view", "boq.view", "drawing.view", "report.view", "bill.view", "bill.certify", "invoice.view", "variation.decide", "rfi.respond", "dispute.raise", "portal"],
-  consultant: ["project.view", "boq.view", "drawing.view", "report.view", "bill.view", "bill.certify", "variation.decide", "rfi.respond", "portal"],
+  client: ["project.view", "boq.view", "drawing.view", "report.view", "plan.view", "bill.view", "bill.certify", "invoice.view", "variation.decide", "rfi.respond", "dispute.raise", "portal"],
+  consultant: ["project.view", "boq.view", "drawing.view", "report.view", "plan.view", "bill.view", "bill.certify", "variation.decide", "rfi.respond", "portal"],
 } as const satisfies Record<Role, readonly string[]>;
 
 export type Permission = string;
