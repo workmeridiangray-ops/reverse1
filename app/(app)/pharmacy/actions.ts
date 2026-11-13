@@ -9,7 +9,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const str = (f: FormData, k: string) => String(f.get(k) ?? "").trim();
 function go(path: string, kind: "ok" | "error", message: string): never {
   revalidatePath(path); revalidatePath("/pharmacy"); revalidatePath("/pharmacy/stock");
-  redirect(`${path}?${new URLSearchParams({ [kind]: message })}`);
+  redirect(`${path}${path.includes("?") ? "&" : "?"}${new URLSearchParams({ [kind]: message })}`);
 }
 function uid(f: FormData, k: string, back: string): string {
   const v = str(f, k);

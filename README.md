@@ -4,13 +4,12 @@ Clinic management for small and mid-size clinics. Six roles (admin, doctor,
 receptionist, lab, pharmacist, patient), every table behind row-level security,
 and the business rules in small pure modules with their own tests.
 
-**Status: Phase 1 + inpatient care.** Schema, auth and role routing, front desk,
-doctor's day, patient and appointment CRUD, billing, plus wards and beds,
-admissions, bed allocation/transfer/reservation, nursing observations and
-tasks, discharge governance, a public marketing site and demo-request intake.
-**Not built:** theatre, lab/imaging, pharmacy stock, purchasing/assets, patient
-portal, subscriptions/payments, multi-hospital groups, SSO/2FA, migration
-tooling, platform super-admin. See `docs/STATUS.md` for the full scope map.
+**Status:** clinic core (patients, appointments, notes, invoices) plus inpatient
+care (wards, beds, admissions, nursing, discharge governance), billing from
+tariffs/charges/deposits/refunds, lab and imaging orders and results, pharmacy
+stock and dispensing, theatre scheduling, a public site and demo-request intake.
+**Not built:** purchasing/assets, patient portal, subscriptions/payments,
+multi-hospital groups, SSO/2FA, migration tooling, platform super-admin. See `docs/STATUS.md` for the full scope map.
 
 > Clinical rules are placeholders until a clinician reviews them. Look for
 > `CLINICAL PLACEHOLDER` and `CLINICAL_REVIEW_REQUIRED` in the code.
@@ -39,6 +38,7 @@ npm run db:reset     # re-seed, then:
 npm run test:db      # RLS, audit and parity tests against real local Supabase
 npm run db:local     # no Docker? plain Postgres 16 + Supabase shim, migrations and seed (tests/db except auth-e2e)
 npm run db:types:local  # regenerate lib/supabase/database.types.ts without Docker
+npm run test:journey && npm run test:journey2   # end-to-end clinical journeys (after db:reset)
 npm run test:smoke   # with `npm run dev` running: every role, every screen, axe WCAG AA
 npm run typecheck
 ```

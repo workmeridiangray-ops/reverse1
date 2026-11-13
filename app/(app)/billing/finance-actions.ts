@@ -101,7 +101,7 @@ export async function requestRefund(form: FormData): Promise<void> {
   const back = inv ? `/billing/${inv}` : "/billing/refunds";
   const supabase = await createClient();
   const { error } = await supabase.rpc("request_refund", {
-    p_invoice: (inv || undefined) as string, p_deposit: (dep || undefined) as string, p_amount: money(form, "amount", back, session.clinic.currency), p_reason: str(form, "reason"),
+    p_invoice: (inv || null) as string, p_deposit: (dep || null) as string, p_amount: money(form, "amount", back, session.clinic.currency), p_reason: str(form, "reason"),
   });
   if (error) go(back, "error", friendlyDbError(error.message));
   go(back, "ok", "Refund requested. A second person must approve it before money moves.");

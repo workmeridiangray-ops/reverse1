@@ -94,6 +94,8 @@ export const ADMISSION_VISUAL: Record<"requested" | "admitted" | "discharged" | 
   cancelled: { tone: "neutral", icon: "x", label: "Cancelled" },
 };
 
+export const PROCEDURE_VISUAL: Record<"requested" | "scheduled" | "in_progress" | "recovery" | "completed" | "cancelled", StatusVisual> = { requested: { tone: "warn", icon: "hourglass", label: "Needs scheduling" }, scheduled: { tone: "info", icon: "clock", label: "Scheduled" }, in_progress: { tone: "brand", icon: "user", label: "In progress" }, recovery: { tone: "info", icon: "door", label: "Recovery" }, completed: { tone: "ok", icon: "check", label: "Completed" }, cancelled: { tone: "neutral", icon: "x", label: "Cancelled" } };
+
 export const NOTE_VISUAL = {
   critical: { tone: "critical", icon: "flag", label: "Critical" },
   unsigned: { tone: "warn", icon: "pencil", label: "Unsigned note" },
@@ -111,4 +113,5 @@ export const ALL_VISUAL_SETS = {
   NOTE_VISUAL,
   BED_VISUAL,
   ADMISSION_VISUAL,
+  PROCEDURE_VISUAL,
 } as const;

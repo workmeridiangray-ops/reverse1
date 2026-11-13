@@ -54,7 +54,7 @@ export async function placeOrder(_prev: { error?: string } | undefined, form: Fo
   if (!str(form, "test_name")) return { error: "Say which test or scan is needed." };
   const adm = str(form, "admission_id");
   const { data, error } = await (await createClient()).rpc("place_order", {
-    p_patient: patient, p_admission: (UUID.test(adm) ? adm : undefined) as string, p_test: str(form, "test_name"),
+    p_patient: patient, p_admission: (UUID.test(adm) ? adm : null) as string, p_test: str(form, "test_name"),
     p_kind: str(form, "kind") === "imaging" ? "imaging" : "lab", p_priority: str(form, "priority") === "urgent" ? "urgent" : "routine", p_note: str(form, "clinical_note"),
   });
   if (error) return { error: friendlyDbError(error.message) };

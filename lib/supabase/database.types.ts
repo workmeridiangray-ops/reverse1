@@ -908,6 +908,222 @@ isOneToOne: false
     }
                   ]
                 },
+            "procedure_changes": {
+                  Row: {
+                    "at": string,"by_user": string | null,"change": string,"clinic_id": string,"id": number,"procedure_id": string,"reason": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "at"?: string,"by_user"?: string | null,"change": string,"clinic_id": string,"id"?: never,"procedure_id": string,"reason"?: string | null
+                  }
+                  Update: {
+                    "at"?: string,"by_user"?: string | null,"change"?: string,"clinic_id"?: string,"id"?: never,"procedure_id"?: string,"reason"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "procedure_changes_by_user_fkey"
+      columns: ["by_user"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "procedure_changes_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "procedure_changes_procedure_id_clinic_id_fkey"
+      columns: ["procedure_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "procedures"
+      referencedColumns: ["id","clinic_id"]
+    }
+                  ]
+                },
+            "procedure_checklist": {
+                  Row: {
+                    "clinic_id": string,"done_at": string | null,"done_by": string | null,"id": string,"item": string,"procedure_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "clinic_id": string,"done_at"?: string | null,"done_by"?: string | null,"id"?: string,"item": string,"procedure_id": string
+                  }
+                  Update: {
+                    "clinic_id"?: string,"done_at"?: string | null,"done_by"?: string | null,"id"?: string,"item"?: string,"procedure_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "procedure_checklist_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "procedure_checklist_done_by_fkey"
+      columns: ["done_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "procedure_checklist_procedure_id_clinic_id_fkey"
+      columns: ["procedure_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "procedures"
+      referencedColumns: ["id","clinic_id"]
+    }
+                  ]
+                },
+            "procedure_consents": {
+                  Row: {
+                    "clinic_id": string,"consenter_name": string,"evidence_ref": string,"id": string,"method": string,"obtained_at": string,"obtained_by": string,"patient_id": string,"procedure_id": string,"relationship": string,"withdrawn_at": string | null,"withdrawn_reason": string | null,"witness_name": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "clinic_id": string,"consenter_name": string,"evidence_ref": string,"id"?: string,"method": string,"obtained_at"?: string,"obtained_by": string,"patient_id": string,"procedure_id": string,"relationship": string,"withdrawn_at"?: string | null,"withdrawn_reason"?: string | null,"witness_name"?: string | null
+                  }
+                  Update: {
+                    "clinic_id"?: string,"consenter_name"?: string,"evidence_ref"?: string,"id"?: string,"method"?: string,"obtained_at"?: string,"obtained_by"?: string,"patient_id"?: string,"procedure_id"?: string,"relationship"?: string,"withdrawn_at"?: string | null,"withdrawn_reason"?: string | null,"witness_name"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "procedure_consents_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "procedure_consents_obtained_by_fkey"
+      columns: ["obtained_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "procedure_consents_procedure_id_clinic_id_patient_id_fkey"
+      columns: ["procedure_id","clinic_id","patient_id"]
+isOneToOne: false
+      referencedRelation: "procedures"
+      referencedColumns: ["id","clinic_id","patient_id"]
+    }
+                  ]
+                },
+            "procedure_notes": {
+                  Row: {
+                    "amendment_reason": string | null,"body": string,"clinic_id": string,"id": string,"procedure_id": string,"version": number,"written_at": string,"written_by": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "amendment_reason"?: string | null,"body": string,"clinic_id": string,"id"?: string,"procedure_id": string,"version": number,"written_at"?: string,"written_by": string
+                  }
+                  Update: {
+                    "amendment_reason"?: string | null,"body"?: string,"clinic_id"?: string,"id"?: string,"procedure_id"?: string,"version"?: number,"written_at"?: string,"written_by"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "procedure_notes_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "procedure_notes_procedure_id_clinic_id_fkey"
+      columns: ["procedure_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "procedures"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "procedure_notes_written_by_fkey"
+      columns: ["written_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },
+            "procedure_team": {
+                  Row: {
+                    "active": boolean,"clinic_id": string,"during": string,"id": string,"procedure_id": string,"team_role": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"clinic_id": string,"during": string,"id"?: string,"procedure_id": string,"team_role": string,"user_id": string
+                  }
+                  Update: {
+                    "active"?: boolean,"clinic_id"?: string,"during"?: string,"id"?: string,"procedure_id"?: string,"team_role"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "procedure_team_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "procedure_team_procedure_id_clinic_id_fkey"
+      columns: ["procedure_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "procedures"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "procedure_team_user_id_clinic_id_fkey"
+      columns: ["user_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id","clinic_id"]
+    }
+                  ]
+                },
+            "procedures": {
+                  Row: {
+                    "admission_id": string | null,"cancel_reason": string | null,"clinic_id": string,"completed_at": string | null,"created_at": string,"ends_at": string | null,"id": string,"name": string,"patient_id": string,"recovery_at": string | null,"requested_by": string | null,"room_id": string | null,"start_override_reason": string | null,"started_at": string | null,"starts_at": string | null,"status": string,"surgeon_id": string,"urgency": string,"version": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "admission_id"?: string | null,"cancel_reason"?: string | null,"clinic_id": string,"completed_at"?: string | null,"created_at"?: string,"ends_at"?: string | null,"id"?: string,"name": string,"patient_id": string,"recovery_at"?: string | null,"requested_by"?: string | null,"room_id"?: string | null,"start_override_reason"?: string | null,"started_at"?: string | null,"starts_at"?: string | null,"status"?: string,"surgeon_id": string,"urgency"?: string,"version"?: number
+                  }
+                  Update: {
+                    "admission_id"?: string | null,"cancel_reason"?: string | null,"clinic_id"?: string,"completed_at"?: string | null,"created_at"?: string,"ends_at"?: string | null,"id"?: string,"name"?: string,"patient_id"?: string,"recovery_at"?: string | null,"requested_by"?: string | null,"room_id"?: string | null,"start_override_reason"?: string | null,"started_at"?: string | null,"starts_at"?: string | null,"status"?: string,"surgeon_id"?: string,"urgency"?: string,"version"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "procedures_admission_id_clinic_id_fkey"
+      columns: ["admission_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "admissions"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "procedures_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "procedures_patient_id_clinic_id_fkey"
+      columns: ["patient_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "procedures_requested_by_fkey"
+      columns: ["requested_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "procedures_room_id_clinic_id_fkey"
+      columns: ["room_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "rooms"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "procedures_surgeon_id_clinic_id_fkey"
+      columns: ["surgeon_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id","clinic_id"]
+    }
+                  ]
+                },
             "profiles": {
                   Row: {
                     "active": boolean,"clinic_id": string,"created_at": string,"full_name": string,"id": string,"role": Database["public"]['Enums']["app_role"],"updated_at": string
@@ -1294,6 +1510,9 @@ isOneToOne: false
             "cancel_order":
 { Args: { "p_order": string,"p_reason": string }; Returns: undefined
                            },
+            "cancel_procedure":
+{ Args: { "p_proc": string,"p_reason": string }; Returns: undefined
+                           },
             "capture_bed_days":
 { Args: { "p_admission": string }; Returns: number
                            },
@@ -1302,6 +1521,9 @@ isOneToOne: false
                            },
             "collect_specimen":
 { Args: { "p_order": string }; Returns: string
+                           },
+            "complete_recovery":
+{ Args: { "p_proc": string }; Returns: undefined
                            },
             "create_tariff_draft":
 { Args: { "p_copy_from"?: string,"p_effective": string,"p_name": string }; Returns: string
@@ -1336,6 +1558,9 @@ isOneToOne: false
             "mark_notifications_read":
 { Args: {  }; Returns: undefined
                            },
+            "move_to_recovery":
+{ Args: { "p_proc": string }; Returns: undefined
+                           },
             "place_order":
 { Args: { "p_admission": string,"p_kind": string,"p_note": string,"p_patient": string,"p_priority": string,"p_test": string }; Returns: string
                            },
@@ -1351,8 +1576,14 @@ isOneToOne: false
             "record_clearance":
 { Args: { "p_admission": string,"p_department": string,"p_note"?: string,"p_status": string }; Returns: undefined
                            },
+            "record_consent":
+{ Args: { "p_evidence": string,"p_method": string,"p_name": string,"p_proc": string,"p_relationship": string,"p_witness": string }; Returns: undefined
+                           },
             "record_deposit":
 { Args: { "p_admission": string,"p_amount": number,"p_method": Database["public"]['Enums']["payment_method"],"p_patient": string,"p_reference": string }; Returns: string
+                           },
+            "request_procedure":
+{ Args: { "p_admission": string,"p_name": string,"p_patient": string,"p_surgeon": string,"p_urgency": string }; Returns: string
                            },
             "request_refund":
 { Args: { "p_amount": number,"p_deposit": string,"p_invoice": string,"p_reason": string }; Returns: string
@@ -1363,20 +1594,35 @@ isOneToOne: false
             "request_substitution":
 { Args: { "p_medicine": string,"p_reason": string,"p_rx": string }; Returns: undefined
                            },
+            "schedule_procedure":
+{ Args: { "p_end": string,"p_proc": string,"p_reason"?: string,"p_room": string,"p_start": string,"p_team": Json }; Returns: undefined
+                           },
             "set_batch_status":
 { Args: { "p_batch": string,"p_reason": string,"p_status": string }; Returns: number
                            },
             "set_bed_housekeeping":
 { Args: { "p_bed": string,"p_state": string }; Returns: undefined
                            },
+            "start_procedure":
+{ Args: { "p_override_reason"?: string,"p_proc": string }; Returns: undefined
+                           },
             "submit_demo_request":
 { Args: { "p_beds": number,"p_email": string,"p_message": string,"p_name": string,"p_organisation": string }; Returns: string
+                           },
+            "tick_checklist":
+{ Args: { "p_item": string }; Returns: undefined
                            },
             "transfer_bed":
 { Args: { "p_admission": string,"p_bed": string,"p_effective"?: string,"p_note"?: string }; Returns: string
                            },
+            "withdraw_consent":
+{ Args: { "p_proc": string,"p_reason": string }; Returns: undefined
+                           },
             "withdraw_discharge_authorisation":
 { Args: { "p_admission": string,"p_reason": string }; Returns: undefined
+                           },
+            "write_procedure_note":
+{ Args: { "p_body": string,"p_proc": string,"p_reason"?: string }; Returns: number
                            }
           }
           Enums: {

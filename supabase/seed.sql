@@ -333,3 +333,12 @@ insert into public.stock_batches (id, clinic_id, medicine_id, batch_no, expiry_d
 insert into public.stock_movements (clinic_id, batch_id, kind, qty, by_user)
 select clinic_id, id, 'receipt', received_qty, received_by from public.stock_batches;
 update public.prescriptions set medicine_id = 'ae000000-0000-4000-8000-000000000001', quantity = 21 where id = 'a5000000-0000-4000-8000-000000000001';
+
+-- Phase 6: theatre demo data (rooms of kind 'procedure' already: Room 3)
+insert into public.rooms (id, clinic_id, name, kind) values
+  ('a1000000-0000-4000-8000-000000000005', 'aaaaaaaa-0000-4000-8000-000000000000', 'Theatre 1', 'procedure'),
+  ('a1000000-0000-4000-8000-000000000006', 'aaaaaaaa-0000-4000-8000-000000000000', 'Theatre 2', 'procedure'),
+  ('b1000000-0000-4000-8000-000000000002', 'bbbbbbbb-0000-4000-8000-000000000000', 'Theatre B', 'procedure');
+insert into public.procedures (id, clinic_id, patient_id, admission_id, surgeon_id, name, urgency, requested_by) values
+  ('b0a00000-0000-4000-8000-000000000001', 'aaaaaaaa-0000-4000-8000-000000000000', 'a2000000-0000-4000-8000-000000000002', 'a9000000-0000-4000-8000-000000000001',
+   'a0000000-0000-4000-8000-000000000002', 'Right hip revision', 'elective', 'a0000000-0000-4000-8000-000000000002');

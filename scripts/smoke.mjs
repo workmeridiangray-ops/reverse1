@@ -16,12 +16,12 @@ const A = "a2000000-0000-4000-8000-000000000001";
 
 const PLAN = [
   ["desk@cedarlane.test", ["/reception", "/patients", `/patients/${A}`, `/patients/${A}/edit`, "/patients/new", "/appointments", "/appointments/new",
-    "/appointments/a3000000-0000-4000-8000-000000000008", "/billing", "/billing/new", "/billing/a6000000-0000-4000-8000-000000000001"]],
-  ["dr.okafor@cedarlane.test", ["/doctor", "/admissions", "/admissions/a9000000-0000-4000-8000-000000000001", "/doctor/notes/a4000000-0000-4000-8000-000000000001", "/doctor/notes/a4000000-0000-4000-8000-000000000002", "/appointments"]],
-  ["admin@cedarlane.test", ["/admin", "/admin/audit", "/admin/wards", "/wards", "/admissions", "/admissions/a9000000-0000-4000-8000-000000000001"]],
-  ["nurse@cedarlane.test", ["/wards", "/admissions", "/admissions/a9000000-0000-4000-8000-000000000001", "/admissions/a9000000-0000-4000-8000-000000000002"]],
-  ["lab@cedarlane.test", ["/lab"]],
-  ["pharmacy@cedarlane.test", ["/pharmacy"]],
+    "/appointments/a3000000-0000-4000-8000-000000000008", "/billing", "/billing/new", "/billing/a6000000-0000-4000-8000-000000000001", "/billing/refunds", "/admissions/a9000000-0000-4000-8000-000000000001"]],
+  ["dr.okafor@cedarlane.test", ["/doctor", "/investigations", "/investigations/new", "/investigations/ad000000-0000-4000-8000-000000000001", "/prescribe", "/theatre", "/theatre/new", "/theatre/b0a00000-0000-4000-8000-000000000001", "/notifications", "/admissions", "/admissions/a9000000-0000-4000-8000-000000000001", "/doctor/notes/a4000000-0000-4000-8000-000000000001", "/doctor/notes/a4000000-0000-4000-8000-000000000002", "/appointments"]],
+  ["admin@cedarlane.test", ["/admin", "/admin/audit", "/admin/wards", "/wards", "/admissions", "/admissions/a9000000-0000-4000-8000-000000000001", "/billing/tariffs", "/billing/refunds", "/theatre", "/theatre/b0a00000-0000-4000-8000-000000000001", "/lab", "/lab/orders/ad000000-0000-4000-8000-000000000001", "/notifications", "/pharmacy", "/pharmacy/stock", "/investigations"]],
+  ["nurse@cedarlane.test", ["/wards", "/admissions", "/admissions/a9000000-0000-4000-8000-000000000001", "/admissions/a9000000-0000-4000-8000-000000000002", "/theatre", "/theatre/b0a00000-0000-4000-8000-000000000001", "/investigations", "/notifications"]],
+  ["lab@cedarlane.test", ["/lab", "/lab/orders/ad000000-0000-4000-8000-000000000001", "/notifications"]],
+  ["pharmacy@cedarlane.test", ["/pharmacy", "/pharmacy/stock", "/pharmacy/prescriptions/a5000000-0000-4000-8000-000000000001", "/admissions"]],
   ["amal.haddad@patient.test", ["/me"]],
 ];
 // Role routing: these must bounce to the role's home.
@@ -32,6 +32,10 @@ const FORBIDDEN = [
   ["desk@cedarlane.test", "/admin", "/reception"],
   ["nurse@cedarlane.test", "/billing", "/wards"],
   ["lab@cedarlane.test", "/wards", "/lab"],
+  ["desk@cedarlane.test", "/billing/tariffs", "/reception"],
+  ["nurse@cedarlane.test", "/lab", "/wards"],
+  ["pharmacy@cedarlane.test", "/theatre", "/pharmacy"],
+  ["dr.okafor@cedarlane.test", "/pharmacy/stock", "/doctor"],
 ];
 
 let failures = 0;
