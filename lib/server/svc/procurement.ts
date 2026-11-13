@@ -47,7 +47,8 @@ export async function receive(c: Db, x: Ctx, poId: string, lines: { lineId: stri
       const b = await c.query("insert into batches(company_id,item_id,code,status,supplier_id,source_ref) values ($1,$2,$3,'quarantine',$4,$5) on conflict (company_id,item_id,code) do update set code=excluded.code returning id", [x.companyId, pl.item_id, code, po.supplier_id, po.number]);
       batchId = b.rows[0].id;
       const qn = (await c.query("select next_number($1,'qc','QC') n", [x.companyId])).rows[0].n;
-      await c.query("insert into inspections(company_id,number,kind,item_id,batch_id,ref_type,ref_id,qty) values ($1,$2,'incoming',$3,$4,'receipt',$5,$6)", [x.companyId, qn, pl.item_id, batchId, rcp.rows[0].id, l.qty]);
+      const ii = await c.query("insert into inspections(company_id,number,kind,item_id,batch_id,ref_type,ref_id,qty) values ($1,$2,'incoming',$3,$4,'receipt',$5,$6) returning id", [x.companyId, qn, pl.item_id, batchId, rcp.rows[0].id, l.qty]);
+      await (await import("./extras")).applyPlan(c, ii.rows[0].id, pl.item_id, "incoming");
     }
     const id = await inv.post(c, x, { itemId: pl.item_id, batchId, locationId, qty: l.qty, kind: "receipt", refType: "receipt", refId: rcp.rows[0].id, unitCostPaise: pl.unit_price_paise, key: key && `${key}:${l.lineId}` });
     if (!id) continue;

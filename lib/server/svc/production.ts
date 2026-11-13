@@ -132,7 +132,8 @@ export async function reportOutput(c: Db, x: Ctx, woId: string, good: number, sc
       const b = await c.query("insert into batches(company_id,item_id,code,status,source_ref) values ($1,$2,$3,'quarantine',$4) on conflict (company_id,item_id,code) do update set code=excluded.code returning id", [x.companyId, wo.item_id, batchCode.trim(), wo.number]);
       batchId = b.rows[0].id;
       const num = (await c.query("select next_number($1,'qc','QC') n", [x.companyId])).rows[0].n;
-      await c.query("insert into inspections(company_id,number,kind,item_id,batch_id,ref_type,ref_id,qty) values ($1,$2,'final',$3,$4,'work_order',$5,$6)", [x.companyId, num, wo.item_id, batchId, woId, good]);
+      const ii = await c.query("insert into inspections(company_id,number,kind,item_id,batch_id,ref_type,ref_id,qty) values ($1,$2,'final',$3,$4,'work_order',$5,$6) returning id", [x.companyId, num, wo.item_id, batchId, woId, good]);
+      await (await import("./extras")).applyPlan(c, ii.rows[0].id, wo.item_id, "final");
     }
     const dup = serials.length ? await c.query("select serial from serials where item_id=$1 and serial = any($2)", [wo.item_id, serials]) : { rowCount: 0, rows: [] };
     if (dup.rowCount) throw new UserError(`Serial number already used: ${dup.rows[0].serial}`, "duplicate");

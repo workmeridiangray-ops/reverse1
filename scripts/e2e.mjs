@@ -29,7 +29,7 @@ const tok = await mailTo(emailA, /token=([\w-]+)/); await pa.goto(base + "/verif
 await pa.goto(base + "/app/onboarding"); pa.once("dialog", (d) => d.accept()); await pa.click('button:has-text("Load sample data")');
 ok("sample data loaded + demo flagged", await pa.locator("text=Sample data loaded. It is demo data").waitFor({ timeout: 8000 }).then(() => true, () => false));
 // ---- every owner page renders ----
-const ownerPages = ["/app", "/app/onboarding", "/app/items", "/app/partners", "/app/setup", "/app/boms", "/app/changes", "/app/sales", "/app/sales/new", "/app/forecasts", "/app/planning", "/app/schedule", "/app/purchasing", "/app/purchasing/new", "/app/subcontract", "/app/inventory", "/app/trace", "/app/production", "/app/shopfloor", "/app/maintenance", "/app/quality", "/app/shipping", "/app/costing", "/app/reports", "/app/settings", "/app/settings/billing", "/app/audit", "/app/support", "/app/profile", "/app/notifications", "/app/search?q=pump", "/workspaces"];
+const ownerPages = ["/app", "/app/onboarding", "/app/items", "/app/partners", "/app/setup", "/app/boms", "/app/changes", "/app/sales", "/app/sales/new", "/app/forecasts", "/app/planning", "/app/schedule", "/app/purchasing", "/app/purchasing/new", "/app/subcontract", "/app/inventory", "/app/trace", "/app/production", "/app/shopfloor", "/app/maintenance", "/app/quality", "/app/shipping", "/app/costing", "/app/reports", "/app/settings", "/app/settings/billing", "/app/audit", "/app/support", "/app/profile", "/app/notifications", "/app/search?q=pump", "/app/purchasing/requests", "/app/quality/plans", "/app/inventory/counts", "/app/labels", "/app/labels?type=batches", "/workspaces"];
 for (const p of ownerPages) { const r = await pa.goto(base + p); const bad = await pa.locator("text=Something went wrong").count(); ok(`owner page ${p}`, r.status() === 200 && !bad, `status ${r.status()}`); }
 // ---- journey: order -> confirm -> MRP -> release ----
 await pa.goto(base + "/app/sales/new");
@@ -62,6 +62,9 @@ await pa.locator('form:has(button:has-text("Send invitation")) [name=party]').se
 const cTok = await mailTo(cust, /invite\/([\w-]+)/); const C = await newCtx(); const pc = await C.newPage(); await pc.goto(base + "/invite/" + cTok); await pc.fill('[name=name]', "Cust User"); await pc.fill('[name=password]', "cust-pass-12345"); await pc.click('button:has-text("Create account")'); await pc.waitForURL("**/portal");
 ok("customer lands in portal", await pc.locator("h1:has-text('Your orders')").waitFor({ timeout: 6000 }).then(() => true, () => false));
 await pc.goto(base + "/app/items"); ok("customer cannot open internal screens", !pc.url().endsWith("/app/items"));
+await pa.goto(base + "/app/search?q=SAMPLE-PUMP"); ok("exact code (scanner) opens the item", /\/app\/items\//.test(pa.url()));
+for (const k of ["items", "movements", "sales-orders", "purchase-orders", "work-orders", "job-costs", "audit", "stock"]) { const r = await pa.request.get(base + "/api/export/" + k); ok(`export ${k} csv`, r.status() === 200 && (r.headers()["content-type"] || "").includes("text/csv")); }
+await pa.goto(base + "/app/settings"); ok("export & closure panel shown to owner", await pa.locator("text=Export & closure").waitFor({ timeout: 5000 }).then(() => true, () => false));
 // ---- cross-company isolation ----
 const itemId = (await db.query("select i.id from items i join companies c on c.id=i.company_id where c.name=$1 limit 1", ["Acme Pumps " + stamp])).rows[0].id;
 const B = await newCtx(); const pb = await B.newPage(); await signup(pb, "Bob B", `bob${stamp}@other.test`, "Other Works " + stamp);

@@ -4,6 +4,7 @@ import { rd } from "@/lib/server/read";
 import { Page, Card, DataTable, Badge, Field, Hidden, Note, A, date, fmt } from "@/components/ui";
 import { ActionForm } from "@/components/ActionForm";
 import { confirmOrder, cancelOrder } from "../../actions";
+import { amendLineAction } from "../../actions3";
 import { Documents } from "@/components/Documents";
 import { can } from "@/lib/server/perms";
 import { shortagePreview } from "@/lib/server/svc/planning";
@@ -17,7 +18,8 @@ export default async function P({ params }: { params: Promise<{ id: string }> })
   return <Page title={`Order ${o.number}`} crumbs={[["Orders", "/app/sales"], [o.number]]} sub={o.customer} actions={<Badge s={o.status} />}>
     {o.status === "cancelled" && <Note tone="danger">Cancelled: {o.cancel_reason}</Note>}
     <Card title="Lines"><DataTable rows={d.lines} cols={[{ h: "#", r: (r: any) => r.line_no, num: true }, { h: "Item", r: (r: any) => `${r.code} — ${r.name}` }, { h: "Qty", r: (r: any) => fmt(r.qty), num: true }, { h: "Shipped", r: (r: any) => fmt(r.shipped_qty), num: true }, { h: "Due", r: (r: any) => date(r.due_date) }, { h: "Promise", r: (r: any) => date(r.promised_date), hideSm: true }, { h: "Supply", r: (r: any) => r.supply.toUpperCase(), hideSm: true },
-      { h: "Shortage preview", r: (r: any) => r.sp.short > 0 ? <span className="text-warn">{fmt(r.sp.short)} short (free {fmt(Math.max(r.sp.free, 0))})</span> : <span className="text-ok">covered from stock</span> }, { h: "Jobs", r: (r: any) => r.jobs.map((j: any) => <A key={j.id} href={`/app/production/${j.id}`} className="mr-2">{j.number}</A>) }]} />
+      { h: "Shortage preview", r: (r: any) => r.sp.short > 0 ? <span className="text-warn">{fmt(r.sp.short)} short (free {fmt(Math.max(r.sp.free, 0))})</span> : <span className="text-ok">covered from stock</span> }, { h: "Jobs", r: (r: any) => r.jobs.map((j: any) => <A key={j.id} href={`/app/production/${j.id}`} className="mr-2">{j.number}</A>) },
+      ...(w && o.status === "confirmed" ? [{ h: "Amend", r: (r: any) => <details><summary className="cursor-pointer text-brand">Change</summary><ActionForm action={amendLineAction} submit="Apply change" small className="mt-2 w-60"><Hidden name="line" value={r.id} /><Field label="Quantity" name="qty" type="number" step="any" defaultValue={Number(r.qty)} required /><Field label="Due date" name="due" type="date" defaultValue={String(r.due_date)} required /><Field label="Reason" name="reason" required /></ActionForm></details> }] : [])]} />
       <p className="mt-3 text-xs text-muted">Promise dates are planning estimates (stock on hand or item lead time + buffer), not an unconditional capacity guarantee.</p></Card>
     {w && o.status === "draft" && <ActionForm action={confirmOrder} submit="Confirm order" className="mt-4"><Hidden name="id" value={o.id} /></ActionForm>}
     {w && ["draft", "confirmed"].includes(o.status) && <Card title="Cancel order" className="mt-4"><ActionForm action={cancelOrder} submit="Cancel order" danger confirm="Cancel this order? Reservations will be released."><Hidden name="id" value={o.id} /><Field label="Reason" name="reason" required /><p className="mt-1 text-xs text-muted">Released jobs and reserved material are listed after cancelling so they can be reviewed.</p></ActionForm></Card>}

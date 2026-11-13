@@ -2,9 +2,14 @@ import { requireCompany } from "@/lib/server/auth";
 import { rd } from "@/lib/server/read";
 import { Page, Card, A, Empty } from "@/components/ui";
 import { can } from "@/lib/server/perms";
+import { redirect } from "next/navigation";
 export const metadata = { title: "Search" };
 export default async function P({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
   const a = await requireCompany(); const q = (await searchParams).q?.trim() ?? ""; const r = a.membership.role;
+  if (q.length >= 2) {   // scanner / exact code: jump straight to the record
+    const hit = await rd(a, async (c) => ({ item: can(r, "master.read") ? (await c.query("select id from items where upper(code)=upper($1)", [q])).rows[0] : null, batch: can(r, "inv.read") ? (await c.query("select id from batches where upper(code)=upper($1) limit 2", [q])).rows : [] }));
+    if (hit.item) redirect(`/app/items/${hit.item.id}`); if (hit.batch.length === 1) redirect(`/app/trace?batch=${hit.batch[0].id}`);
+  }
   const d = q.length < 2 ? null : await rd(a, async (c) => { const l = `%${q}%`; return {
     items: can(r, "master.read") ? (await c.query("select id, code, name from items where code ilike $1 or name ilike $1 limit 10", [l])).rows : [],
     so: can(r, "sales.read") ? (await c.query("select o.id, o.number, cu.name from sales_orders o join customers cu on cu.id=o.customer_id where o.number ilike $1 or cu.name ilike $1 limit 10", [l])).rows : [],

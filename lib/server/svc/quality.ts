@@ -50,5 +50,6 @@ export async function disposition(c: Db, x: Ctx, ncrId: string, disp: "rework" |
 export async function raiseInspection(c: Db, x: Ctx, a: { kind: "incoming" | "in_process" | "final"; itemId: string; batchId?: string | null; qty: number }) {
   const n = (await c.query("select next_number($1,'qc','QC') n", [x.companyId])).rows[0].n;
   const r = await c.query("insert into inspections(company_id,number,kind,item_id,batch_id,qty) values ($1,$2,$3,$4,$5,$6) returning id", [x.companyId, n, a.kind, a.itemId, a.batchId ?? null, a.qty]);
+  await (await import("./extras")).applyPlan(c, r.rows[0].id, a.itemId, a.kind);
   return r.rows[0].id as string;
 }
