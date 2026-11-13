@@ -12,7 +12,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ kind: stri
   const { kind } = await params; const role = a.membership.role;
   const need = kind === "job-costs" ? "cost.read" : "report.read";
   if (!can(role, need) || !can(role, "export") && kind === "job-costs") return new NextResponse("Not allowed", { status: 403 });
-  const co = { companyId: a.company.id, userId: a.user.id };
+  const co = { companyId: a.company.id, userId: a.user.id, plantIds: a.membership.plantIds };
   const { tx } = await import("@/lib/server/db");
   const rows = await tx(async (c) => {
     let out: unknown[][];

@@ -174,3 +174,22 @@ describe("tenant isolation", () => {
     await expect(tx((c) => inv.post(c, B.ctx(), { itemId: A.items.PUMP!, locationId: B.stockLoc, qty: 1, kind: "receipt" }), { companyId: B.companyId })).rejects.toThrow();
   });
 });
+
+describe("plant-level access", () => {
+  it("a plant-limited member sees and writes only their plants, while an unrestricted member sees all", async () => {
+    const pgm = await import("pg"); const o = new pgm.default.Client({ connectionString: "postgres://mfg_owner:owner@localhost/mfg_test" }); await o.connect();
+    const p2 = (await o.query("insert into plants(company_id,code,name) values ($1,'P2','Chennai') returning id", [A.companyId])).rows[0].id;
+    const l2 = (await o.query("insert into locations(company_id,plant_id,code,name) values ($1,$2,'STK-B','Chennai stores') returning id", [A.companyId, p2])).rows[0].id;
+    await o.query("insert into stock_movements(company_id,item_id,location_id,qty,kind) values ($1,$2,$3,5,'adjust')", [A.companyId, A.items.BOLT, l2]);
+    await o.query("insert into work_orders(company_id,number,item_id,plant_id,qty,due_date) values ($1,'WO-P2',$2,$3,1,current_date)", [A.companyId, A.items.PUMP, p2]);
+    await o.end();
+    const limited = { companyId: A.companyId, userId: A.userId, plantIds: [A.plantId] };
+    const seen = await tx(async (c) => ({ plants: (await c.query("select code from plants order by code")).rows.map((r) => r.code), locs: (await c.query("select code from locations")).rows.map((r) => r.code), wos: (await c.query("select number from work_orders where number='WO-P2'")).rowCount, moves: (await c.query("select 1 from stock_movements where location_id=$1", [l2])).rowCount, bal: (await c.query("select 1 from stock_balances where location_id=$1", [l2])).rowCount }), limited);
+    expect(seen.plants).toEqual(["P1"]); expect(seen.locs).not.toContain("STK-B"); expect(seen.wos).toBe(0); expect(seen.moves).toBe(0); expect(seen.bal).toBe(0);
+    await expect(tx((c) => inv.post(c, A.ctx(), { itemId: A.items.BOLT!, locationId: l2, qty: 1, kind: "receipt" }), limited)).rejects.toThrow();   // cannot write into another plant
+    const all = await tx(async (c) => (await c.query("select code from plants order by code")).rows.map((r) => r.code), { companyId: A.companyId, userId: A.userId });
+    expect(all).toEqual(["P1", "P2"]);
+    const other = await tx(async (c) => (await c.query("select count(*)::int n from plants")).rows[0].n, { companyId: B.companyId, plantIds: [A.plantId] });
+    expect(other).toBe(0);   // a foreign plant id in the filter never exposes anything
+  });
+});

@@ -11,14 +11,14 @@ pg.types.setTypeParser(20, (v) => Number(v));     // bigint → number (paise st
 pg.types.setTypeParser(1082, (v) => v);           // date stays 'YYYY-MM-DD'
 
 export type Db = pg.PoolClient;
-export type TenantCtx = { companyId: string; userId?: string | null };
+export type TenantCtx = { companyId: string; userId?: string | null; plantIds?: string[] };
 
 /** Run in a transaction. With ctx the transaction is bound to one company: RLS then hides every other company's rows. */
 export async function tx<T>(fn: (c: Db) => Promise<T>, ctx?: TenantCtx, opts?: { serializable?: boolean }): Promise<T> {
   const c = await pool.connect();
   try {
     await c.query(opts?.serializable ? "begin isolation level repeatable read" : "begin");
-    if (ctx) await c.query("select set_config('app.company_id',$1,true), set_config('app.user_id',$2,true)", [ctx.companyId, ctx.userId ?? ""]);
+    if (ctx) await c.query("select set_config('app.company_id',$1,true), set_config('app.user_id',$2,true), set_config('app.plant_ids',$3,true)", [ctx.companyId, ctx.userId ?? "", (ctx.plantIds ?? []).join(",")]);
     const r = await fn(c);
     await c.query("commit");
     return r;

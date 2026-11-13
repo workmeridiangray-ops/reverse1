@@ -18,7 +18,7 @@ export function action(perm: Perm | null, fn: (a: ActionArgs) => Promise<string 
     const auth = await requireCompany(perm ?? undefined, opts);
     const ctx: Ctx = { companyId: auth.company.id, userId: auth.user.id, role: auth.membership.role, plantIds: auth.membership.plantIds, label: auth.user.email, ip: await clientIp() };
     let out: string | { redirect: string } | void;
-    try { out = await tx((c) => fn({ fd, ctx, c, auth }), { companyId: ctx.companyId, userId: ctx.userId }); }
+    try { out = await tx((c) => fn({ fd, ctx, c, auth }), { companyId: ctx.companyId, userId: ctx.userId, plantIds: ctx.plantIds }); }
     catch (e) { return { error: friendly(e) }; }
     revalidatePath("/app", "layout");
     if (out && typeof out === "object") redirect(out.redirect);

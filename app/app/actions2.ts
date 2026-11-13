@@ -31,7 +31,7 @@ export const inviteAction = action("admin.users", async ({ fd, ctx }) => {
 });
 export const revokeInviteAction = action("admin.users", async ({ fd, ctx }) => { await acc.revokeInvitation(ctx.companyId, need(fd, "id", "Invitation"), ctx.userId); return "Invitation revoked — the link no longer works."; });
 export const changeMemberAction = action("admin.users", async ({ fd, ctx }) => {
-  const patch: any = {}; if (str(fd, "role")) patch.role = str(fd, "role"); if (str(fd, "active")) patch.active = str(fd, "active") === "1";
+  const patch: any = {}; if (str(fd, "role")) patch.role = str(fd, "role"); if (str(fd, "active")) patch.active = str(fd, "active") === "1"; if (str(fd, "setplants")) patch.plantIds = fd.getAll("plants").map(String).filter(Boolean);
   await acc.changeMember(ctx.companyId, ctx.userId, need(fd, "id", "Member"), patch, str(fd, "reason")); return "Access updated. Their active sessions were ended.";
 });
 export const importAction = action("master.write", async ({ fd, ctx, c }) => {

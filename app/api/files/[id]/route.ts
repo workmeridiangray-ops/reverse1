@@ -9,7 +9,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   const a = await getAuth(); const { id } = await params;
   if (!a || "expired" in a || !a.company || !a.membership) return new NextResponse("Sign in required", { status: 401 });
   if (!/^[0-9a-f-]{36}$/.test(id)) return new NextResponse("Not found", { status: 404 });
-  const doc = await tx(async (c) => (await c.query("select * from documents where id=$1", [id])).rows[0], { companyId: a.company.id, userId: a.user.id });
+  const doc = await tx(async (c) => (await c.query("select * from documents where id=$1", [id])).rows[0], { companyId: a.company.id, userId: a.user.id, plantIds: a.membership.plantIds });
   if (!doc) return new NextResponse("Not found", { status: 404 });
   if (isPortal(a.membership.role)) {
     if (!doc.shared_with_party) return new NextResponse("Not found", { status: 404 });
