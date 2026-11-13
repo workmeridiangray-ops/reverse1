@@ -320,7 +320,7 @@ try {
   ok(await has(op, "left to subcontract"), "work order cannot exceed the permitted BOQ quantity");
   await op.locator('input[id^="wq-"]').fill("500"); await submit(op, "Add line"); ok(await has(op, "Work-order line added"), "work-order line added");
   await submit(op, "Award package"); ok(await has(op, "Package awarded"), "package awarded");
-  await go(ep, `${P}/subcontracts`); await ep.locator('select[id^="ml-"]').selectOption({ index: 1 }); await ep.locator('input[id^="mq-"]').fill("400"); await submit(ep, "Prepare measurement"); ok(await has(ep, "exceed the work-order quantity"), "measurement above ordered quantity is refused");
+  await go(ep, `${P}/subcontracts`); await ep.locator('select[id^="ml-"]').selectOption({ index: 1 }); await ep.locator('input[id^="mq-"]').fill("600"); await submit(ep, "Prepare measurement"); ok(await has(ep, "exceed the work-order quantity"), "measurement above ordered quantity is refused");
   await ep.locator('input[id^="mq-"]').fill("200"); await submit(ep, "Prepare measurement"); ok(await has(ep, "prepared for joint verification"), "engineer prepares a subcontract measurement");
   await ep.reload(); ok(!(await text(ep)).includes("Verify jointly"), "preparer cannot verify");
   await go(mp, `${P}/subcontracts`); await submit(mp, "Verify jointly"); ok(await has(mp, "Jointly verified"), "manager verifies jointly");
