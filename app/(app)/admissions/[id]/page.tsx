@@ -11,6 +11,7 @@ import { Table, Td, Th } from "@/components/ui/Table";
 import { requireRole } from "@/lib/auth/session";
 import { logAccess } from "@/lib/data/audit";
 import { getAdmissionDetail } from "@/lib/data/inpatient";
+import { AdmissionFinance } from "@/components/billing/AdmissionFinance";
 import { requiredClearances, type ClearanceDepartment } from "@/lib/rules/admission";
 import { ADMISSION_VISUAL } from "@/lib/ui/status";
 import { createClient } from "@/lib/supabase/server";
@@ -223,6 +224,9 @@ export default async function AdmissionPage({ params, searchParams }: { params: 
                 ) : null}
               </Card>
             </>
+          ) : null}
+          {role === "admin" || role === "receptionist" ? (
+            <AdmissionFinance supabase={supabase} admissionId={a.id} patientId={p.id} currency={session.clinic.currency} tz={tz} open={status === "admitted"} />
           ) : null}
           {status === "discharged" && d.summary ? <Card title="Discharge summary"><p className="whitespace-pre-wrap">{d.summary.summary}</p></Card> : null}
         </div>

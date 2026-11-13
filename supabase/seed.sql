@@ -287,3 +287,22 @@ insert into public.care_tasks (clinic_id, admission_id, patient_id, title, due_a
 insert into public.observations (clinic_id, admission_id, patient_id, recorded_by, systolic, diastolic, pulse, resp_rate, temp_c, spo2) values
   ('aaaaaaaa-0000-4000-8000-000000000000', 'a9000000-0000-4000-8000-000000000001', 'a2000000-0000-4000-8000-000000000002',
    'a0000000-0000-4000-8000-000000000009', 128, 76, 72, 16, 36.8, 97);
+
+-- ---------------------------------------------------------------------------
+-- Phase 3: billing demo data (synthetic)
+-- ---------------------------------------------------------------------------
+insert into public.tariff_versions (id, clinic_id, name, effective_from, status, activated_at) values
+  ('ab000000-0000-4000-8000-000000000001', 'aaaaaaaa-0000-4000-8000-000000000000', 'Standard 2026', '2026-01-01', 'draft', null),
+  ('bb000000-0000-4000-8000-000000000001', 'bbbbbbbb-0000-4000-8000-000000000000', 'Standard 2026', '2026-01-01', 'draft', null);
+insert into public.tariff_items (clinic_id, version_id, code, description, category, unit_price_minor) values
+  ('aaaaaaaa-0000-4000-8000-000000000000', 'ab000000-0000-4000-8000-000000000001', 'BED-GEN', 'General ward bed, per day', 'bed', 12000),
+  ('aaaaaaaa-0000-4000-8000-000000000000', 'ab000000-0000-4000-8000-000000000001', 'CONS', 'Specialist consultation', 'consultation', 8000),
+  ('aaaaaaaa-0000-4000-8000-000000000000', 'ab000000-0000-4000-8000-000000000001', 'DRESS', 'Wound dressing', 'service', 1500),
+  ('bbbbbbbb-0000-4000-8000-000000000000', 'bb000000-0000-4000-8000-000000000001', 'BED-GEN', 'General ward bed, per day', 'bed', 20000);
+update public.tariff_versions set status = 'active', activated_at = now() where id in ('ab000000-0000-4000-8000-000000000001', 'bb000000-0000-4000-8000-000000000001');
+insert into public.deposits (id, clinic_id, patient_id, admission_id, amount_minor, method, reference, received_by) values
+  ('ac000000-0000-4000-8000-000000000001', 'aaaaaaaa-0000-4000-8000-000000000000', 'a2000000-0000-4000-8000-000000000002',
+   'a9000000-0000-4000-8000-000000000001', 50000, 'card', 'DEP-1001', 'a0000000-0000-4000-8000-000000000004');
+insert into public.charges (clinic_id, patient_id, admission_id, tariff_version_id, item_code, category, description, unit_price_minor, quantity, captured_by) values
+  ('aaaaaaaa-0000-4000-8000-000000000000', 'a2000000-0000-4000-8000-000000000002', 'a9000000-0000-4000-8000-000000000001',
+   'ab000000-0000-4000-8000-000000000001', 'DRESS', 'service', 'Wound dressing', 1500, 2, 'a0000000-0000-4000-8000-000000000009');

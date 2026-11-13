@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { InvoiceExtras } from "@/components/billing/InvoiceExtras";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { SelectField, TextField } from "@/components/ui/Field";
@@ -140,6 +141,7 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
             </dl>
           </Card>
 
+          {state === "issued" ? <InvoiceExtras supabase={supabase} invoiceId={id} patientId={inv.patient_id} currency={cur} paidMinor={b.patientPaidMinor} dueNow={b.patientDueNowMinor} /> : null}
           <Card title="Insurance" as="aside" actions={<Badge visual={INSURANCE_VISUAL[ins]} size="sm" />}>
             {state === "void" ? <p className="text-ink-500">Void.</p> : (
               <form action={updateInsurance} className="flex flex-col gap-4">
@@ -174,7 +176,7 @@ export default async function InvoicePage({ params, searchParams }: { params: Pr
                   <TextField label="Reason for voiding" name="void_reason" maxLength={200} />
                   <Button type="submit" variant="danger" size="sm">Void invoice</Button>
                 </form>
-              ) : <p className="text-sm text-ink-500">Invoices with payments can't be voided. Refunds arrive in a later phase.</p>}
+              ) : <p className="text-sm text-ink-500">Invoices with payments can't be voided. Request a refund instead.</p>}
             </Card>
           ) : null}
         </div>

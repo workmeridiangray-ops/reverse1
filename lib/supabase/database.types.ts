@@ -305,6 +305,57 @@ isOneToOne: false
     }
                   ]
                 },
+            "charges": {
+                  Row: {
+                    "admission_id": string | null,"cancel_reason": string | null,"captured_at": string,"captured_by": string | null,"category": string,"clinic_id": string,"description": string,"id": string,"invoice_id": string | null,"item_code": string,"patient_id": string,"quantity": number,"status": string,"tariff_version_id": string,"unit_price_minor": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "admission_id"?: string | null,"cancel_reason"?: string | null,"captured_at"?: string,"captured_by"?: string | null,"category": string,"clinic_id": string,"description": string,"id"?: string,"invoice_id"?: string | null,"item_code": string,"patient_id": string,"quantity": number,"status"?: string,"tariff_version_id": string,"unit_price_minor": number
+                  }
+                  Update: {
+                    "admission_id"?: string | null,"cancel_reason"?: string | null,"captured_at"?: string,"captured_by"?: string | null,"category"?: string,"clinic_id"?: string,"description"?: string,"id"?: string,"invoice_id"?: string | null,"item_code"?: string,"patient_id"?: string,"quantity"?: number,"status"?: string,"tariff_version_id"?: string,"unit_price_minor"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "charges_admission_id_clinic_id_fkey"
+      columns: ["admission_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "admissions"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "charges_captured_by_fkey"
+      columns: ["captured_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "charges_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "charges_invoice_id_clinic_id_fkey"
+      columns: ["invoice_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "invoices"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "charges_patient_id_clinic_id_fkey"
+      columns: ["patient_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "charges_tariff_version_id_clinic_id_fkey"
+      columns: ["tariff_version_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "tariff_versions"
+      referencedColumns: ["id","clinic_id"]
+    }
+                  ]
+                },
             "clinics": {
                   Row: {
                     "consent_form_version": string,"created_at": string,"currency": string,"emergency_requires_finance_clearance": boolean,"id": string,"name": string,"require_deposit_for_elective": boolean,"timezone": string
@@ -378,6 +429,45 @@ isOneToOne: false
                   }
                   Relationships: [
                     
+                  ]
+                },
+            "deposits": {
+                  Row: {
+                    "admission_id": string | null,"amount_minor": number,"applied_minor": number,"clinic_id": string,"id": string,"method": Database["public"]['Enums']["payment_method"],"patient_id": string,"received_at": string,"received_by": string | null,"reference": string,"refunded_minor": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "admission_id"?: string | null,"amount_minor": number,"applied_minor"?: number,"clinic_id": string,"id"?: string,"method": Database["public"]['Enums']["payment_method"],"patient_id": string,"received_at"?: string,"received_by"?: string | null,"reference": string,"refunded_minor"?: number
+                  }
+                  Update: {
+                    "admission_id"?: string | null,"amount_minor"?: number,"applied_minor"?: number,"clinic_id"?: string,"id"?: string,"method"?: Database["public"]['Enums']["payment_method"],"patient_id"?: string,"received_at"?: string,"received_by"?: string | null,"reference"?: string,"refunded_minor"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "deposits_admission_id_clinic_id_fkey"
+      columns: ["admission_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "admissions"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "deposits_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "deposits_patient_id_clinic_id_fkey"
+      columns: ["patient_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "deposits_received_by_fkey"
+      columns: ["received_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
                   ]
                 },
             "discharge_clearances": {
@@ -638,6 +728,57 @@ isOneToOne: false
     }
                   ]
                 },
+            "refunds": {
+                  Row: {
+                    "amount_minor": number,"clinic_id": string,"decided_at": string | null,"decided_by": string | null,"decision_reason": string | null,"deposit_id": string | null,"id": string,"invoice_id": string | null,"patient_id": string,"reason": string,"requested_at": string,"requested_by": string,"status": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "amount_minor": number,"clinic_id": string,"decided_at"?: string | null,"decided_by"?: string | null,"decision_reason"?: string | null,"deposit_id"?: string | null,"id"?: string,"invoice_id"?: string | null,"patient_id": string,"reason": string,"requested_at"?: string,"requested_by": string,"status"?: string
+                  }
+                  Update: {
+                    "amount_minor"?: number,"clinic_id"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"decision_reason"?: string | null,"deposit_id"?: string | null,"id"?: string,"invoice_id"?: string | null,"patient_id"?: string,"reason"?: string,"requested_at"?: string,"requested_by"?: string,"status"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "refunds_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "refunds_decided_by_fkey"
+      columns: ["decided_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "refunds_deposit_id_clinic_id_fkey"
+      columns: ["deposit_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "deposits"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "refunds_invoice_id_clinic_id_fkey"
+      columns: ["invoice_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "invoices"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "refunds_patient_id_clinic_id_fkey"
+      columns: ["patient_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "refunds_requested_by_fkey"
+      columns: ["requested_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },
             "rooms": {
                   Row: {
                     "clinic_id": string,"created_at": string,"id": string,"kind": string,"name": string,"out_of_service": boolean,"updated_at": string
@@ -655,6 +796,60 @@ isOneToOne: false
       columns: ["clinic_id"]
 isOneToOne: false
       referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },
+            "tariff_items": {
+                  Row: {
+                    "category": string,"clinic_id": string,"code": string,"description": string,"id": string,"unit_price_minor": number,"version_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "category"?: string,"clinic_id": string,"code": string,"description": string,"id"?: string,"unit_price_minor": number,"version_id": string
+                  }
+                  Update: {
+                    "category"?: string,"clinic_id"?: string,"code"?: string,"description"?: string,"id"?: string,"unit_price_minor"?: number,"version_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "tariff_items_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "tariff_items_version_id_clinic_id_fkey"
+      columns: ["version_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "tariff_versions"
+      referencedColumns: ["id","clinic_id"]
+    }
+                  ]
+                },
+            "tariff_versions": {
+                  Row: {
+                    "activated_at": string | null,"clinic_id": string,"created_at": string,"created_by": string | null,"effective_from": string,"id": string,"name": string,"status": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "activated_at"?: string | null,"clinic_id": string,"created_at"?: string,"created_by"?: string | null,"effective_from": string,"id"?: string,"name": string,"status"?: string
+                  }
+                  Update: {
+                    "activated_at"?: string | null,"clinic_id"?: string,"created_at"?: string,"created_by"?: string | null,"effective_from"?: string,"id"?: string,"name"?: string,"status"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "tariff_versions_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "tariff_versions_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
       referencedColumns: ["id"]
     }
                   ]
@@ -711,8 +906,14 @@ isOneToOne: false
                 }
           }
           Functions: {
+            "activate_tariff":
+{ Args: { "p_version": string }; Returns: undefined
+                           },
             "allocate_bed":
 { Args: { "p_admission": string,"p_bed": string }; Returns: string
+                           },
+            "apply_deposit":
+{ Args: { "p_deposit": string,"p_invoice": string }; Returns: number
                            },
             "authorise_discharge":
 { Args: { "p_admission": string,"p_summary": string }; Returns: undefined
@@ -723,14 +924,38 @@ isOneToOne: false
             "cancel_admission":
 { Args: { "p_admission": string,"p_reason": string }; Returns: undefined
                            },
+            "cancel_charge":
+{ Args: { "p_charge": string,"p_reason": string }; Returns: undefined
+                           },
+            "capture_bed_days":
+{ Args: { "p_admission": string }; Returns: number
+                           },
+            "capture_charge":
+{ Args: { "p_admission": string,"p_code": string,"p_patient": string,"p_qty": number }; Returns: string
+                           },
+            "create_tariff_draft":
+{ Args: { "p_copy_from"?: string,"p_effective": string,"p_name": string }; Returns: string
+                           },
+            "decide_refund":
+{ Args: { "p_approve": boolean,"p_reason"?: string,"p_refund": string }; Returns: undefined
+                           },
             "finalise_discharge":
 { Args: { "p_admission": string }; Returns: undefined
+                           },
+            "generate_bill":
+{ Args: { "p_admission": string,"p_patient": string }; Returns: string
                            },
             "log_record_access":
 { Args: { "p_reason"?: string,"p_record_id": string,"p_table": string }; Returns: undefined
                            },
             "record_clearance":
 { Args: { "p_admission": string,"p_department": string,"p_note"?: string,"p_status": string }; Returns: undefined
+                           },
+            "record_deposit":
+{ Args: { "p_admission": string,"p_amount": number,"p_method": Database["public"]['Enums']["payment_method"],"p_patient": string,"p_reference": string }; Returns: string
+                           },
+            "request_refund":
+{ Args: { "p_amount": number,"p_deposit": string,"p_invoice": string,"p_reason": string }; Returns: string
                            },
             "set_bed_housekeeping":
 { Args: { "p_bed": string,"p_state": string }; Returns: undefined
