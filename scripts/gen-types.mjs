@@ -14,6 +14,8 @@ await c.connect();
 
 const old = readFileSync(FILE, "utf8");
 const viewsBlock = old.match(/          Views: \{[\s\S]*?\n          \}\n          Functions:/)[0].replace(/\n          Functions:$/, "");
+const views = (await c.query(`select c.table_name, c.column_name, c.udt_name, c.data_type from information_schema.columns c
+  join information_schema.views v using (table_schema, table_name) where c.table_schema = 'public' order by c.table_name, c.column_name`)).rows;
 const tail = old.slice(old.indexOf("type DatabaseWithoutInternals"));
 
 const enums = (await c.query(`select t.typname, array_agg(e.enumlabel::text order by e.enumsortorder) labels
@@ -107,6 +109,13 @@ const fnBlocks = fnRows.map((f) => {
 const enumStr = enums.map((e) => `"${e.typname}": ${e.labels.map(q).join("|")}`).join(",");
 const enumConst = enums.map((e) => `"${e.typname}": [${e.labels.map(q).join(", ")}]`).join(",");
 
+let viewsOut = viewsBlock;
+for (const vn of [...new Set(views.map((x) => x.table_name))]) {
+  if (viewsOut.includes(`"${vn}": {`)) continue;
+  const row = views.filter((x) => x.table_name === vn).map((x) => `${q(x.column_name)}: ${tsType(x.udt_name, x.data_type === "ARRAY")} | null`).join(",");
+  const entry = `,\n            "${vn}": {\n                  Row: {\n                    ${row}\n                  }\n                  ComputedFields: never\n                  Relationships: []\n                }`;
+  viewsOut = viewsOut.replace(/\n          \}$/, `${entry}\n          }`);
+}
 const out = `
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
@@ -116,7 +125,7 @@ export type Database = {
           Tables: {
 ${tableBlocks.join(",\n")}
           }
-${viewsBlock}
+${viewsOut}
           Functions: {
 ${fnBlocks.join(",\n")}
           }

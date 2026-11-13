@@ -358,14 +358,14 @@ isOneToOne: false
                 },
             "clinics": {
                   Row: {
-                    "consent_form_version": string,"created_at": string,"currency": string,"emergency_requires_finance_clearance": boolean,"id": string,"name": string,"require_deposit_for_elective": boolean,"timezone": string
+                    "consent_form_version": string,"created_at": string,"critical_ack_minutes": number,"currency": string,"emergency_requires_finance_clearance": boolean,"id": string,"name": string,"require_deposit_for_elective": boolean,"timezone": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "consent_form_version"?: string,"created_at"?: string,"currency"?: string,"emergency_requires_finance_clearance"?: boolean,"id"?: string,"name": string,"require_deposit_for_elective"?: boolean,"timezone"?: string
+                    "consent_form_version"?: string,"created_at"?: string,"critical_ack_minutes"?: number,"currency"?: string,"emergency_requires_finance_clearance"?: boolean,"id"?: string,"name": string,"require_deposit_for_elective"?: boolean,"timezone"?: string
                   }
                   Update: {
-                    "consent_form_version"?: string,"created_at"?: string,"currency"?: string,"emergency_requires_finance_clearance"?: boolean,"id"?: string,"name"?: string,"require_deposit_for_elective"?: boolean,"timezone"?: string
+                    "consent_form_version"?: string,"created_at"?: string,"critical_ack_minutes"?: number,"currency"?: string,"emergency_requires_finance_clearance"?: boolean,"id"?: string,"name"?: string,"require_deposit_for_elective"?: boolean,"timezone"?: string
                   }
                   Relationships: [
                     
@@ -566,6 +566,129 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "patients"
       referencedColumns: ["id","clinic_id"]
+    }
+                  ]
+                },
+            "lab_orders": {
+                  Row: {
+                    "accession": string | null,"admission_id": string | null,"cancel_reason": string | null,"clinic_id": string,"clinical_note": string | null,"collected_at": string | null,"collected_by": string | null,"id": string,"kind": string,"ordered_at": string,"ordered_by": string,"patient_id": string,"priority": string,"status": string,"test_name": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "accession"?: string | null,"admission_id"?: string | null,"cancel_reason"?: string | null,"clinic_id": string,"clinical_note"?: string | null,"collected_at"?: string | null,"collected_by"?: string | null,"id"?: string,"kind"?: string,"ordered_at"?: string,"ordered_by": string,"patient_id": string,"priority"?: string,"status"?: string,"test_name": string
+                  }
+                  Update: {
+                    "accession"?: string | null,"admission_id"?: string | null,"cancel_reason"?: string | null,"clinic_id"?: string,"clinical_note"?: string | null,"collected_at"?: string | null,"collected_by"?: string | null,"id"?: string,"kind"?: string,"ordered_at"?: string,"ordered_by"?: string,"patient_id"?: string,"priority"?: string,"status"?: string,"test_name"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "lab_orders_admission_id_clinic_id_fkey"
+      columns: ["admission_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "admissions"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "lab_orders_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "lab_orders_collected_by_fkey"
+      columns: ["collected_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "lab_orders_ordered_by_clinic_id_fkey"
+      columns: ["ordered_by","clinic_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "lab_orders_patient_id_clinic_id_fkey"
+      columns: ["patient_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id","clinic_id"]
+    }
+                  ]
+                },
+            "lab_results": {
+                  Row: {
+                    "acknowledged_at": string | null,"acknowledged_by": string | null,"amendment_reason": string | null,"clinic_id": string,"entered_at": string,"entered_by": string,"flag": string,"id": string,"note": string | null,"order_id": string,"patient_id": string,"published_at": string | null,"reference_range": string | null,"reviewed_by": string | null,"state": string,"unit": string | null,"value": string,"version": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "acknowledged_at"?: string | null,"acknowledged_by"?: string | null,"amendment_reason"?: string | null,"clinic_id": string,"entered_at"?: string,"entered_by": string,"flag"?: string,"id"?: string,"note"?: string | null,"order_id": string,"patient_id": string,"published_at"?: string | null,"reference_range"?: string | null,"reviewed_by"?: string | null,"state"?: string,"unit"?: string | null,"value": string,"version": number
+                  }
+                  Update: {
+                    "acknowledged_at"?: string | null,"acknowledged_by"?: string | null,"amendment_reason"?: string | null,"clinic_id"?: string,"entered_at"?: string,"entered_by"?: string,"flag"?: string,"id"?: string,"note"?: string | null,"order_id"?: string,"patient_id"?: string,"published_at"?: string | null,"reference_range"?: string | null,"reviewed_by"?: string | null,"state"?: string,"unit"?: string | null,"value"?: string,"version"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "lab_results_acknowledged_by_fkey"
+      columns: ["acknowledged_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "lab_results_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "lab_results_entered_by_fkey"
+      columns: ["entered_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "lab_results_order_id_clinic_id_fkey"
+      columns: ["order_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "lab_orders"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "lab_results_patient_id_clinic_id_fkey"
+      columns: ["patient_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "lab_results_reviewed_by_fkey"
+      columns: ["reviewed_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },
+            "notifications": {
+                  Row: {
+                    "clinic_id": string,"created_at": string,"id": string,"kind": string,"link": string | null,"read_at": string | null,"title": string,"user_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "clinic_id": string,"created_at"?: string,"id"?: string,"kind": string,"link"?: string | null,"read_at"?: string | null,"title": string,"user_id": string
+                  }
+                  Update: {
+                    "clinic_id"?: string,"created_at"?: string,"id"?: string,"kind"?: string,"link"?: string | null,"read_at"?: string | null,"title"?: string,"user_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "notifications_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "notifications_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
     }
                   ]
                 },
@@ -903,9 +1026,19 @@ isOneToOne: false
       referencedColumns: ["id","clinic_id"]
     }
                   ]
+                },
+            "overdue_critical_results": {
+                  Row: {
+                    "clinic_id": string | null,"order_id": string | null,"ordered_by": string | null,"patient_id": string | null,"published_at": string | null,"test_name": string | null
+                  }
+                  ComputedFields: never
+                  Relationships: []
                 }
           }
           Functions: {
+            "acknowledge_critical":
+{ Args: { "p_order": string }; Returns: undefined
+                           },
             "activate_tariff":
 { Args: { "p_version": string }; Returns: undefined
                            },
@@ -927,17 +1060,26 @@ isOneToOne: false
             "cancel_charge":
 { Args: { "p_charge": string,"p_reason": string }; Returns: undefined
                            },
+            "cancel_order":
+{ Args: { "p_order": string,"p_reason": string }; Returns: undefined
+                           },
             "capture_bed_days":
 { Args: { "p_admission": string }; Returns: number
                            },
             "capture_charge":
 { Args: { "p_admission": string,"p_code": string,"p_patient": string,"p_qty": number }; Returns: string
                            },
+            "collect_specimen":
+{ Args: { "p_order": string }; Returns: string
+                           },
             "create_tariff_draft":
 { Args: { "p_copy_from"?: string,"p_effective": string,"p_name": string }; Returns: string
                            },
             "decide_refund":
 { Args: { "p_approve": boolean,"p_reason"?: string,"p_refund": string }; Returns: undefined
+                           },
+            "enter_result":
+{ Args: { "p_amend_reason"?: string,"p_flag": string,"p_note": string,"p_order": string,"p_range": string,"p_unit": string,"p_value": string }; Returns: number
                            },
             "finalise_discharge":
 { Args: { "p_admission": string }; Returns: undefined
@@ -947,6 +1089,15 @@ isOneToOne: false
                            },
             "log_record_access":
 { Args: { "p_reason"?: string,"p_record_id": string,"p_table": string }; Returns: undefined
+                           },
+            "mark_notifications_read":
+{ Args: {  }; Returns: undefined
+                           },
+            "place_order":
+{ Args: { "p_admission": string,"p_kind": string,"p_note": string,"p_patient": string,"p_priority": string,"p_test": string }; Returns: string
+                           },
+            "publish_result":
+{ Args: { "p_order": string }; Returns: undefined
                            },
             "record_clearance":
 { Args: { "p_admission": string,"p_department": string,"p_note"?: string,"p_status": string }; Returns: undefined

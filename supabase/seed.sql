@@ -306,3 +306,12 @@ insert into public.deposits (id, clinic_id, patient_id, admission_id, amount_min
 insert into public.charges (clinic_id, patient_id, admission_id, tariff_version_id, item_code, category, description, unit_price_minor, quantity, captured_by) values
   ('aaaaaaaa-0000-4000-8000-000000000000', 'a2000000-0000-4000-8000-000000000002', 'a9000000-0000-4000-8000-000000000001',
    'ab000000-0000-4000-8000-000000000001', 'DRESS', 'service', 'Wound dressing', 1500, 2, 'a0000000-0000-4000-8000-000000000009');
+
+-- Phase 4: investigations demo data
+insert into public.lab_orders (id, clinic_id, patient_id, admission_id, ordered_by, test_name, kind, priority, status, accession, collected_at, collected_by) values
+  ('ad000000-0000-4000-8000-000000000001', 'aaaaaaaa-0000-4000-8000-000000000000', 'a2000000-0000-4000-8000-000000000002', 'a9000000-0000-4000-8000-000000000001',
+   'a0000000-0000-4000-8000-000000000002', 'Full blood count', 'lab', 'routine', 'collected', 'ACC-000001', now() - interval '1 hour', 'a0000000-0000-4000-8000-000000000005');
+insert into public.lab_orders (id, clinic_id, patient_id, ordered_by, test_name, kind, priority) values
+  ('ad000000-0000-4000-8000-000000000002', 'aaaaaaaa-0000-4000-8000-000000000000', 'a2000000-0000-4000-8000-000000000001',
+   'a0000000-0000-4000-8000-000000000002', 'Chest X-ray', 'imaging', 'urgent');
+update app.clinic_counters set next_accession = 2 where clinic_id = 'aaaaaaaa-0000-4000-8000-000000000000';
