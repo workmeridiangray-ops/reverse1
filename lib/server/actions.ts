@@ -6,6 +6,8 @@ import type { Permission } from "@/lib/rules/permissions";
 import { QtyError } from "@/lib/rules/qty";
 import { BillingError } from "@/lib/rules/billing";
 import { MoneyError } from "@/lib/rules/money";
+import { SubcontractError } from "@/lib/rules/subcontract";
+import { ScheduleError } from "@/lib/rules/schedule";
 
 export type FormState = { ok?: boolean; message?: string; error?: string; details?: string[]; fieldErrors?: Record<string, string>; redirectTo?: string } | null;
 
@@ -22,7 +24,7 @@ export function toState(e: unknown): FormState {
     return { error: "Please correct the highlighted fields.", fieldErrors };
   }
   if (e instanceof UserError) return { error: e.message, details: e.details, fieldErrors: e.field ? { [e.field]: e.message } : undefined };
-  if (e instanceof QtyError || e instanceof BillingError || e instanceof MoneyError) return { error: e.message };
+  if (e instanceof QtyError || e instanceof BillingError || e instanceof MoneyError || e instanceof SubcontractError || e instanceof ScheduleError) return { error: e.message };
   if (e instanceof NotFound) return { error: "That record no longer exists or you do not have access to it." };
   const code = (e as { code?: string })?.code;
   if (code === "23505") return { error: "That already exists (duplicate). Nothing was changed." };
