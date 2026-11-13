@@ -503,6 +503,57 @@ isOneToOne: false
     }
                   ]
                 },
+            "dispensings": {
+                  Row: {
+                    "batch_id": string,"clinic_id": string,"dispensed_at": string,"dispensed_by": string,"id": string,"medicine_id": string,"patient_id": string,"prescription_id": string,"qty": number,"returned_qty": number,"witness_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "batch_id": string,"clinic_id": string,"dispensed_at"?: string,"dispensed_by": string,"id"?: string,"medicine_id": string,"patient_id": string,"prescription_id": string,"qty": number,"returned_qty"?: number,"witness_id"?: string | null
+                  }
+                  Update: {
+                    "batch_id"?: string,"clinic_id"?: string,"dispensed_at"?: string,"dispensed_by"?: string,"id"?: string,"medicine_id"?: string,"patient_id"?: string,"prescription_id"?: string,"qty"?: number,"returned_qty"?: number,"witness_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "dispensings_batch_id_clinic_id_fkey"
+      columns: ["batch_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "stock_batches"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "dispensings_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "dispensings_dispensed_by_fkey"
+      columns: ["dispensed_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "dispensings_patient_id_clinic_id_fkey"
+      columns: ["patient_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "patients"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "dispensings_prescription_id_clinic_id_fkey"
+      columns: ["prescription_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "prescriptions"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "dispensings_witness_id_fkey"
+      columns: ["witness_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },
             "invoice_lines": {
                   Row: {
                     "clinic_id": string,"created_at": string,"description": string,"id": string,"invoice_id": string,"quantity": number,"unit_price_minor": number
@@ -665,6 +716,27 @@ isOneToOne: false
     }
                   ]
                 },
+            "medicines": {
+                  Row: {
+                    "active": boolean,"clinic_id": string,"controlled": boolean,"created_at": string,"form": string,"id": string,"name": string,"on_formulary": boolean,"strength": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"clinic_id": string,"controlled"?: boolean,"created_at"?: string,"form"?: string,"id"?: string,"name": string,"on_formulary"?: boolean,"strength"?: string
+                  }
+                  Update: {
+                    "active"?: boolean,"clinic_id"?: string,"controlled"?: boolean,"created_at"?: string,"form"?: string,"id"?: string,"name"?: string,"on_formulary"?: boolean,"strength"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "medicines_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },
             "notifications": {
                   Row: {
                     "clinic_id": string,"created_at": string,"id": string,"kind": string,"link": string | null,"read_at": string | null,"title": string,"user_id": string
@@ -793,14 +865,14 @@ isOneToOne: false
                 },
             "prescriptions": {
                   Row: {
-                    "allergy_override_reason": string | null,"clinic_id": string,"consultation_id": string | null,"created_at": string,"dose": string,"drug_name": string,"duration_days": number | null,"frequency": string,"id": string,"patient_id": string,"prescriber_id": string,"route": string,"status": Database["public"]['Enums']["prescription_status"],"updated_at": string
+                    "allergy_override_reason": string | null,"clinic_id": string,"consultation_id": string | null,"created_at": string,"dose": string,"drug_name": string,"duration_days": number | null,"frequency": string,"id": string,"medicine_id": string | null,"patient_id": string,"prescriber_id": string,"quantity": number | null,"route": string,"status": Database["public"]['Enums']["prescription_status"],"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "allergy_override_reason"?: string | null,"clinic_id": string,"consultation_id"?: string | null,"created_at"?: string,"dose": string,"drug_name": string,"duration_days"?: number | null,"frequency": string,"id"?: string,"patient_id": string,"prescriber_id": string,"route": string,"status"?: Database["public"]['Enums']["prescription_status"],"updated_at"?: string
+                    "allergy_override_reason"?: string | null,"clinic_id": string,"consultation_id"?: string | null,"created_at"?: string,"dose": string,"drug_name": string,"duration_days"?: number | null,"frequency": string,"id"?: string,"medicine_id"?: string | null,"patient_id": string,"prescriber_id": string,"quantity"?: number | null,"route": string,"status"?: Database["public"]['Enums']["prescription_status"],"updated_at"?: string
                   }
                   Update: {
-                    "allergy_override_reason"?: string | null,"clinic_id"?: string,"consultation_id"?: string | null,"created_at"?: string,"dose"?: string,"drug_name"?: string,"duration_days"?: number | null,"frequency"?: string,"id"?: string,"patient_id"?: string,"prescriber_id"?: string,"route"?: string,"status"?: Database["public"]['Enums']["prescription_status"],"updated_at"?: string
+                    "allergy_override_reason"?: string | null,"clinic_id"?: string,"consultation_id"?: string | null,"created_at"?: string,"dose"?: string,"drug_name"?: string,"duration_days"?: number | null,"frequency"?: string,"id"?: string,"medicine_id"?: string | null,"patient_id"?: string,"prescriber_id"?: string,"quantity"?: number | null,"route"?: string,"status"?: Database["public"]['Enums']["prescription_status"],"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -814,6 +886,12 @@ isOneToOne: false
       columns: ["consultation_id","clinic_id"]
 isOneToOne: false
       referencedRelation: "consultations"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "prescriptions_medicine_id_clinic_id_fkey"
+      columns: ["medicine_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "medicines"
       referencedColumns: ["id","clinic_id"]
     },{
       foreignKeyName: "prescriptions_patient_id_clinic_id_fkey"
@@ -919,6 +997,156 @@ isOneToOne: false
       columns: ["clinic_id"]
 isOneToOne: false
       referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },
+            "stock_batches": {
+                  Row: {
+                    "batch_no": string,"clinic_id": string,"expiry_date": string,"id": string,"medicine_id": string,"on_hand_qty": number,"received_at": string,"received_by": string | null,"received_qty": number,"status": string,"status_reason": string | null,"supplier_ref": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "batch_no": string,"clinic_id": string,"expiry_date": string,"id"?: string,"medicine_id": string,"on_hand_qty": number,"received_at"?: string,"received_by"?: string | null,"received_qty": number,"status"?: string,"status_reason"?: string | null,"supplier_ref"?: string | null
+                  }
+                  Update: {
+                    "batch_no"?: string,"clinic_id"?: string,"expiry_date"?: string,"id"?: string,"medicine_id"?: string,"on_hand_qty"?: number,"received_at"?: string,"received_by"?: string | null,"received_qty"?: number,"status"?: string,"status_reason"?: string | null,"supplier_ref"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "stock_batches_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "stock_batches_medicine_id_clinic_id_fkey"
+      columns: ["medicine_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "medicines"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "stock_batches_received_by_fkey"
+      columns: ["received_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },
+            "stock_movements": {
+                  Row: {
+                    "at": string,"batch_id": string,"by_user": string | null,"clinic_id": string,"id": number,"kind": string,"qty": number,"reason": string | null,"reference_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "at"?: string,"batch_id": string,"by_user"?: string | null,"clinic_id": string,"id"?: never,"kind": string,"qty": number,"reason"?: string | null,"reference_id"?: string | null
+                  }
+                  Update: {
+                    "at"?: string,"batch_id"?: string,"by_user"?: string | null,"clinic_id"?: string,"id"?: never,"kind"?: string,"qty"?: number,"reason"?: string | null,"reference_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "stock_movements_batch_id_clinic_id_fkey"
+      columns: ["batch_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "stock_batches"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "stock_movements_by_user_fkey"
+      columns: ["by_user"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "stock_movements_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },
+            "stock_returns": {
+                  Row: {
+                    "claimed_saleable": boolean,"clinic_id": string,"decided_at": string | null,"decided_by": string | null,"decision_note": string | null,"dispensing_id": string,"id": string,"qty": number,"reason": string,"requested_at": string,"requested_by": string,"status": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "claimed_saleable": boolean,"clinic_id": string,"decided_at"?: string | null,"decided_by"?: string | null,"decision_note"?: string | null,"dispensing_id": string,"id"?: string,"qty": number,"reason": string,"requested_at"?: string,"requested_by": string,"status"?: string
+                  }
+                  Update: {
+                    "claimed_saleable"?: boolean,"clinic_id"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"decision_note"?: string | null,"dispensing_id"?: string,"id"?: string,"qty"?: number,"reason"?: string,"requested_at"?: string,"requested_by"?: string,"status"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "stock_returns_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "stock_returns_decided_by_fkey"
+      columns: ["decided_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "stock_returns_dispensing_id_clinic_id_fkey"
+      columns: ["dispensing_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "dispensings"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "stock_returns_requested_by_fkey"
+      columns: ["requested_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },
+            "substitutions": {
+                  Row: {
+                    "clinic_id": string,"decided_at": string | null,"decided_by": string | null,"id": string,"medicine_id": string,"prescription_id": string,"reason": string,"requested_by": string,"status": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "clinic_id": string,"decided_at"?: string | null,"decided_by"?: string | null,"id"?: string,"medicine_id": string,"prescription_id": string,"reason": string,"requested_by": string,"status"?: string
+                  }
+                  Update: {
+                    "clinic_id"?: string,"decided_at"?: string | null,"decided_by"?: string | null,"id"?: string,"medicine_id"?: string,"prescription_id"?: string,"reason"?: string,"requested_by"?: string,"status"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "substitutions_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "substitutions_decided_by_fkey"
+      columns: ["decided_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "substitutions_medicine_id_clinic_id_fkey"
+      columns: ["medicine_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "medicines"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "substitutions_prescription_id_clinic_id_fkey"
+      columns: ["prescription_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "prescriptions"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "substitutions_requested_by_fkey"
+      columns: ["requested_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
       referencedColumns: ["id"]
     }
                   ]
@@ -1042,6 +1270,9 @@ isOneToOne: false
             "activate_tariff":
 { Args: { "p_version": string }; Returns: undefined
                            },
+            "add_medicine":
+{ Args: { "p_controlled": boolean,"p_form": string,"p_name": string,"p_strength": string }; Returns: string
+                           },
             "allocate_bed":
 { Args: { "p_admission": string,"p_bed": string }; Returns: string
                            },
@@ -1078,6 +1309,18 @@ isOneToOne: false
             "decide_refund":
 { Args: { "p_approve": boolean,"p_reason"?: string,"p_refund": string }; Returns: undefined
                            },
+            "decide_return":
+{ Args: { "p_accept": boolean,"p_note"?: string,"p_return": string }; Returns: string
+                           },
+            "decide_substitution":
+{ Args: { "p_approve": boolean,"p_sub": string }; Returns: undefined
+                           },
+            "dispense":
+{ Args: { "p_batch": string,"p_qty": number,"p_rx": string,"p_witness"?: string }; Returns: string
+                           },
+            "dispose_batch":
+{ Args: { "p_batch": string,"p_reason": string }; Returns: undefined
+                           },
             "enter_result":
 { Args: { "p_amend_reason"?: string,"p_flag": string,"p_note": string,"p_order": string,"p_range": string,"p_unit": string,"p_value": string }; Returns: number
                            },
@@ -1096,8 +1339,14 @@ isOneToOne: false
             "place_order":
 { Args: { "p_admission": string,"p_kind": string,"p_note": string,"p_patient": string,"p_priority": string,"p_test": string }; Returns: string
                            },
+            "prescribe":
+{ Args: { "p_days": number,"p_dose": string,"p_frequency": string,"p_medicine": string,"p_patient": string,"p_qty": number,"p_route": string }; Returns: string
+                           },
             "publish_result":
 { Args: { "p_order": string }; Returns: undefined
+                           },
+            "receive_stock":
+{ Args: { "p_batch": string,"p_expiry": string,"p_medicine": string,"p_qty": number,"p_supplier": string }; Returns: string
                            },
             "record_clearance":
 { Args: { "p_admission": string,"p_department": string,"p_note"?: string,"p_status": string }; Returns: undefined
@@ -1107,6 +1356,15 @@ isOneToOne: false
                            },
             "request_refund":
 { Args: { "p_amount": number,"p_deposit": string,"p_invoice": string,"p_reason": string }; Returns: string
+                           },
+            "request_return":
+{ Args: { "p_dispensing": string,"p_qty": number,"p_reason": string,"p_saleable": boolean }; Returns: string
+                           },
+            "request_substitution":
+{ Args: { "p_medicine": string,"p_reason": string,"p_rx": string }; Returns: undefined
+                           },
+            "set_batch_status":
+{ Args: { "p_batch": string,"p_reason": string,"p_status": string }; Returns: number
                            },
             "set_bed_housekeeping":
 { Args: { "p_bed": string,"p_state": string }; Returns: undefined

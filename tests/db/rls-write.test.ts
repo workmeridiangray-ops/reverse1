@@ -225,10 +225,10 @@ describe("consultations", () => {
 });
 
 describe("prescriptions (Phase 1: storage + RLS only)", () => {
-  it("pharmacist can only mark active prescriptions dispensed", async () => {
+  it("pharmacist cannot edit or flip prescriptions directly; dispensing is the only way (see pharmacy tests)", async () => {
     await as("pharmA", async (q) => {
-      expect((await attempt(q, `update public.prescriptions set dose = '400 mg' where id = $1`, [ID.rxActive])).error).toMatch(/only mark/);
-      expect((await attempt(q, `update public.prescriptions set status = 'dispensed' where id = $1 returning id`, [ID.rxActive])).rows).toBe(1);
+      expect((await attempt(q, `update public.prescriptions set dose = '400 mg' where id = $1 returning id`, [ID.rxActive])).rows).toBe(0);
+      expect((await attempt(q, `update public.prescriptions set status = 'dispensed' where id = $1 returning id`, [ID.rxActive])).rows).toBe(0);
     });
   });
   it("reception cannot read or write prescriptions", async () => {

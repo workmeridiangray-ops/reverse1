@@ -315,3 +315,21 @@ insert into public.lab_orders (id, clinic_id, patient_id, ordered_by, test_name,
   ('ad000000-0000-4000-8000-000000000002', 'aaaaaaaa-0000-4000-8000-000000000000', 'a2000000-0000-4000-8000-000000000001',
    'a0000000-0000-4000-8000-000000000002', 'Chest X-ray', 'imaging', 'urgent');
 update app.clinic_counters set next_accession = 2 where clinic_id = 'aaaaaaaa-0000-4000-8000-000000000000';
+
+-- Phase 5: pharmacy demo data
+insert into public.medicines (id, clinic_id, name, strength, form, controlled) values
+  ('ae000000-0000-4000-8000-000000000001', 'aaaaaaaa-0000-4000-8000-000000000000', 'Amoxicillin', '500 mg', 'capsule', false),
+  ('ae000000-0000-4000-8000-000000000002', 'aaaaaaaa-0000-4000-8000-000000000000', 'Amoxicillin', '250 mg', 'capsule', false),
+  ('ae000000-0000-4000-8000-000000000003', 'aaaaaaaa-0000-4000-8000-000000000000', 'Morphine', '10 mg', 'tablet', true),
+  ('be000000-0000-4000-8000-000000000001', 'bbbbbbbb-0000-4000-8000-000000000000', 'Ibuprofen', '200 mg', 'tablet', false);
+-- Batches: soon-to-expire (FIFO first), later, expired (seeded directly), quarantined, controlled.
+insert into public.stock_batches (id, clinic_id, medicine_id, batch_no, expiry_date, received_qty, on_hand_qty, status, status_reason, received_by) values
+  ('af000000-0000-4000-8000-000000000001', 'aaaaaaaa-0000-4000-8000-000000000000', 'ae000000-0000-4000-8000-000000000001', 'AMX-A', current_date + 60, 100, 100, 'available', null, 'a0000000-0000-4000-8000-000000000006'),
+  ('af000000-0000-4000-8000-000000000002', 'aaaaaaaa-0000-4000-8000-000000000000', 'ae000000-0000-4000-8000-000000000001', 'AMX-B', current_date + 400, 100, 100, 'available', null, 'a0000000-0000-4000-8000-000000000006'),
+  ('af000000-0000-4000-8000-000000000003', 'aaaaaaaa-0000-4000-8000-000000000000', 'ae000000-0000-4000-8000-000000000001', 'AMX-OLD', current_date - 5, 50, 50, 'available', null, 'a0000000-0000-4000-8000-000000000006'),
+  ('af000000-0000-4000-8000-000000000004', 'aaaaaaaa-0000-4000-8000-000000000000', 'ae000000-0000-4000-8000-000000000001', 'AMX-Q', current_date + 300, 40, 40, 'quarantined', 'Cold-chain breach suspected', 'a0000000-0000-4000-8000-000000000006'),
+  ('af000000-0000-4000-8000-000000000005', 'aaaaaaaa-0000-4000-8000-000000000000', 'ae000000-0000-4000-8000-000000000002', 'AMX250-A', current_date + 200, 80, 80, 'available', null, 'a0000000-0000-4000-8000-000000000006'),
+  ('af000000-0000-4000-8000-000000000006', 'aaaaaaaa-0000-4000-8000-000000000000', 'ae000000-0000-4000-8000-000000000003', 'MOR-A', current_date + 500, 30, 30, 'available', null, 'a0000000-0000-4000-8000-000000000006');
+insert into public.stock_movements (clinic_id, batch_id, kind, qty, by_user)
+select clinic_id, id, 'receipt', received_qty, received_by from public.stock_batches;
+update public.prescriptions set medicine_id = 'ae000000-0000-4000-8000-000000000001', quantity = 21 where id = 'a5000000-0000-4000-8000-000000000001';
