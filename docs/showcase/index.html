@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tendwell hospital management: product tour</title>
+<meta name="description" content="A tour of the Tendwell hospital management system: wards and beds, admissions, billing, laboratory, pharmacy, theatre, stores and a patient portal.">
+<style>
+  :root { --ink:#17212f; --muted:#526174; --line:#d9dfe7; --bg:#f7f8fa; --card:#fff; --accent:#0e5b57; }
+  @media (prefers-color-scheme: dark) { :root { --ink:#e8edf3; --muted:#a9b6c6; --line:#2c3a4b; --bg:#10161e; --card:#18212c; --accent:#6fd0c8; } }
+  * { box-sizing: border-box; }
+  body { margin:0; font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; color:var(--ink); background:var(--bg); }
+  .wrap { max-width:1120px; margin:0 auto; padding:0 20px; }
+  header.hero { padding:56px 0 32px; }
+  h1 { font-size:clamp(1.9rem,4vw,2.8rem); line-height:1.15; margin:0 0 12px; }
+  h2 { font-size:1.4rem; margin:0 0 6px; }
+  p.lead { font-size:1.15rem; color:var(--muted); max-width:46rem; margin:0 0 20px; }
+  .cta { display:inline-block; background:var(--accent); color:#fff; padding:12px 20px; border-radius:8px; text-decoration:none; font-weight:700; }
+  @media (prefers-color-scheme: dark) { .cta { color:#06201e; } }
+  .grid { display:grid; gap:20px; grid-template-columns:repeat(auto-fit,minmax(min(100%,480px),1fr)); padding:24px 0 8px; }
+  figure { margin:0; background:var(--card); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+  figure img { display:block; width:100%; height:auto; border-bottom:1px solid var(--line); }
+  figcaption { padding:14px 16px 18px; }
+  figcaption p { margin:4px 0 0; color:var(--muted); font-size:.95rem; }
+  .phones { display:flex; flex-wrap:wrap; gap:20px; justify-content:center; padding:8px 0 24px; }
+  .phones figure { width:min(100%,260px); }
+  ul.points { columns:2 280px; padding-left:1.2rem; color:var(--ink); }
+  .note { font-size:.9rem; color:var(--muted); border-top:1px solid var(--line); padding:20px 0 48px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="hero">
+  <h1>One calm system for clinics and hospital wards</h1>
+  <p class="lead">Patient registration, appointments, wards and beds, billing, laboratory, pharmacy, theatre, stores and a patient portal, with access that follows each person's role and an audit trail behind every change.</p>
+  <a class="cta" href="mailto:CHANGE-ME@yourdomain.example?subject=Tendwell%20demo">Book a live demo</a>
+</header>
+
+<section aria-labelledby="tour">
+<h2 id="tour">Product tour</h2>
+<div class="grid">
+  <figure><img src="img/ward-census.jpg" alt="Ward census showing beds, occupancy and patients waiting for a bed" loading="lazy"><figcaption><strong>Ward census</strong><p>Live bed state, who is waiting, and cleaning status. Two nurses can never be given the same bed.</p></figcaption></figure>
+  <figure><img src="img/admission-discharge.jpg" alt="Admission page with discharge authorisation and clearances" loading="lazy"><figcaption><strong>Admission and discharge</strong><p>Doctor authorisation, finance, pharmacy and nursing clearance, with audited exceptions. Emergencies are not held up by payment.</p></figcaption></figure>
+  <figure><img src="img/invoice.jpg" alt="Invoice with payments and balance" loading="lazy"><figcaption><strong>Billing</strong><p>Tariff versions, charges that keep the price they were added at, deposits, part payments and refunds that need a second approver.</p></figcaption></figure>
+  <figure><img src="img/lab-queue.jpg" alt="Laboratory work queue" loading="lazy"><figcaption><strong>Laboratory and imaging</strong><p>Orders, accession numbers, a second-person review before release, amendments as new versions and critical-result acknowledgement.</p></figcaption></figure>
+  <figure><img src="img/pharmacy-dispense.jpg" alt="Pharmacy dispensing screen" loading="lazy"><figcaption><strong>Pharmacy</strong><p>Earliest-expiry stock first, expired and recalled batches blocked, partial supply, substitutions the prescriber approves.</p></figcaption></figure>
+  <figure><img src="img/pharmacy-stock.jpg" alt="Pharmacy stock and batches" loading="lazy"><figcaption><strong>Stock, recalls and returns</strong><p>Batch and expiry tracking, quarantine, recall with prescriber alerts, and returns reviewed before restocking.</p></figcaption></figure>
+  <figure><img src="img/theatre-procedure.jpg" alt="Theatre procedure with checklist and consent" loading="lazy"><figcaption><strong>Theatre</strong><p>Room, staff and patient clashes are refused. Checklist, consent evidence, versioned notes and a visible change log.</p></figcaption></figure>
+  <figure><img src="img/stores.jpg" alt="Stores stock by location" loading="lazy"><figcaption><strong>Purchasing and stores</strong><p>Requests and orders each approved by a second person, goods received against orders, issue, transfer and counts.</p></figcaption></figure>
+  <figure><img src="img/assets.jpg" alt="Asset register and maintenance queue" loading="lazy"><figcaption><strong>Assets and maintenance</strong><p>Service dates, fault reports and downtime tracking.</p></figcaption></figure>
+  <figure><img src="img/patient-portal.jpg" alt="Patient portal" loading="lazy"><figcaption><strong>Patient portal</strong><p>Patients see only what the care team has reviewed and released.</p></figcaption></figure>
+</div>
+</section>
+
+<section aria-labelledby="mobile">
+<h2 id="mobile">Works on a phone</h2>
+<div class="phones">
+  <figure><img src="img/ward-census-mobile.jpg" alt="Ward census on a phone" loading="lazy"><figcaption>Ward census</figcaption></figure>
+  <figure><img src="img/patient-portal-mobile.jpg" alt="Patient portal on a phone" loading="lazy"><figcaption>Patient portal</figcaption></figure>
+  <figure><img src="img/pharmacy-dispense-mobile.jpg" alt="Pharmacy dispensing on a phone" loading="lazy"><figcaption>Dispensing</figcaption></figure>
+</div>
+</section>
+
+<section aria-labelledby="safe">
+<h2 id="safe">Built for safe, accountable care</h2>
+<ul class="points">
+  <li>Each organisation's data is isolated by the database itself</li>
+  <li>Role-based access: reception cannot read clinical notes, doctors cannot read billing</li>
+  <li>Append-only audit trail of changes and record views</li>
+  <li>Signed notes lock; corrections keep the original</li>
+  <li>Second-person approval for refunds, returns, lab release and purchasing</li>
+  <li>Accessibility checked against WCAG 2.1 AA</li>
+</ul>
+</section>
+
+<p class="note">All screens show synthetic demonstration data; no real patients. Clinical rules and approval policies are configured and approved by each hospital. This system supports, and does not replace, clinical judgement. Online subscriptions, patient online payment and multi-hospital groups are not yet available.</p>
+</div>
+</body>
+</html>
