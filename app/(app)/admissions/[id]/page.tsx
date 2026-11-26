@@ -17,7 +17,7 @@ import { ADMISSION_VISUAL } from "@/lib/ui/status";
 import { createClient } from "@/lib/supabase/server";
 import {
   addCareTask, addObservation, allocateBed, authoriseDischarge, cancelAdmission, finaliseDischarge, recordClearance,
-  recordTask, releaseReservation, reserveBed, transferBed, updateExpectedDischarge, withdrawAuthorisation,
+  recordTask, releaseReservation, reserveBed, shareSummary, transferBed, updateExpectedDischarge, withdrawAuthorisation,
 } from "../actions";
 
 export const metadata: Metadata = { title: "Admission" };
@@ -228,7 +228,11 @@ export default async function AdmissionPage({ params, searchParams }: { params: 
           {role === "admin" || role === "receptionist" ? (
             <AdmissionFinance supabase={supabase} admissionId={a.id} patientId={p.id} currency={session.clinic.currency} tz={tz} open={status === "admitted"} />
           ) : null}
-          {status === "discharged" && d.summary ? <Card title="Discharge summary"><p className="whitespace-pre-wrap">{d.summary.summary}</p></Card> : null}
+          {status === "discharged" && d.summary ? (
+            <Card title="Discharge summary"><p className="whitespace-pre-wrap">{d.summary.summary}</p>
+              {role === "doctor" ? (d.summary.shared_at ? <p className="mt-3 text-sm text-ink-500">Shared with the patient.</p> : (
+                <form action={shareSummary} className="mt-4"><input type="hidden" name="admission_id" value={a.id} /><SubmitButton variant="secondary">Share with patient portal</SubmitButton>
+                  <p className="mt-1 text-sm text-ink-500">Only share once you have reviewed the text. The patient can then read it.</p></form>)) : null}</Card>) : null}
         </div>
       </div>
     </>

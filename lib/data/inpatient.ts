@@ -133,17 +133,18 @@ export async function getAdmissionDetail(supabase: ServerClient, id: string, cli
   if (admissionRes.error) throw new Error(`admission: ${admissionRes.error.message}`);
   const admission = admissionRes.data;
   if (!admission) return null;
-  const [patient, attending, stays, beds, clearances, summary, tasks, obs, reservations, billedDays] = await Promise.all([
+  const [patient, attending, stays, beds, clearances, summary, tasks, obs, reservations, billedDays, dbBlockers] = await Promise.all([
     supabase.from("patients").select("id, mrn, given_name, family_name, date_of_birth, sex_at_birth").eq("id", admission.patient_id).maybeSingle(),
     supabase.from("profiles").select("id, full_name").eq("id", admission.attending_id).maybeSingle(),
     supabase.from("bed_stays").select("id, bed_id, starts_at, ends_at, reason, note").eq("admission_id", id).order("starts_at"),
     supabase.from("beds").select("id, label, ward_id, out_of_service, housekeeping"),
     supabase.from("discharge_clearances").select("department, status, note, cleared_at, cleared_by").eq("admission_id", id),
-    supabase.from("admission_summaries").select("summary, written_by, updated_at").eq("admission_id", id).maybeSingle(),
+    supabase.from("admission_summaries").select("summary, written_by, updated_at, shared_at").eq("admission_id", id).maybeSingle(),
     supabase.from("care_tasks").select("id, title, due_at, status, not_done_reason, completed_at, completed_by").eq("admission_id", id).order("due_at"),
     supabase.from("observations").select("id, recorded_at, recorded_by, systolic, diastolic, pulse, resp_rate, temp_c, spo2, note, corrects_id, correction_reason").eq("admission_id", id).order("recorded_at", { ascending: false }).limit(50),
     supabase.from("bed_reservations").select("id, bed_id, reserved_from, reserved_until, status").eq("admission_id", id).eq("status", "active"),
     supabase.rpc("billed_bed_days", { p_admission: id }),
+    supabase.rpc("discharge_blockers", { p_admission: id }),
   ]);
   const bedRows = check(beds, "beds");
   const wards = check(await supabase.from("wards").select("id, name, active"), "wards");
@@ -168,14 +169,13 @@ export async function getAdmissionDetail(supabase: ServerClient, id: string, cli
 
   const clearanceRows = check(clearances, "clearances");
   const status = admission.status as AdmissionStatus;
-  const blockers = dischargeBlockers({
-    status,
-    type: admission.admission_type as AdmissionType,
-    emergencyNeedsFinance: clinic.emergencyNeedsFinance,
-    authorised: Boolean(admission.discharge_authorised_at),
-    hasSummary: Boolean(summary.data),
+  // The database is the source of truth (reception cannot read the summary row, so a local check would be wrong for them).
+  const blockers: string[] = Array.isArray(dbBlockers.data) ? (dbBlockers.data as string[]) : dischargeBlockers({
+    status, type: admission.admission_type as AdmissionType, emergencyNeedsFinance: clinic.emergencyNeedsFinance,
+    authorised: Boolean(admission.discharge_authorised_at), hasSummary: Boolean(summary.data),
     clearances: clearanceRows.map((c) => c.department as ClearanceDepartment),
   });
+
 
   return {
     admission,

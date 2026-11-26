@@ -7,14 +7,14 @@ export type Database = {
           Tables: {
             "admission_summaries": {
                   Row: {
-                    "admission_id": string,"clinic_id": string,"id": string | null,"patient_id": string,"summary": string,"updated_at": string,"written_by": string
+                    "admission_id": string,"clinic_id": string,"id": string | null,"patient_id": string,"shared_at": string | null,"shared_by": string | null,"summary": string,"updated_at": string,"written_by": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "admission_id": string,"clinic_id": string,"id"?: never,"patient_id": string,"summary": string,"updated_at"?: string,"written_by": string
+                    "admission_id": string,"clinic_id": string,"id"?: never,"patient_id": string,"shared_at"?: string | null,"shared_by"?: string | null,"summary": string,"updated_at"?: string,"written_by": string
                   }
                   Update: {
-                    "admission_id"?: string,"clinic_id"?: string,"id"?: never,"patient_id"?: string,"summary"?: string,"updated_at"?: string,"written_by"?: string
+                    "admission_id"?: string,"clinic_id"?: string,"id"?: never,"patient_id"?: string,"shared_at"?: string | null,"shared_by"?: string | null,"summary"?: string,"updated_at"?: string,"written_by"?: string
                   }
                   Relationships: [
                     {
@@ -28,6 +28,12 @@ isOneToOne: false
       columns: ["clinic_id"]
 isOneToOne: false
       referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "admission_summaries_shared_by_fkey"
+      columns: ["shared_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
       referencedColumns: ["id"]
     },{
       foreignKeyName: "admission_summaries_written_by_fkey"
@@ -136,6 +142,33 @@ isOneToOne: false
       columns: ["room_id","clinic_id"]
 isOneToOne: false
       referencedRelation: "rooms"
+      referencedColumns: ["id","clinic_id"]
+    }
+                  ]
+                },
+            "assets": {
+                  Row: {
+                    "category": string,"clinic_id": string,"created_at": string,"id": string,"last_service_on": string | null,"location": string | null,"name": string,"next_service_due": string | null,"po_id": string | null,"status": string,"tag": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "category"?: string,"clinic_id": string,"created_at"?: string,"id"?: string,"last_service_on"?: string | null,"location"?: string | null,"name": string,"next_service_due"?: string | null,"po_id"?: string | null,"status"?: string,"tag": string
+                  }
+                  Update: {
+                    "category"?: string,"clinic_id"?: string,"created_at"?: string,"id"?: string,"last_service_on"?: string | null,"location"?: string | null,"name"?: string,"next_service_due"?: string | null,"po_id"?: string | null,"status"?: string,"tag"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "assets_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "assets_po_id_clinic_id_fkey"
+      columns: ["po_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "purchase_orders"
       referencedColumns: ["id","clinic_id"]
     }
                   ]
@@ -554,6 +587,39 @@ isOneToOne: false
     }
                   ]
                 },
+            "goods_receipts": {
+                  Row: {
+                    "clinic_id": string,"delivery_note": string,"id": string,"po_line_id": string,"qty": number,"received_at": string,"received_by": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "clinic_id": string,"delivery_note": string,"id"?: string,"po_line_id": string,"qty": number,"received_at"?: string,"received_by": string
+                  }
+                  Update: {
+                    "clinic_id"?: string,"delivery_note"?: string,"id"?: string,"po_line_id"?: string,"qty"?: number,"received_at"?: string,"received_by"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "goods_receipts_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "goods_receipts_po_line_id_clinic_id_fkey"
+      columns: ["po_line_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "po_lines"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "goods_receipts_received_by_fkey"
+      columns: ["received_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },
             "invoice_lines": {
                   Row: {
                     "clinic_id": string,"created_at": string,"description": string,"id": string,"invoice_id": string,"quantity": number,"unit_price_minor": number
@@ -716,6 +782,39 @@ isOneToOne: false
     }
                   ]
                 },
+            "maintenance_requests": {
+                  Row: {
+                    "asset_id": string,"clinic_id": string,"downtime_minutes": number | null,"id": string,"issue": string,"priority": string,"reported_at": string,"reported_by": string,"resolution": string | null,"resolved_at": string | null,"started_at": string | null,"status": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "asset_id": string,"clinic_id": string,"downtime_minutes"?: number | null,"id"?: string,"issue": string,"priority"?: string,"reported_at"?: string,"reported_by": string,"resolution"?: string | null,"resolved_at"?: string | null,"started_at"?: string | null,"status"?: string
+                  }
+                  Update: {
+                    "asset_id"?: string,"clinic_id"?: string,"downtime_minutes"?: number | null,"id"?: string,"issue"?: string,"priority"?: string,"reported_at"?: string,"reported_by"?: string,"resolution"?: string | null,"resolved_at"?: string | null,"started_at"?: string | null,"status"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "maintenance_requests_asset_id_clinic_id_fkey"
+      columns: ["asset_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "assets"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "maintenance_requests_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "maintenance_requests_reported_by_fkey"
+      columns: ["reported_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },
             "medicines": {
                   Row: {
                     "active": boolean,"clinic_id": string,"controlled": boolean,"created_at": string,"form": string,"id": string,"name": string,"on_formulary": boolean,"strength": string
@@ -860,6 +959,45 @@ isOneToOne: false
 isOneToOne: false
       referencedRelation: "profiles"
       referencedColumns: ["id"]
+    }
+                  ]
+                },
+            "po_lines": {
+                  Row: {
+                    "clinic_id": string,"id": string,"item_id": string,"po_id": string,"qty": number,"received_qty": number,"request_id": string | null,"unit_price_minor": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "clinic_id": string,"id"?: string,"item_id": string,"po_id": string,"qty": number,"received_qty"?: number,"request_id"?: string | null,"unit_price_minor": number
+                  }
+                  Update: {
+                    "clinic_id"?: string,"id"?: string,"item_id"?: string,"po_id"?: string,"qty"?: number,"received_qty"?: number,"request_id"?: string | null,"unit_price_minor"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "po_lines_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "po_lines_item_id_clinic_id_fkey"
+      columns: ["item_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "store_items"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "po_lines_po_id_clinic_id_fkey"
+      columns: ["po_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "purchase_orders"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "po_lines_request_id_clinic_id_fkey"
+      columns: ["request_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "purchase_requests"
+      referencedColumns: ["id","clinic_id"]
     }
                   ]
                 },
@@ -1145,6 +1283,84 @@ isOneToOne: false
     }
                   ]
                 },
+            "purchase_orders": {
+                  Row: {
+                    "approved_at": string | null,"approved_by": string | null,"clinic_id": string,"created_at": string,"created_by": string,"id": string,"number": string,"status": string,"supplier_bill_ref": string | null,"supplier_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "approved_at"?: string | null,"approved_by"?: string | null,"clinic_id": string,"created_at"?: string,"created_by": string,"id"?: string,"number": string,"status"?: string,"supplier_bill_ref"?: string | null,"supplier_id": string
+                  }
+                  Update: {
+                    "approved_at"?: string | null,"approved_by"?: string | null,"clinic_id"?: string,"created_at"?: string,"created_by"?: string,"id"?: string,"number"?: string,"status"?: string,"supplier_bill_ref"?: string | null,"supplier_id"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "purchase_orders_approved_by_fkey"
+      columns: ["approved_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "purchase_orders_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "purchase_orders_created_by_fkey"
+      columns: ["created_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "purchase_orders_supplier_id_clinic_id_fkey"
+      columns: ["supplier_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "suppliers"
+      referencedColumns: ["id","clinic_id"]
+    }
+                  ]
+                },
+            "purchase_requests": {
+                  Row: {
+                    "clinic_id": string,"decided_by": string | null,"decision_note": string | null,"est_unit_price_minor": number,"id": string,"item_id": string,"qty": number,"reason": string,"requested_at": string,"requested_by": string,"status": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "clinic_id": string,"decided_by"?: string | null,"decision_note"?: string | null,"est_unit_price_minor"?: number,"id"?: string,"item_id": string,"qty": number,"reason": string,"requested_at"?: string,"requested_by": string,"status"?: string
+                  }
+                  Update: {
+                    "clinic_id"?: string,"decided_by"?: string | null,"decision_note"?: string | null,"est_unit_price_minor"?: number,"id"?: string,"item_id"?: string,"qty"?: number,"reason"?: string,"requested_at"?: string,"requested_by"?: string,"status"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "purchase_requests_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "purchase_requests_decided_by_fkey"
+      columns: ["decided_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "purchase_requests_item_id_clinic_id_fkey"
+      columns: ["item_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "store_items"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "purchase_requests_requested_by_fkey"
+      columns: ["requested_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },
             "refunds": {
                   Row: {
                     "amount_minor": number,"clinic_id": string,"decided_at": string | null,"decided_by": string | null,"decision_reason": string | null,"deposit_id": string | null,"id": string,"invoice_id": string | null,"patient_id": string,"reason": string,"requested_at": string,"requested_by": string,"status": string
@@ -1322,6 +1538,120 @@ isOneToOne: false
     }
                   ]
                 },
+            "store_balances": {
+                  Row: {
+                    "clinic_id": string,"item_id": string,"location_id": string,"qty": number
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "clinic_id": string,"item_id": string,"location_id": string,"qty"?: number
+                  }
+                  Update: {
+                    "clinic_id"?: string,"item_id"?: string,"location_id"?: string,"qty"?: number
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "store_balances_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "store_balances_item_id_clinic_id_fkey"
+      columns: ["item_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "store_items"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "store_balances_location_id_clinic_id_fkey"
+      columns: ["location_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "store_locations"
+      referencedColumns: ["id","clinic_id"]
+    }
+                  ]
+                },
+            "store_items": {
+                  Row: {
+                    "active": boolean,"clinic_id": string,"id": string,"name": string,"reorder_level": number,"unit": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"clinic_id": string,"id"?: string,"name": string,"reorder_level"?: number,"unit"?: string
+                  }
+                  Update: {
+                    "active"?: boolean,"clinic_id"?: string,"id"?: string,"name"?: string,"reorder_level"?: number,"unit"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "store_items_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },
+            "store_locations": {
+                  Row: {
+                    "clinic_id": string,"id": string,"is_main": boolean,"name": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "clinic_id": string,"id"?: string,"is_main"?: boolean,"name": string
+                  }
+                  Update: {
+                    "clinic_id"?: string,"id"?: string,"is_main"?: boolean,"name"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "store_locations_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },
+            "store_movements": {
+                  Row: {
+                    "at": string,"by_user": string | null,"clinic_id": string,"id": number,"item_id": string,"kind": string,"location_id": string,"qty": number,"reason": string | null,"reference": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "at"?: string,"by_user"?: string | null,"clinic_id": string,"id"?: never,"item_id": string,"kind": string,"location_id": string,"qty": number,"reason"?: string | null,"reference"?: string | null
+                  }
+                  Update: {
+                    "at"?: string,"by_user"?: string | null,"clinic_id"?: string,"id"?: never,"item_id"?: string,"kind"?: string,"location_id"?: string,"qty"?: number,"reason"?: string | null,"reference"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "store_movements_by_user_fkey"
+      columns: ["by_user"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "store_movements_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "store_movements_item_id_clinic_id_fkey"
+      columns: ["item_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "store_items"
+      referencedColumns: ["id","clinic_id"]
+    },{
+      foreignKeyName: "store_movements_location_id_clinic_id_fkey"
+      columns: ["location_id","clinic_id"]
+isOneToOne: false
+      referencedRelation: "store_locations"
+      referencedColumns: ["id","clinic_id"]
+    }
+                  ]
+                },
             "substitutions": {
                   Row: {
                     "clinic_id": string,"decided_at": string | null,"decided_by": string | null,"id": string,"medicine_id": string,"prescription_id": string,"reason": string,"requested_by": string,"status": string
@@ -1363,6 +1693,27 @@ isOneToOne: false
       columns: ["requested_by"]
 isOneToOne: false
       referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },
+            "suppliers": {
+                  Row: {
+                    "active": boolean,"clinic_id": string,"contact": string | null,"id": string,"name": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "active"?: boolean,"clinic_id": string,"contact"?: string | null,"id"?: string,"name": string
+                  }
+                  Update: {
+                    "active"?: boolean,"clinic_id"?: string,"contact"?: string | null,"id"?: string,"name"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "suppliers_clinic_id_fkey"
+      columns: ["clinic_id"]
+isOneToOne: false
+      referencedRelation: "clinics"
       referencedColumns: ["id"]
     }
                   ]
@@ -1489,11 +1840,23 @@ isOneToOne: false
             "add_medicine":
 { Args: { "p_controlled": boolean,"p_form": string,"p_name": string,"p_strength": string }; Returns: string
                            },
+            "add_store_item":
+{ Args: { "p_name": string,"p_reorder": number,"p_unit": string }; Returns: string
+                           },
+            "add_store_location":
+{ Args: { "p_main": boolean,"p_name": string }; Returns: string
+                           },
+            "add_supplier":
+{ Args: { "p_contact": string,"p_name": string }; Returns: string
+                           },
             "allocate_bed":
 { Args: { "p_admission": string,"p_bed": string }; Returns: string
                            },
             "apply_deposit":
 { Args: { "p_deposit": string,"p_invoice": string }; Returns: number
+                           },
+            "approve_po":
+{ Args: { "p_po": string }; Returns: undefined
                            },
             "authorise_discharge":
 { Args: { "p_admission": string,"p_summary": string }; Returns: undefined
@@ -1525,17 +1888,26 @@ isOneToOne: false
             "complete_recovery":
 { Args: { "p_proc": string }; Returns: undefined
                            },
+            "create_po":
+{ Args: { "p_requests": (string)[],"p_supplier": string }; Returns: string
+                           },
             "create_tariff_draft":
 { Args: { "p_copy_from"?: string,"p_effective": string,"p_name": string }; Returns: string
                            },
             "decide_refund":
 { Args: { "p_approve": boolean,"p_reason"?: string,"p_refund": string }; Returns: undefined
                            },
+            "decide_request":
+{ Args: { "p_approve": boolean,"p_note"?: string,"p_req": string }; Returns: undefined
+                           },
             "decide_return":
 { Args: { "p_accept": boolean,"p_note"?: string,"p_return": string }; Returns: string
                            },
             "decide_substitution":
 { Args: { "p_approve": boolean,"p_sub": string }; Returns: undefined
+                           },
+            "discharge_blockers":
+{ Args: { "p_admission": string }; Returns: (string)[]
                            },
             "dispense":
 { Args: { "p_batch": string,"p_qty": number,"p_rx": string,"p_witness"?: string }; Returns: string
@@ -1551,6 +1923,9 @@ isOneToOne: false
                            },
             "generate_bill":
 { Args: { "p_admission": string,"p_patient": string }; Returns: string
+                           },
+            "issue_stock":
+{ Args: { "p_from": string,"p_item": string,"p_qty": number,"p_to": string }; Returns: undefined
                            },
             "log_record_access":
 { Args: { "p_reason"?: string,"p_record_id": string,"p_table": string }; Returns: undefined
@@ -1570,6 +1945,9 @@ isOneToOne: false
             "publish_result":
 { Args: { "p_order": string }; Returns: undefined
                            },
+            "receive_goods":
+{ Args: { "p_delivery_note": string,"p_line": string,"p_location": string,"p_qty": number }; Returns: undefined
+                           },
             "receive_stock":
 { Args: { "p_batch": string,"p_expiry": string,"p_medicine": string,"p_qty": number,"p_supplier": string }; Returns: string
                            },
@@ -1582,8 +1960,20 @@ isOneToOne: false
             "record_deposit":
 { Args: { "p_admission": string,"p_amount": number,"p_method": Database["public"]['Enums']["payment_method"],"p_patient": string,"p_reference": string }; Returns: string
                            },
+            "record_service":
+{ Args: { "p_asset": string,"p_next": string }; Returns: undefined
+                           },
+            "register_asset":
+{ Args: { "p_category": string,"p_location": string,"p_name": string,"p_next_service": string,"p_tag": string }; Returns: string
+                           },
+            "report_fault":
+{ Args: { "p_asset": string,"p_issue": string,"p_priority": string }; Returns: string
+                           },
             "request_procedure":
 { Args: { "p_admission": string,"p_name": string,"p_patient": string,"p_surgeon": string,"p_urgency": string }; Returns: string
+                           },
+            "request_purchase":
+{ Args: { "p_item": string,"p_price": number,"p_qty": number,"p_reason": string }; Returns: string
                            },
             "request_refund":
 { Args: { "p_amount": number,"p_deposit": string,"p_invoice": string,"p_reason": string }; Returns: string
@@ -1594,6 +1984,12 @@ isOneToOne: false
             "request_substitution":
 { Args: { "p_medicine": string,"p_reason": string,"p_rx": string }; Returns: undefined
                            },
+            "resolve_maintenance":
+{ Args: { "p_req": string,"p_resolution": string }; Returns: undefined
+                           },
+            "retire_asset":
+{ Args: { "p_asset": string,"p_reason": string }; Returns: undefined
+                           },
             "schedule_procedure":
 { Args: { "p_end": string,"p_proc": string,"p_reason"?: string,"p_room": string,"p_start": string,"p_team": Json }; Returns: undefined
                            },
@@ -1603,8 +1999,23 @@ isOneToOne: false
             "set_bed_housekeeping":
 { Args: { "p_bed": string,"p_state": string }; Returns: undefined
                            },
+            "set_po_line_price":
+{ Args: { "p_line": string,"p_price": number }; Returns: undefined
+                           },
+            "set_supplier_bill":
+{ Args: { "p_po": string,"p_ref": string }; Returns: undefined
+                           },
+            "share_discharge_summary":
+{ Args: { "p_admission": string }; Returns: undefined
+                           },
+            "start_maintenance":
+{ Args: { "p_req": string }; Returns: undefined
+                           },
             "start_procedure":
 { Args: { "p_override_reason"?: string,"p_proc": string }; Returns: undefined
+                           },
+            "stock_count":
+{ Args: { "p_counted": number,"p_item": string,"p_loc": string,"p_reason": string }; Returns: number
                            },
             "submit_demo_request":
 { Args: { "p_beds": number,"p_email": string,"p_message": string,"p_name": string,"p_organisation": string }; Returns: string
@@ -1614,6 +2025,9 @@ isOneToOne: false
                            },
             "transfer_bed":
 { Args: { "p_admission": string,"p_bed": string,"p_effective"?: string,"p_note"?: string }; Returns: string
+                           },
+            "transfer_stock":
+{ Args: { "p_from": string,"p_item": string,"p_qty": number,"p_to": string }; Returns: undefined
                            },
             "withdraw_consent":
 { Args: { "p_proc": string,"p_reason": string }; Returns: undefined

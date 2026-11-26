@@ -37,6 +37,7 @@ select pg_temp.mk_user('a0000000-0000-4000-8000-000000000007', 'amal.haddad@pati
 select pg_temp.mk_user('a0000000-0000-4000-8000-000000000008', 'former.desk@cedarlane.test');
 select pg_temp.mk_user('a0000000-0000-4000-8000-000000000009', 'nurse@cedarlane.test');
 select pg_temp.mk_user('b0000000-0000-4000-8000-000000000009', 'nurse@northgate.test');
+select pg_temp.mk_user('a0000000-0000-4000-8000-00000000000a', 'admin2@cedarlane.test');
 select pg_temp.mk_user('b0000000-0000-4000-8000-000000000001', 'admin@northgate.test');
 select pg_temp.mk_user('b0000000-0000-4000-8000-000000000002', 'dr.reyes@northgate.test');
 select pg_temp.mk_user('b0000000-0000-4000-8000-000000000004', 'desk@northgate.test');
@@ -60,6 +61,7 @@ insert into public.profiles (id, clinic_id, role, full_name, active) values
   ('a0000000-0000-4000-8000-000000000008', 'aaaaaaaa-0000-4000-8000-000000000000', 'receptionist', 'Former Desk', false),
   ('a0000000-0000-4000-8000-000000000009', 'aaaaaaaa-0000-4000-8000-000000000000', 'nurse', 'Mei Tanaka', true),
   ('b0000000-0000-4000-8000-000000000009', 'bbbbbbbb-0000-4000-8000-000000000000', 'nurse', 'Omar Ali', true),
+  ('a0000000-0000-4000-8000-00000000000a', 'aaaaaaaa-0000-4000-8000-000000000000', 'admin', 'Second Admin (demo)', true),
   ('b0000000-0000-4000-8000-000000000001', 'bbbbbbbb-0000-4000-8000-000000000000', 'admin', 'Grace Whitfield', true),
   ('b0000000-0000-4000-8000-000000000002', 'bbbbbbbb-0000-4000-8000-000000000000', 'doctor', 'Dr. Luis Reyes', true),
   ('b0000000-0000-4000-8000-000000000004', 'bbbbbbbb-0000-4000-8000-000000000000', 'receptionist', 'Dana Kim', true),
@@ -342,3 +344,19 @@ insert into public.rooms (id, clinic_id, name, kind) values
 insert into public.procedures (id, clinic_id, patient_id, admission_id, surgeon_id, name, urgency, requested_by) values
   ('b0a00000-0000-4000-8000-000000000001', 'aaaaaaaa-0000-4000-8000-000000000000', 'a2000000-0000-4000-8000-000000000002', 'a9000000-0000-4000-8000-000000000001',
    'a0000000-0000-4000-8000-000000000002', 'Right hip revision', 'elective', 'a0000000-0000-4000-8000-000000000002');
+
+-- Phase 7: purchasing, stores, assets demo data
+insert into public.suppliers (id, clinic_id, name, contact) values ('b1a00000-0000-4000-8000-000000000001', 'aaaaaaaa-0000-4000-8000-000000000000', 'MediSupply Ltd', 'orders@medisupply.example');
+insert into public.store_locations (id, clinic_id, name, is_main) values
+  ('b1b00000-0000-4000-8000-000000000001', 'aaaaaaaa-0000-4000-8000-000000000000', 'Main store', true),
+  ('b1b00000-0000-4000-8000-000000000002', 'aaaaaaaa-0000-4000-8000-000000000000', 'Ward 1 cupboard', false);
+insert into public.store_items (id, clinic_id, name, unit, reorder_level) values
+  ('b1c00000-0000-4000-8000-000000000001', 'aaaaaaaa-0000-4000-8000-000000000000', 'Sterile gloves (box)', 'box', 20),
+  ('b1c00000-0000-4000-8000-000000000002', 'aaaaaaaa-0000-4000-8000-000000000000', 'Wound dressing pack', 'each', 50);
+insert into public.store_balances (clinic_id, item_id, location_id, qty) values
+  ('aaaaaaaa-0000-4000-8000-000000000000', 'b1c00000-0000-4000-8000-000000000001', 'b1b00000-0000-4000-8000-000000000001', 40);
+insert into public.store_movements (clinic_id, item_id, location_id, kind, qty, reference) values
+  ('aaaaaaaa-0000-4000-8000-000000000000', 'b1c00000-0000-4000-8000-000000000001', 'b1b00000-0000-4000-8000-000000000001', 'receipt', 40, 'Opening balance');
+insert into public.assets (id, clinic_id, tag, name, category, location, next_service_due) values
+  ('b1d00000-0000-4000-8000-000000000001', 'aaaaaaaa-0000-4000-8000-000000000000', 'MON-001', 'Patient monitor', 'equipment', 'Ward 1', current_date + 90),
+  ('b1d00000-0000-4000-8000-000000000002', 'aaaaaaaa-0000-4000-8000-000000000000', 'INF-014', 'Infusion pump', 'equipment', 'Ward 1', current_date - 10);

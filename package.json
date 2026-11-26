@@ -19,7 +19,8 @@
     "db:local": "bash scripts/db-reset-local.sh",
     "db:types:local": "node scripts/gen-types.mjs",
     "test:journey": "node scripts/journey.mjs",
-    "test:journey2": "node scripts/journey2.mjs"
+    "test:journey2": "node scripts/journey2.mjs",
+    "test:journey3": "node scripts/journey3.mjs"
   },
   "dependencies": {
     "@fontsource/atkinson-hyperlegible": "^5.3.0",

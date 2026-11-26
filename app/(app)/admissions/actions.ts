@@ -268,3 +268,11 @@ export async function setHousekeeping(form: FormData): Promise<void> {
   if (error) redirect(`/wards?${new URLSearchParams({ error: friendlyDbError(error.message) })}`);
   redirect(`/wards?${new URLSearchParams({ ok: state === "clean" ? "Bed marked clean and ready." : "Bed cleaning status updated." })}`);
 }
+
+export async function shareSummary(form: FormData): Promise<void> {
+  await requireRole("doctor");
+  const id = validId(str(form, "admission_id"));
+  const { error } = await (await createClient()).rpc("share_discharge_summary", { p_admission: id });
+  if (error) back(id, "error", friendlyDbError(error.message));
+  back(id, "ok", "Summary shared. The patient can now read it in their portal.");
+}
